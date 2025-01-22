@@ -2,48 +2,37 @@
 class InfoCenter extends HTMLElement {
     constructor() {
         super();
-        this.isVisible = false;
     }
 
     connectedCallback() {
-        // Wrap existing content
-        const content = this.innerHTML;
+        // Initial HTML Structure
         this.innerHTML = `
-            <div class="info-center-content" style="
-                position: fixed;
-                top: 0;
-                right: -360px;
-                width: 360px;
-                height: 100vh;
-                background: #fff;
-                box-shadow: 0 0 10px rgba(0,0,0,0.1);
-                transition: right 0.3s ease-in-out;
-                z-index: 10000;
-                padding: 20px;
-                overflow-y: auto;
-            ">
-                ${content}
+            <button class="info-center-toggle" type="button">
+                <span>☰</span>
+            </button>
+            <div class="info-center-panel">
+                <div class="info-center-content">
+                    ${this.innerHTML}
+                </div>
             </div>
         `;
 
-        // Find the toggle button outside the component
-        const toggleBtn = document.querySelector('.info-center-toggle');
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => this.toggle());
-        }
+        // Add event listener to toggle button
+        this.querySelector('.info-center-toggle').addEventListener('click', () => {
+            this.togglePanel();
+        });
     }
 
-    toggle() {
-        this.isVisible = !this.isVisible;
-        const content = this.querySelector('.info-center-content');
-        const toggleBtn = document.querySelector('.info-center-toggle');
-
-        if (this.isVisible) {
-            content.style.right = '0';
-            toggleBtn.style.right = '360px';
+    togglePanel() {
+        const panel = this.querySelector('.info-center-panel');
+        const button = this.querySelector('.info-center-toggle');
+        
+        if (panel.classList.contains('active')) {
+            panel.classList.remove('active');
+            button.classList.remove('active');
         } else {
-            content.style.right = '-360px';
-            toggleBtn.style.right = '0';
+            panel.classList.add('active');
+            button.classList.add('active');
         }
     }
 }
