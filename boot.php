@@ -8,22 +8,25 @@ use rex_extension_point;
 use rex_view;
 use rex_url;
 
+// Get addon instance
+$addon = rex_addon::get('info_center');
+
 // Initialisiere das Info Center
 $infoCenter = InfoCenter::getInstance();
 
 // Registriere die Standard-Widgets
-if ($this->getConfig('widgets')['system']['enabled'] ?? true) {
+if ($addon->getConfig('widgets')['system']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\SystemWidget());
 }
 
-if ($this->getConfig('widgets')['article']['enabled'] ?? true) {
+if ($addon->getConfig('widgets')['article']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\ArticleWidget());
 }
 
 // Assets einbinden
 if (rex::isBackend()) {
-    rex_view::addCssFile($this->getAssetsUrl('css/info-center.css'));
-    rex_view::addJsFile($this->getAssetsUrl('js/info-center.js'));
+    rex_view::addCssFile($addon->getAssetsUrl('css/info-center.css'));
+    rex_view::addJsFile($addon->getAssetsUrl('js/info-center.js'));
 }
 
 // Ausgabe im Backend
@@ -41,16 +44,16 @@ if (rex::isBackend()) {
 
 // Frontend Integration
 if (rex::isFrontend() && rex::getUser()) {
-    rex_extension::register('OUTPUT_FILTER', function(rex_extension_point $ep) use ($infoCenter, $this) {
+    rex_extension::register('OUTPUT_FILTER', function(rex_extension_point $ep) use ($infoCenter, $addon) {
         $content = $ep->getSubject();
         
         // Assets und Info Center vor den schließenden Tags einfügen
         $content = str_ireplace(
             ['</head>', '</body>'],
             [
-                '<link rel="stylesheet" type="text/css" href="' . $this->getAssetsUrl('css/info-center.css') . '" /></head>',
+                '<link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/info-center.css') . '" /></head>',
                 $infoCenter->get() . '
-                <script src="' . $this->getAssetsUrl('js/info-center.js') . '"></script></body>'
+                <script src="' . $addon->getAssetsUrl('js/info-center.js') . '"></script></body>'
             ],
             $content
         );
