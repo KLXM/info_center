@@ -96,10 +96,7 @@ class InfoCenter
      */
     private function shouldRender(): bool
     {
-        // Only render if user is logged in
-        if (!rex::getUser()) {
-            return false;
-        }
+      
 
         return $this->isVisible;
     }
