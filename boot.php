@@ -7,6 +7,8 @@ use rex_extension;
 use rex_extension_point;
 use rex_view;
 use rex_url;
+use rex_addon;
+
 
 // Get addon instance
 $addon = rex_addon::get('info_center');
