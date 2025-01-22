@@ -7,6 +7,7 @@ use rex;
 use rex_sql;
 use rex_addon;
 use rex_url;
+use rex_i18n;
 
 class SystemWidget extends AbstractWidget
 {
