@@ -1,75 +1,146 @@
-/* Base styles */
-:root {
-    --info-center-background-color: #ffffff;
-    --info-center-text-color: #333333;
-    --info-center-border-color: #dddddd;
-    --info-center-shadow: 0 0 10px rgba(0,0,0,0.1);
-    --info-center-header-background: #f5f5f5;
+/* Base Styles */
+.info-center {
+    --panel-width: 360px;
+    --panel-bg: #fff;
+    --panel-shadow: 0 0 20px rgba(0,0,0,0.15);
+    --border-color: #e4e4e4;
+    --text-color: #333;
+    --header-bg: #f8f8f8;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+    .info-center {
+        --panel-bg: #1a1a1a;
+        --panel-shadow: 0 0 20px rgba(0,0,0,0.3);
+        --border-color: #333;
+        --text-color: #fff;
+        --header-bg: #2a2a2a;
+    }
 }
 
 /* Toggle Button */
 .info-center-toggle {
     position: fixed;
-    z-index: 100001;  /* Higher than info-center */
     top: 50%;
     right: 0;
     transform: translateY(-50%);
-    background: var(--info-center-background-color);
-    border: 1px solid var(--info-center-border-color);
+    z-index: 100001;
+    width: 40px;
+    height: 40px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border-color);
     border-right: none;
     border-radius: 4px 0 0 4px;
-    padding: 12px 8px;
     cursor: pointer;
-    box-shadow: var(--info-center-shadow);
-    transition: right 0.3s ease-in-out;
+    transition: right 0.3s ease;
 }
 
-.info-center-toggle:hover {
-    background: var(--info-center-header-background);
+.info-center-toggle.active {
+    right: var(--panel-width);
 }
 
-.info-center-toggle-icon {
-    display: block;
-    width: 20px;
-    height: 20px;
-    line-height: 20px;
-    text-align: center;
-    font-size: 16px;
+/* Panel */
+.info-center-panel {
+    position: fixed;
+    top: 0;
+    right: calc(-1 * var(--panel-width));
+    width: var(--panel-width);
+    height: 100vh;
+    background: var(--panel-bg);
+    box-shadow: var(--panel-shadow);
+    transition: right 0.3s ease;
+    z-index: 100000;
 }
 
-/* Widget styles */
-.info-center-article-item,
+.info-center-panel.active {
+    right: 0;
+}
+
+.info-center-content {
+    height: 100%;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* Widget Styles */
+.info-center-widget {
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.info-center-widget-header {
+    padding: 10px 15px;
+    background: var(--header-bg);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-center-widget-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.info-center-widget-content {
+    padding: 15px;
+    color: var(--text-color);
+}
+
+/* System Widget */
 .info-center-system-item {
     display: flex;
     justify-content: space-between;
-    align-items: center;
     padding: 8px 0;
-    border-bottom: 1px solid var(--info-center-border-color);
+    border-bottom: 1px solid var(--border-color);
 }
 
-.info-center-article-item:last-child,
 .info-center-system-item:last-child {
     border-bottom: none;
 }
 
-.info-center-article-item .label,
 .info-center-system-item .label {
-    font-weight: normal;
     opacity: 0.7;
 }
 
-.info-center-article-item .value,
-.info-center-system-item .value {
-    font-weight: 500;
+/* Article Widget */
+.info-center-article-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
 }
 
-/* Dark mode support */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --info-center-background-color: #1a1a1a;
-        --info-center-text-color: #ffffff;
-        --info-center-border-color: #333333;
-        --info-center-header-background: #2a2a2a;
-        --info-center-shadow: 0 0 10px rgba(0,0,0,0.3);
-    }
+.info-center-article-item:last-child {
+    border-bottom: none;
+}
+
+.info-center-status-online {
+    color: #28a745;
+}
+
+.info-center-status-offline {
+    color: #dc3545;
+}
+
+/* Action Links */
+.info-center-article-actions,
+.info-center-system-admin-links {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.info-center-article-actions a,
+.info-center-system-admin-links a {
+    color: #4b9ad9;
+    text-decoration: none;
+}
+
+.info-center-article-actions a:hover,
+.info-center-system-admin-links a:hover {
+    text-decoration: underline;
 }
