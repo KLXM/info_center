@@ -1,21 +1,16 @@
-// Main Info Center Component
 class InfoCenter extends HTMLElement {
     constructor() {
         super();
         this.attachShadow({ mode: 'open' });
-        this.visible = false;
+        this.isVisible = false;
     }
 
     connectedCallback() {
         this.render();
-        this.setupToggleButton();
         this.setupEventListeners();
     }
 
     render() {
-        const position = this.dataset.position || 'right';
-        const theme = this.dataset.theme || 'auto';
-
         this.shadowRoot.innerHTML = `
             <style>
                 :host {
@@ -28,28 +23,14 @@ class InfoCenter extends HTMLElement {
                     
                     position: fixed;
                     top: 0;
-                    ${position}: -${this.visible ? 0 : 'var(--info-center-width)'};
+                    right: ${this.isVisible ? '0' : '-360px'};
                     width: var(--info-center-width);
                     height: 100vh;
                     background: var(--info-center-background);
                     box-shadow: var(--info-center-shadow);
-                    transition: right 0.3s ease-in-out, left 0.3s ease-in-out;
+                    transition: right 0.3s ease-in-out;
                     z-index: 10000;
                     color: var(--info-center-text-color);
-                }
-
-                .info-center-toggle {
-                    position: fixed;
-                    ${position}: ${this.visible ? 'var(--info-center-width)' : '0'};
-                    top: 50%;
-                    transform: translateY(-50%);
-                    background: var(--info-center-background);
-                    border: 1px solid var(--info-center-border-color);
-                    border-${position}: none;
-                    padding: 10px;
-                    cursor: pointer;
-                    box-shadow: var(--info-center-shadow);
-                    transition: right 0.3s ease-in-out, left 0.3s ease-in-out;
                 }
 
                 .info-center-container {
@@ -57,56 +38,40 @@ class InfoCenter extends HTMLElement {
                     overflow-y: auto;
                     padding: 20px;
                 }
-
-                @media (prefers-color-scheme: dark) {
-                    :host([data-theme="auto"]) {
-                        --info-center-background-color: #1a1a1a;
-                        --info-center-text-color: #ffffff;
-                        --info-center-border-color: #333333;
-                        --info-center-header-background: #2a2a2a;
-                        --info-center-shadow: 0 0 10px rgba(0,0,0,0.3);
-                    }
-                }
-
-                :host([data-theme="dark"]) {
-                    --info-center-background-color: #1a1a1a;
-                    --info-center-text-color: #ffffff;
-                    --info-center-border-color: #333333;
-                    --info-center-header-background: #2a2a2a;
-                    --info-center-shadow: 0 0 10px rgba(0,0,0,0.3);
-                }
             </style>
-
-            <div class="info-center-toggle" title="${this.visible ? 'Verbergen' : 'Anzeigen'}">
-                ${this.visible ? '❯' : '❮'}
-            </div>
-
             <div class="info-center-container">
                 <slot></slot>
             </div>
         `;
     }
 
-    setupToggleButton() {
-        const toggle = this.shadowRoot.querySelector('.info-center-toggle');
-        toggle.addEventListener('click', () => {
-            this.visible = !this.visible;
-            this.render();
-            this.dispatchEvent(new CustomEvent('visibilityChange', { 
-                detail: { visible: this.visible } 
-            }));
+    setupEventListeners() {
+        // Reagieren auf den Toggle-Button-Click
+        document.querySelector('.info-center-toggle').addEventListener('click', () => {
+            this.toggleVisibility();
         });
     }
 
-    setupEventListeners() {
-        // Listen for theme changes
-        this.addEventListener('themeChange', (event) => {
-            this.dataset.theme = event.detail.theme;
-        });
+    toggleVisibility() {
+        this.isVisible = !this.isVisible;
+        if (this.isVisible) {
+            this.style.right = '0';
+        } else {
+            this.style.right = '-360px';
+        }
+
+        // Button-Position anpassen
+        const toggleButton = document.querySelector('.info-center-toggle');
+        if (this.isVisible) {
+            toggleButton.style.right = '360px';
+            toggleButton.innerHTML = '<span class="info-center-toggle-icon">❯</span>';
+        } else {
+            toggleButton.style.right = '0';
+            toggleButton.innerHTML = '<span class="info-center-toggle-icon">❮</span>';
+        }
     }
 }
 
-// Widget Base Component
 class InfoCenterWidget extends HTMLElement {
     constructor() {
         super();
@@ -147,12 +112,6 @@ class InfoCenterWidget extends HTMLElement {
                 .widget-content {
                     padding: 15px;
                 }
-
-                .widget-loading {
-                    text-align: center;
-                    padding: 20px;
-                    color: var(--info-center-text-color);
-                }
             </style>
 
             <div class="widget-header">
@@ -162,37 +121,6 @@ class InfoCenterWidget extends HTMLElement {
                 <slot></slot>
             </div>
         `;
-    }
-
-    setupLazyLoading() {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    this.loadContent();
-                    observer.unobserve(this);
-                }
-            });
-        });
-
-        observer.observe(this);
-    }
-
-    async loadContent() {
-        const content = this.shadowRoot.querySelector('.widget-content');
-        content.innerHTML = '<div class="widget-loading">Laden...</div>';
-
-        try {
-            const response = await fetch(`/index.php?widget=${this.dataset.id}`, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-            const html = await response.text();
-            content.innerHTML = html;
-        } catch (error) {
-            content.innerHTML = '<div class="widget-error">Fehler beim Laden</div>';
-            console.error('Widget loading error:', error);
-        }
     }
 }
 
