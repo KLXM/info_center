@@ -1,110 +1,48 @@
-/* CSS Custom Properties für Theming */
-:root {
-    --info-center-background-color: #ffffff;
-    --info-center-text-color: #333333;
-    --info-center-border-color: #dddddd;
-    --info-center-shadow: 0 0 10px rgba(0,0,0,0.1);
-    --info-center-header-background: #f5f5f5;
-    --info-center-accent-color: #4b9ad9;
-    --info-center-success-color: #3bb594;
-    --info-center-error-color: #d9534f;
-    --info-center-warning-color: #f0ad4e;
-}
-
-/* Dark Mode */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --info-center-background-color: #1a1a1a;
-        --info-center-text-color: #ffffff;
-        --info-center-border-color: #333333;
-        --info-center-header-background: #2a2a2a;
-        --info-center-shadow: 0 0 10px rgba(0,0,0,0.3);
-    }
-}
-
-/* Widget Specific Styles */
-.info-center-article-item,
-.info-center-system-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--info-center-border-color);
-}
-
-.info-center-article-item:last-child,
-.info-center-system-item:last-child {
-    border-bottom: none;
-}
-
-.info-center-article-item .label,
-.info-center-system-item .label {
-    color: var(--info-center-text-color);
-    opacity: 0.7;
-    font-size: 0.9em;
-}
-
-.info-center-article-item .value,
-.info-center-system-item .value {
-    font-weight: 500;
-}
-
-/* Status Indicators */
-.info-center-status-online {
-    color: var(--info-center-success-color);
-}
-
-.info-center-status-offline {
-    color: var(--info-center-error-color);
-}
-
-/* Action Links */
-.info-center-article-actions,
-.info-center-system-admin-links {
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid var(--info-center-border-color);
-    text-align: center;
-}
-
-.info-center-article-actions a,
-.info-center-system-admin-links a {
-    color: var(--info-center-accent-color);
-    text-decoration: none;
-    font-size: 0.9em;
-}
-
-.info-center-article-actions a:hover,
-.info-center-system-admin-links a:hover {
-    text-decoration: underline;
-}
-
-/* Metadata Section */
-.info-center-article-metadata {
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 1px solid var(--info-center-border-color);
-}
-
-.info-center-article-metadata h4 {
-    margin: 0 0 10px 0;
-    font-size: 1em;
-    color: var(--info-center-text-color);
-    opacity: 0.8;
-}
-
-/* Loading States */
-.info-center-loading {
-    text-align: center;
-    padding: 20px;
-    color: var(--info-center-text-color);
-    opacity: 0.7;
-}
-
-/* Error States */
-.info-center-error {
-    color: var(--info-center-error-color);
-    text-align: center;
+/* Toggle Button Styles */
+.info-center-toggle {
+    position: fixed;
+    z-index: 100000;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+    background: var(--info-center-background-color, #ffffff);
+    border: 1px solid var(--info-center-border-color, #dddddd);
+    border-right: none;
+    border-radius: 4px 0 0 4px;
     padding: 10px;
-    font-size: 0.9em;
+    cursor: pointer;
+    box-shadow: var(--info-center-shadow, 0 0 10px rgba(0,0,0,0.1));
+    transition: right 0.3s ease-in-out;
 }
+
+.info-center-toggle:hover {
+    background: var(--info-center-header-background, #f5f5f5);
+}
+
+.info-center-toggle-icon {
+    display: block;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    font-size: 16px;
+}
+
+/* Info Center Container */
+.info-center {
+    position: fixed;
+    top: 0;
+    right: -360px; /* Startet ausgeblendet */
+    width: 360px;
+    height: 100vh;
+    background: var(--info-center-background-color, #ffffff);
+    box-shadow: var(--info-center-shadow, 0 0 10px rgba(0,0,0,0.1));
+    transition: right 0.3s ease-in-out;
+    z-index: 99999;
+}
+
+.info-center.visible {
+    right: 0;
+}
+
+/* Rest der bestehenden Styles... */
