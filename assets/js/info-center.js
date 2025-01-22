@@ -3,6 +3,11 @@ class InfoCenter extends HTMLElement {
     constructor() {
         super();
         this.isVisible = false;
+    }
+
+    connectedCallback() {
+        // Wrap existing content
+        const content = this.innerHTML;
         this.innerHTML = `
             <div class="info-center-content" style="
                 position: fixed;
@@ -17,12 +22,10 @@ class InfoCenter extends HTMLElement {
                 padding: 20px;
                 overflow-y: auto;
             ">
-                ${this.innerHTML}
+                ${content}
             </div>
         `;
-    }
 
-    connectedCallback() {
         // Find the toggle button outside the component
         const toggleBtn = document.querySelector('.info-center-toggle');
         if (toggleBtn) {
