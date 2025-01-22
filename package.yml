@@ -1,8 +1,32 @@
-package: addon_key
-version: '0.0.0'
-author: 'Friends Of REDAXO'
-supportpage: https://github.com/FriendsOfREDAXO/addon_key
+package: info_center
+version: '1.0.0-dev'
+author: 'KLXM Crossmedia GmbH'
+supportpage: https://github.com/klxm/info_center
+
+load: late
+
 requires:
-    redaxo: '^5.15.1'
+    redaxo: '^5.18.0'
     php:
-        version: '>=8.1, <9'
+        version: '>=8.1'
+    packages:
+        structure: '^2.0.0'
+
+page:
+    title: 'Info Center'
+    prio: 150
+
+default_config:
+    darkmode: auto
+    position: right
+    widgets:
+        system:
+            enabled: true
+            prio: 10
+        article:
+            enabled: true 
+            prio: 20
+
+conflicts:
+    packages:
+        minibar: '*'
