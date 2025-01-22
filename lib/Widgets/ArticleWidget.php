@@ -9,6 +9,7 @@ use rex_url;
 use rex_clang;
 use rex_extension;
 use rex_extension_point;
+use rex_i18n;
 
 class ArticleWidget extends AbstractWidget
 {
