@@ -11,17 +11,21 @@ requires:
         version: '>=8.1'
     packages:
         structure: '^2.0.0'
+        quick_navigation: '*'
 
 default_config:
     darkmode: auto
     position: right
     widgets:
+        article:
+            enabled: true 
+            prio: 1
         system:
             enabled: true
             prio: 10
-        article:
-            enabled: true 
-            prio: 20
+        stats:
+            enabled: true
+            prio: 5
         upkeep:
             enabled: true
             prio: 30

@@ -12,6 +12,7 @@ use rex_extension_point;
 use rex_i18n;
 use rex_backend_login;
 use rex_escape;
+use rex_sql;
 
 class ArticleWidget extends AbstractWidget
 {
@@ -48,29 +49,214 @@ class ArticleWidget extends AbstractWidget
 
     public function render(): string
     {
-        if (!$this->article) {
-            return $this->wrapContent(rex_i18n::msg('info_center_no_article_found'));
-        }
-
         $content = '<div class="info-center-article-items">';
 
-        // Basic article information
-        $content .= $this->renderBasicInfo();
-        
-        // Article path
-        $content .= $this->renderPathInfo();
-        
-        // Edit/View links
-        $content .= $this->renderActionLinks();
-        
-        // Metadata
-        if ($this->shouldShowMetaInfo()) {
-            $content .= $this->renderMetaInfo();
+        if (rex::isBackend()) {
+            // Backend: Administrative Funktionen
+            $content .= $this->renderBackendContent();
+        } else {
+            // Frontend: Aktueller Artikel
+            if (!$this->article) {
+                return $this->wrapContent(rex_i18n::msg('info_center_no_article_found'));
+            }
+            
+            $content .= $this->renderFrontendContent();
         }
 
         $content .= '</div>';
-
         return $this->wrapContent($content);
+    }
+
+    private function renderBackendContent(): string
+    {
+        $html = '';
+        
+        // Quick Links zu häufig genutzten Bereichen
+        $html .= $this->renderQuickLinks();
+        
+        // Zuletzt bearbeitete Artikel (wie quick_navigation)
+        $html .= $this->renderRecentArticles();
+        
+        return $html;
+    }
+
+    private function renderFrontendContent(): string
+    {
+        $html = '';
+
+        // Basic article information
+        $html .= $this->renderBasicInfo();
+        
+        // Article path
+        $html .= $this->renderPathInfo();
+        
+        // Edit/View links
+        $html .= $this->renderActionLinks();
+        
+        // Metadata
+        if ($this->shouldShowMetaInfo()) {
+            $html .= $this->renderMetaInfo();
+        }
+        
+        return $html;
+    }
+
+    private function renderQuickLinks(): string
+    {
+        $user = rex_backend_login::createUser();
+        if (!$user) {
+            return '';
+        }
+
+        $html = '<div class="info-center-quick-links">';
+        
+        // Struktur-Hauptseite
+        if ($user->hasPerm('structure')) {
+            $html .= sprintf(
+                '<div class="info-center-quick-link">
+                    <a href="%s">🗂️ %s</a>
+                </div>',
+                rex_url::backendPage('structure'),
+                rex_i18n::msg('info_center_structure_overview')
+            );
+        }
+        
+        // Content-Bereich
+        if ($user->hasPerm('content')) {
+            $html .= sprintf(
+                '<div class="info-center-quick-link">
+                    <a href="%s">📝 %s</a>
+                </div>',
+                rex_url::backendPage('content'),
+                rex_i18n::msg('info_center_content_overview')
+            );
+        }
+
+        $html .= '</div>';
+        return $html;
+    }
+
+    private function renderRecentArticles(): string
+    {
+        $user = rex_backend_login::createUser();
+        if (!$user || (!$user->hasPerm('structure') && !$user->hasPerm('content'))) {
+            return '';
+        }
+
+        $recentArticles = $this->getRecentArticles();
+        if (empty($recentArticles)) {
+            return '';
+        }
+
+        $html = '<div class="info-center-recent-articles">';
+        $html .= '<h4>' . rex_i18n::msg('info_center_recent_articles') . '</h4>';
+        
+        foreach ($recentArticles as $article) {
+            $statusClass = $article['status'] == 1 ? 'online' : 'offline';
+            
+            // Bessere Datumsformatierung - prüfe ob updatedate ein gültiger Timestamp ist
+            $updatedate = (int)$article['updatedate'];
+            if ($updatedate > 0) {
+                $date = date('d.m. H:i', $updatedate);
+            } else {
+                // Fallback: aktuelles Datum
+                $date = date('d.m. H:i');
+            }
+            
+            $html .= sprintf(
+                '<div class="info-center-recent-article status-%s">
+                    <div class="article-main">
+                        <a href="%s" title="%s">
+                            <span class="article-name">%s</span>
+                        </a>
+                    </div>
+                    <div class="article-meta">
+                        <span class="article-user">%s</span>
+                        <span class="article-date">%s</span>
+                    </div>
+                </div>',
+                $statusClass,
+                rex_url::backendPage('content/edit', [
+                    'article_id' => $article['id'],
+                    'category_id' => $article['category_id'],
+                    'clang' => $article['clang_id'],
+                    'mode' => 'edit'
+                ]),
+                rex_escape($article['name']),
+                rex_escape($this->truncateString($article['name'], 30)),
+                rex_escape($article['updateuser']),
+                $date
+            );
+        }
+        
+        $html .= '</div>';
+        return $html;
+    }
+
+    private function getRecentArticles(): array
+    {
+        try {
+            $where = '';
+            $whereParams = [];
+            
+            $user = rex_backend_login::createUser();
+            if (!$user) {
+                return [];
+            }
+
+            // Prüfe Berechtigung für alle Änderungen oder nur eigene
+            if (!$user->isAdmin() && !$user->hasPerm('quick_navigation[all_changes]')) {
+                $where = 'WHERE updateuser = :user';
+                $whereParams['user'] = $user->getValue('login');
+            } else {
+                $where = 'WHERE updatedate > 0';
+            }
+
+            $sql = rex_sql::factory();
+            $query = '
+                SELECT 
+                    id, 
+                    parent_id as category_id,
+                    clang_id, 
+                    name, 
+                    updateuser,
+                    UNIX_TIMESTAMP(updatedate) as updatedate,
+                    status
+                FROM ' . rex::getTable('article') . ' 
+                ' . $where . ' 
+                ORDER BY updatedate DESC 
+                LIMIT 5
+            ';
+            
+            $sql->setQuery($query, $whereParams);
+            
+            $articles = [];
+            while ($sql->hasNext()) {
+                $articles[] = [
+                    'id' => $sql->getValue('id'),
+                    'category_id' => $sql->getValue('category_id'),
+                    'clang_id' => $sql->getValue('clang_id'),
+                    'name' => $sql->getValue('name'),
+                    'updateuser' => $sql->getValue('updateuser'),
+                    'updatedate' => $sql->getValue('updatedate'),
+                    'status' => $sql->getValue('status')
+                ];
+                $sql->next();
+            }
+            
+            return $articles;
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    private function truncateString(string $string, int $length): string
+    {
+        if (strlen($string) <= $length) {
+            return $string;
+        }
+        
+        return substr($string, 0, $length - 3) . '...';
     }
 
     private function renderBasicInfo(): string

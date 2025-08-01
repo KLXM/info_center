@@ -21,13 +21,19 @@ $addon = rex_addon::get('info_center');
 // Initialisiere das Info Center
 $infoCenter = InfoCenter::getInstance();
 
-// Registriere die Standard-Widgets (nach Priorität)
+// Registriere Widgets in der gewünschten Reihenfolge
+// Article Widget zuerst
+if ($addon->getConfig('widgets')['article']['enabled'] ?? true) {
+    $infoCenter->registerWidget(new Widgets\ArticleWidget());
+}
+
+// Dann die anderen Widgets
 if ($addon->getConfig('widgets')['system']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\SystemWidget());
 }
 
-if ($addon->getConfig('widgets')['article']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\ArticleWidget());
+if ($addon->getConfig('widgets')['stats']['enabled'] ?? true) {
+    $infoCenter->registerWidget(new Widgets\StatsWidget());
 }
 
 if ($addon->getConfig('widgets')['upkeep']['enabled'] ?? true) {

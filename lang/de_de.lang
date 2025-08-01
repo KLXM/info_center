@@ -38,6 +38,10 @@ info_center_article_view = Anzeigen
 info_center_article_structure = Struktur
 info_center_article_metadata_updated = Aktualisiert
 info_center_article_metadata_created = Erstellt
+info_center_structure_overview = Struktur-Übersicht
+info_center_add_article = Neue Seite
+info_center_content_overview = Content-Bereich
+info_center_recent_articles = Zuletzt bearbeitet
 
 # Upkeep Widget
 info_center_upkeep_title = Upkeep
@@ -47,6 +51,14 @@ info_center_upkeep_security = Sicherheit
 info_center_upkeep_performance = Performance
 info_center_upkeep_dashboard = Dashboard
 info_center_upkeep_settings = Einstellungen
+
+# Stats Widget
+info_center_stats_title = Performance
+info_center_stats_execution_time = Ladezeit
+info_center_stats_memory_usage = Speicher
+info_center_stats_peak_memory = Peak RAM
+info_center_stats_db_queries = DB Queries
+info_center_stats_request = Request
 
 # Statusinformationen
 info_center_status_online = Online

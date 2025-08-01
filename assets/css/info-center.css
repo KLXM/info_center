@@ -336,6 +336,211 @@
     font-family: 'Courier New', monospace;
 }
 
+/* Stats Widget Specific Styles */
+.info-center-stats-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--widget-border);
+    transition: all 0.2s ease;
+    font-size: 11px;
+}
+
+.info-center-stats-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-center-stats-item:hover {
+    background: var(--hover-bg);
+    margin: 0 -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+    border-radius: 5px;
+}
+
+.info-center-stats-item .label {
+    color: var(--text-color-muted);
+    font-weight: 500;
+    font-size: 10px;
+}
+
+.info-center-stats-item .value {
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 10px;
+    font-family: 'Courier New', monospace;
+    text-align: right;
+}
+
+/* Performance Status Colors */
+.stats-status-good {
+    color: #10b981 !important;
+}
+
+.stats-status-warning {
+    color: #f59e0b !important;
+}
+
+.stats-status-critical {
+    color: #ef4444 !important;
+}
+
+.stats-status-neutral {
+    color: var(--text-color) !important;
+}
+
+/* Article Widget - Backend Quick Links */
+.info-center-quick-links {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--widget-border);
+}
+
+.info-center-quick-link {
+    margin-bottom: 8px;
+}
+
+.info-center-quick-link:last-child {
+    margin-bottom: 0;
+}
+
+.info-center-quick-link a {
+    display: flex;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--button-bg);
+    border: 1px solid var(--button-border);
+    border-radius: 6px;
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    gap: 8px;
+}
+
+.info-center-quick-link a:hover {
+    background: rgba(59, 130, 246, 0.25);
+    border-color: rgba(59, 130, 246, 0.4);
+    color: #60a5fa;
+    transform: translateY(-1px);
+}
+
+/* Recent Articles Styling */
+.info-center-recent-articles {
+    margin-top: 15px;
+}
+
+.info-center-recent-articles h4 {
+    color: var(--text-color);
+    font-size: 13px;
+    margin: 0 0 8px 0;
+    text-transform: uppercase;
+    font-weight: 600;
+    opacity: 0.8;
+}
+
+.info-center-recent-article {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    margin-bottom: 6px;
+    padding: 8px;
+    border-left: 3px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.info-center-recent-article:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateX(2px);
+}
+
+.info-center-recent-article.status-online {
+    border-left-color: #4caf50;
+}
+
+.info-center-recent-article.status-offline {
+    border-left-color: #f44336;
+}
+
+.info-center-recent-article .article-main a {
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 12px;
+}
+
+.info-center-recent-article .article-main a:hover {
+    color: #64b5f6;
+}
+
+.info-center-recent-article .article-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.info-center-recent-article .article-user,
+.info-center-recent-article .article-date {
+    font-size: 10px;
+}
+
+/* Recent Articles */
+.info-center-recent-articles h4 {
+    margin: 0 0 12px 0;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-center-recent-article {
+    margin-bottom: 6px;
+}
+
+.info-center-recent-article:last-child {
+    margin-bottom: 0;
+}
+
+.info-center-recent-article a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 10px;
+    transition: all 0.2s ease;
+}
+
+.info-center-recent-article a:hover {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #60a5fa;
+}
+
+.info-center-recent-article .article-name {
+    font-weight: 500;
+    flex: 1;
+    text-align: left;
+}
+
+.info-center-recent-article .article-date {
+    font-weight: 400;
+    color: var(--text-color-muted);
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
 /* Upkeep Widget Specific Styles */
 .info-center-upkeep-item {
     display: flex;
