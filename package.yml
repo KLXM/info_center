@@ -17,6 +17,9 @@ default_config:
     darkmode: auto
     position: right
     widgets:
+        timetracker:
+            enabled: true
+            prio: 0
         article:
             enabled: true 
             prio: 1

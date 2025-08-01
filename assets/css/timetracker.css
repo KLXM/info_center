@@ -1,0 +1,290 @@
+/* TimeTracker Widget Styles */
+.time-tracker-widget {
+    position: relative;
+}
+
+.time-tracker-container {
+    padding: 0;
+}
+
+.time-tracker-greeting {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 12px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.time-tracker-display {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.time-display {
+    font-size: 24px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    color: #2c3e50;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.session-info {
+    font-size: 11px;
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+.time-tracker-controls {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.time-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 60px;
+    justify-content: center;
+}
+
+.time-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.time-btn-start {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+    box-shadow: 0 2px 4px rgba(46, 204, 113, 0.3);
+}
+
+.time-btn-start:hover:not(:disabled) {
+    background: linear-gradient(135deg, #229954, #27ae60);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(46, 204, 113, 0.4);
+}
+
+.time-btn-pause {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+    box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
+}
+
+.time-btn-pause:hover:not(:disabled) {
+    background: linear-gradient(135deg, #e67e22, #d35400);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(243, 156, 18, 0.4);
+}
+
+.time-btn-stop {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
+}
+
+.time-btn-stop:hover:not(:disabled) {
+    background: linear-gradient(135deg, #c0392b, #a93226);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(231, 76, 60, 0.4);
+}
+
+.btn-icon {
+    font-size: 12px;
+    line-height: 1;
+}
+
+.btn-text {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.time-tracker-stats {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 8px;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+}
+
+.stat-label {
+    color: #7f8c8d;
+    font-weight: 500;
+}
+
+.stat-value {
+    color: #2c3e50;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+}
+
+/* Status States */
+.time-tracker-container.tracking .time-display {
+    color: #27ae60;
+    animation: pulse 2s infinite;
+}
+
+.time-tracker-container.paused .time-display {
+    color: #f39c12;
+}
+
+.time-tracker-container.stopped .time-display {
+    color: #e74c3c;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Dark Mode Support */
+.rex-theme-dark .time-display,
+.rex-theme-dark .stat-value {
+    color: #ecf0f1;
+}
+
+.rex-theme-dark .time-tracker-greeting,
+.rex-theme-dark .session-info,
+.rex-theme-dark .stat-label {
+    color: #bdc3c7;
+}
+
+.rex-theme-dark .time-tracker-stats {
+    border-top-color: rgba(255,255,255,0.1);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .time-btn {
+        min-width: 50px;
+        padding: 5px 8px;
+    }
+    
+    .btn-text {
+        display: none;
+    }
+    
+    .time-display {
+        font-size: 20px;
+    }
+}
+
+/* Mini TimeTracker für ausgeblendete Sidebar */
+.time-tracker-mini {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(15, 15, 25, 0.9);
+    -webkit-backdrop-filter: blur(25px) saturate(200%);
+    backdrop-filter: blur(25px) saturate(200%);
+    border-radius: 8px;
+    padding: 8px 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 9998;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.time-tracker-mini:hover {
+    background: rgba(15, 15, 25, 0.95);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+.time-tracker-mini.visible {
+    display: flex;
+}
+
+.time-tracker-mini .mini-display {
+    font-size: 16px;
+    font-weight: bold;
+    font-family: 'Courier New', monospace;
+    color: #ecf0f1;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+}
+
+.time-tracker-mini .mini-status {
+    font-size: 10px;
+    color: #bdc3c7;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 500;
+}
+
+.time-tracker-mini .mini-controls {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: all 0.2s ease;
+}
+
+.time-tracker-mini:hover .mini-controls {
+    opacity: 1;
+}
+
+.time-tracker-mini .mini-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 50%;
+    font-size: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.time-tracker-mini .mini-btn:hover {
+    transform: scale(1.1);
+}
+
+.time-tracker-mini .mini-btn-start {
+    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    color: white;
+}
+
+.time-tracker-mini .mini-btn-pause {
+    background: linear-gradient(135deg, #f39c12, #e67e22);
+    color: white;
+}
+
+.time-tracker-mini .mini-btn-stop {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+}
+
+/* Status-spezifische Farben für Mini-Version */
+.time-tracker-mini.tracking .mini-display {
+    color: #2ecc71;
+    animation: pulse 2s infinite;
+}
+
+.time-tracker-mini.paused .mini-display {
+    color: #f39c12;
+}
+
+/* Verstecke Mini-Version wenn Sidebar sichtbar ist */
+.info-center-sidebar.active ~ .time-tracker-mini {
+    display: none !important;
+}

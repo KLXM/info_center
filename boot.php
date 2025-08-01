@@ -22,7 +22,12 @@ $addon = rex_addon::get('info_center');
 $infoCenter = InfoCenter::getInstance();
 
 // Registriere Widgets in der gewünschten Reihenfolge
-// Article Widget zuerst
+// TimeTracker Widget zuerst
+if ($addon->getConfig('widgets')['timetracker']['enabled'] ?? true) {
+    $infoCenter->registerWidget(new Widgets\TimeTrackerWidget());
+}
+
+// Article Widget
 if ($addon->getConfig('widgets')['article']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\ArticleWidget());
 }
@@ -48,7 +53,9 @@ if ($addon->getConfig('widgets')['upkeep']['enabled'] ?? true) {
 if (rex::isBackend() && rex::getUser()) {
     // Backend: Normale Asset-Einbindung
     rex_view::addCssFile($addon->getAssetsUrl('css/info-center.css'));
+    rex_view::addCssFile($addon->getAssetsUrl('css/timetracker.css'));
     rex_view::addJsFile($addon->getAssetsUrl('js/info-center.js'));
+    rex_view::addJsFile($addon->getAssetsUrl('js/timetracker.js'));
 }
 
 // Ausgabe für Backend und Frontend
@@ -76,9 +83,11 @@ if (rex::isFrontend() && rex_backend_login::createUser()) {
             $content = str_ireplace(
                 ['</head>', '</body>'],
                 [
-                    '<link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/info-center.css') . '" /></head>',
+                    '<link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/info-center.css') . '" />
+                    <link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/timetracker.css') . '" /></head>',
                     $infoCenterOutput . '
-                    <script src="' . $addon->getAssetsUrl('js/info-center.js') . '"></script></body>'
+                    <script src="' . $addon->getAssetsUrl('js/info-center.js') . '"></script>
+                    <script src="' . $addon->getAssetsUrl('js/timetracker.js') . '"></script></body>'
                 ],
                 $content
             );

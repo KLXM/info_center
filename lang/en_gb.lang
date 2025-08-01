@@ -25,6 +25,16 @@ info_center_documentation = Read Documentation
 info_center_report_issue = Report Issue
 info_center_online_help = Online Help
 
+# TimeTracker Widget
+info_center_timetracker_title = TimeTracker
+info_center_timetracker_start = Start tracking
+info_center_timetracker_pause = Pause tracking
+info_center_timetracker_stop = Stop tracking
+info_center_timetracker_good_morning = Good morning, %s!
+info_center_timetracker_good_afternoon = Good afternoon, %s!
+info_center_timetracker_good_evening = Good evening, %s!
+info_center_timetracker_good_night = Good evening, %s!
+
 # Article Widget
 info_center_article_title = Articles
 info_center_no_article_found = No article found
