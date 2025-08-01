@@ -45,11 +45,18 @@ class InfoCenter
             }
         }
 
-        // Das komplette Info Center HTML
+        // Das komplette Info Center HTML mit neuer Sidebar-Struktur
         return sprintf(
-            '<info-center class="info-center" data-position="%s" data-theme="%s">%s</info-center>',
-            rex_escape($this->position),
-            rex_escape($this->darkMode),
+            '<div class="info-center-container">
+                <button class="info-center-toggle" type="button" title="Info Center öffnen/schließen">
+                    <span>☰</span>
+                </button>
+                <div class="info-center-sidebar">
+                    <div class="info-center-content">
+                        %s
+                    </div>
+                </div>
+            </div>',
             $widgetsOutput
         );
     }

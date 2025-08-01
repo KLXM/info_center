@@ -16,7 +16,7 @@ class SystemWidget extends AbstractWidget
     public function __construct()
     {
         parent::__construct();
-        $this->title = rex_i18n::msg('info_center_system_title');
+        $this->title = '⚙️ ' . rex_i18n::msg('info_center_system_title');
     }
 
     public function getInitialContent(): string
@@ -86,13 +86,25 @@ class SystemWidget extends AbstractWidget
         if (rex::isBackend() && rex::getUser()?->isAdmin()) {
             $content .= sprintf(
                 '<div class="info-center-system-admin-links">
-                    <a href="%s">%s</a> | 
-                    <a href="%s">%s</a>
+                    <a href="%s">
+                        <i class="rex-icon rex-icon-system"></i>
+                        <span>%s</span>
+                    </a>
+                    <a href="%s">
+                        <i class="rex-icon rex-icon-file-text"></i>
+                        <span>%s</span>
+                    </a>
+                    <a href="%s">
+                        <i class="rex-icon rex-icon-info"></i>
+                        <span>%s</span>
+                    </a>
                 </div>',
                 rex_url::backendPage('system'),
                 rex_i18n::msg('info_center_system_settings'),
                 rex_url::backendPage('system/report'),
-                rex_i18n::msg('info_center_system_report')
+                rex_i18n::msg('info_center_system_report'),
+                rex_url::backendPage('system/phpinfo'),
+                rex_i18n::msg('info_center_system_phpinfo')
             );
         }
 

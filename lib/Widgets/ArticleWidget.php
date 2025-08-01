@@ -10,6 +10,8 @@ use rex_clang;
 use rex_extension;
 use rex_extension_point;
 use rex_i18n;
+use rex_backend_login;
+use rex_escape;
 
 class ArticleWidget extends AbstractWidget
 {
@@ -90,8 +92,8 @@ class ArticleWidget extends AbstractWidget
         // Status
         $statusClass = $this->article->isOnline() ? 'online' : 'offline';
         $statusText = $this->article->isOnline() ? 
-            rex_i18n::msg('status_online') : 
-            rex_i18n::msg('status_offline');
+            rex_i18n::msg('info_center_status_online') : 
+            rex_i18n::msg('info_center_status_offline');
         
         $html .= $this->renderInfoItem(
             rex_i18n::msg('info_center_article_status'),
@@ -104,10 +106,28 @@ class ArticleWidget extends AbstractWidget
     private function renderPathInfo(): string
     {
         $path = [];
+        // Verwende rex_backend_login::createUser() wie bei der Minibar
+        $user = rex_backend_login::createUser();
+        
         foreach ($this->article->getParentTree() as $parent) {
-            if (rex::isBackend() && rex::getUser()?->getComplexPerm('structure')->hasCategoryPerm($parent->getId())) {
+            $canLinkToStructure = false;
+            
+            if ($user) {
+                if (rex::isBackend()) {
+                    // Im Backend: Normale Berechtigungsprüfung
+                    $canLinkToStructure = $user->getComplexPerm('structure')?->hasCategoryPerm($parent->getId()) ?? false;
+                } else {
+                    // Im Frontend: Erweiterte Prüfung für Backend-Benutzer
+                    $canLinkToStructure = $user->isAdmin() || 
+                                         $user->hasPerm('structure') || 
+                                         $user->hasPerm('content') ||
+                                         $user->hasPerm('article');
+                }
+            }
+            
+            if ($canLinkToStructure) {
                 $path[] = sprintf(
-                    '<a href="%s">%s</a>',
+                    '<a href="%s" target="_blank">%s</a>',
                     rex_url::backendPage('structure', ['category_id' => $parent->getId()]),
                     rex_escape($parent->getName())
                 );
@@ -126,24 +146,75 @@ class ArticleWidget extends AbstractWidget
     {
         $html = '<div class="info-center-article-actions">';
         
-        // Edit link in backend
-        if (rex::isBackend() && rex::getUser()?->getComplexPerm('structure')->hasCategoryPerm($this->article->getCategoryId())) {
+        // Verwende rex_backend_login::createUser() wie bei der Minibar
+        $user = rex_backend_login::createUser();
+        $hasStructurePerm = false;
+        
+        // Debug-Info hinzufügen
+        if (rex::isFrontend()) {
+            $debugInfo = sprintf(
+                'Debug: Frontend-Modus, User: %s, Session: %s, Perms: %s',
+                $user ? 'Ja' : 'Nein',
+                rex_backend_login::hasSession() ? 'Ja' : 'Nein',
+                $user ? ($user->isAdmin() ? 'Admin' : ($user->hasPerm('structure') ? 'Structure' : ($user->hasPerm('content') ? 'Content' : 'Andere'))) : 'Keine'
+            );
+            $html .= '<div style="font-size:10px;color:#888;margin-bottom:8px;">' . $debugInfo . '</div>';
+        }
+        
+        // Prüfe Berechtigung - Backend oder Frontend mit Backend-Session
+        if ($user) {
+            if (rex::isBackend()) {
+                // Im Backend: Normale Berechtigungsprüfung
+                $hasStructurePerm = $user->getComplexPerm('structure')?->hasCategoryPerm($this->article->getCategoryId()) ?? false;
+            } else {
+                // Im Frontend: Erweiterte Prüfung für Backend-Benutzer
+                $hasStructurePerm = $user->isAdmin() || 
+                                   $user->hasPerm('structure') || 
+                                   $user->hasPerm('content') ||
+                                   $user->hasPerm('article');
+            }
+        }
+        
+        // Edit link - im Backend und Frontend für eingeloggte Backend-Benutzer
+        if ($hasStructurePerm) {
+            $editUrl = rex_url::backendPage('content/edit', [
+                'article_id' => $this->article->getId(),
+                'category_id' => $this->article->getCategoryId(),
+                'clang' => $this->article->getClangId(),
+                'mode' => 'edit'
+            ]);
+            
             $html .= sprintf(
-                '<a href="%s">%s</a>',
-                rex_url::backendPage('content/edit', [
-                    'article_id' => $this->article->getId(),
-                    'category_id' => $this->article->getCategoryId(),
-                    'clang' => $this->article->getClangId(),
-                    'mode' => 'edit'
-                ]),
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-edit">
+                    ✏️ %s
+                </a>',
+                $editUrl,
                 rex_i18n::msg('info_center_article_edit')
             );
         }
         
-        // View link
+        // Structure/Category link - für Navigation zur Kategorie-Verwaltung
+        if ($hasStructurePerm) {
+            $structureUrl = rex_url::backendPage('structure', [
+                'category_id' => $this->article->getCategoryId(),
+                'clang' => $this->article->getClangId()
+            ]);
+            
+            $html .= sprintf(
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-structure">
+                    🗂️ %s
+                </a>',
+                $structureUrl,
+                rex_i18n::msg('info_center_article_structure')
+            );
+        }
+        
+        // View link - nur im Backend, da im Frontend bereits sichtbar
         if (rex::isBackend()) {
             $html .= sprintf(
-                ' | <a href="%s" target="_blank">%s</a>',
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-view">
+                    👁️ %s
+                </a>',
                 $this->article->getUrl(),
                 rex_i18n::msg('info_center_article_view')
             );
@@ -217,8 +288,36 @@ class ArticleWidget extends AbstractWidget
         return $article;
     }
 
+    protected function wrapContent(string $content): string
+    {
+        // Status-Punkt basierend auf Artikel-Status
+        $statusClass = 'unknown';
+        if ($this->article) {
+            $statusClass = $this->article->isOnline() ? 'online' : 'offline';
+        }
+        
+        $statusDot = '<span class="info-center-status-dot info-center-status-' . $statusClass . '"></span>';
+        
+        return sprintf(
+            '<div class="info-center-widget" data-id="%s" data-lazy="%s">
+                <div class="info-center-widget-header">
+                    <h3 class="info-center-widget-title">%s%s</h3>
+                </div>
+                <div class="info-center-widget-content">
+                    %s
+                </div>
+            </div>',
+            rex_escape($this->getId()),
+            $this->supportsLazyLoading() ? 'true' : 'false',
+            $statusDot,
+            rex_escape($this->getTitle()),
+            $content
+        );
+    }
+
     private function shouldShowMetaInfo(): bool
     {
-        return rex::getUser()?->isAdmin() ?? false;
+        $user = rex_backend_login::createUser();
+        return $user?->isAdmin() ?? false;
     }
 }

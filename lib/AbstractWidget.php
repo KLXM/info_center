@@ -104,14 +104,14 @@ abstract class AbstractWidget implements WidgetInterface
     protected function wrapContent(string $content): string
     {
         return sprintf(
-            '<info-center-widget class="info-center-widget" data-id="%s" data-lazy="%s">
+            '<div class="info-center-widget" data-id="%s" data-lazy="%s">
                 <div class="info-center-widget-header">
                     <h3 class="info-center-widget-title">%s</h3>
                 </div>
                 <div class="info-center-widget-content">
                     %s
                 </div>
-            </info-center-widget>',
+            </div>',
             rex_escape($this->getId()),
             $this->supportsLazyLoading() ? 'true' : 'false',
             rex_escape($this->getTitle()),

@@ -8,7 +8,12 @@ use rex_extension_point;
 use rex_view;
 use rex_url;
 use rex_addon;
+use rex_backend_login;
 
+// Frontend-Session starten, damit rex::getUser() funktioniert
+if (rex::isFrontend()) {
+    rex_backend_login::startSession();
+}
 
 // Get addon instance
 $addon = rex_addon::get('info_center');
@@ -16,7 +21,7 @@ $addon = rex_addon::get('info_center');
 // Initialisiere das Info Center
 $infoCenter = InfoCenter::getInstance();
 
-// Registriere die Standard-Widgets
+// Registriere die Standard-Widgets (nach Priorität)
 if ($addon->getConfig('widgets')['system']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\SystemWidget());
 }
@@ -25,14 +30,24 @@ if ($addon->getConfig('widgets')['article']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\ArticleWidget());
 }
 
-// Assets einbinden
-if (rex::isBackend()) {
+if ($addon->getConfig('widgets')['upkeep']['enabled'] ?? true) {
+    $infoCenter->registerWidget(new Widgets\UpkeepWidget());
+}
+
+
+
+
+
+// Assets einbinden - Backend und Frontend
+if (rex::isBackend() && rex::getUser()) {
+    // Backend: Normale Asset-Einbindung
     rex_view::addCssFile($addon->getAssetsUrl('css/info-center.css'));
     rex_view::addJsFile($addon->getAssetsUrl('js/info-center.js'));
 }
 
-// Ausgabe im Backend
-if (rex::isBackend()) {
+// Ausgabe für Backend und Frontend
+if (rex::isBackend() && rex::getUser()) {
+    // Backend: Normale Ausgabe
     rex_extension::register('OUTPUT_FILTER', function(rex_extension_point $ep) use ($infoCenter) {
         $content = $ep->getSubject();
         $infoCenterOutput = $infoCenter->get();
@@ -44,21 +59,24 @@ if (rex::isBackend()) {
     });
 }
 
-// Frontend Integration
-if (rex::isFrontend() && rex::getUser()) {
+// Frontend Integration - für eingeloggte Backend-Benutzer
+if (rex::isFrontend() && rex_backend_login::createUser()) {
     rex_extension::register('OUTPUT_FILTER', function(rex_extension_point $ep) use ($infoCenter, $addon) {
         $content = $ep->getSubject();
+        $infoCenterOutput = $infoCenter->get();
         
-        // Assets und Info Center vor den schließenden Tags einfügen
-        $content = str_ireplace(
-            ['</head>', '</body>'],
-            [
-                '<link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/info-center.css') . '" /></head>',
-                $infoCenter->get() . '
-                <script src="' . $addon->getAssetsUrl('js/info-center.js') . '"></script></body>'
-            ],
-            $content
-        );
+        if ($infoCenterOutput) {
+            // Assets und Info Center vor den schließenden Tags einfügen
+            $content = str_ireplace(
+                ['</head>', '</body>'],
+                [
+                    '<link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/info-center.css') . '" /></head>',
+                    $infoCenterOutput . '
+                    <script src="' . $addon->getAssetsUrl('js/info-center.js') . '"></script></body>'
+                ],
+                $content
+            );
+        }
         
         $ep->setSubject($content);
     });

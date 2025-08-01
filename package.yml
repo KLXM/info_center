@@ -12,10 +12,6 @@ requires:
     packages:
         structure: '^2.0.0'
 
-page:
-    title: 'Info Center'
-    prio: 150
-
 default_config:
     darkmode: auto
     position: right
@@ -26,6 +22,9 @@ default_config:
         article:
             enabled: true 
             prio: 20
+        upkeep:
+            enabled: true
+            prio: 30
 
 conflicts:
     packages:

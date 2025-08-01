@@ -1,41 +1,60 @@
-// Main Info Center Component
-class InfoCenter extends HTMLElement {
-    constructor() {
-        super();
+// REDAXO Info Center JavaScript - Vanilla JS mit Fallback
+(function() {
+    function initInfoCenter() {
+        initInfoCenterToggle();
     }
 
-    connectedCallback() {
-        // Initial HTML Structure
-        this.innerHTML = `
-            <button class="info-center-toggle" type="button">
-                <span>☰</span>
-            </button>
-            <div class="info-center-panel">
-                <div class="info-center-content">
-                    ${this.innerHTML}
-                </div>
-            </div>
-        `;
+    // DOM Ready mit mehreren Fallbacks
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initInfoCenter);
+    } else {
+        initInfoCenter();
+    }
 
-        // Add event listener to toggle button
-        this.querySelector('.info-center-toggle').addEventListener('click', () => {
-            this.togglePanel();
+    function initInfoCenterToggle() {
+        const toggleBtns = document.querySelectorAll('.info-center-toggle');
+        
+        toggleBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const sidebar = document.querySelector('.info-center-sidebar');
+                if (sidebar) {
+                    sidebar.classList.toggle('active');
+                    
+                    // Toggle button state
+                    btn.classList.toggle('active');
+                    
+                    // Store state in localStorage
+                    const isOpen = sidebar.classList.contains('active');
+                    localStorage.setItem('infoCenterOpen', isOpen ? '1' : '0');
+                }
+            });
+        });
+        
+        // Restore previous state
+        const wasOpen = localStorage.getItem('infoCenterOpen') === '1';
+        if (wasOpen) {
+            const sidebar = document.querySelector('.info-center-sidebar');
+            const toggleBtn = document.querySelector('.info-center-toggle');
+            if (sidebar && toggleBtn) {
+                sidebar.classList.add('active');
+                toggleBtn.classList.add('active');
+            }
+        }
+        
+        // Close on outside click
+        document.addEventListener('click', function(e) {
+            const sidebar = document.querySelector('.info-center-sidebar');
+            const toggleBtn = e.target.closest('.info-center-toggle');
+            
+            if (sidebar && !sidebar.contains(e.target) && !toggleBtn) {
+                sidebar.classList.remove('active');
+                const btn = document.querySelector('.info-center-toggle');
+                if (btn) btn.classList.remove('active');
+                localStorage.setItem('infoCenterOpen', '0');
+            }
         });
     }
-
-    togglePanel() {
-        const panel = this.querySelector('.info-center-panel');
-        const button = this.querySelector('.info-center-toggle');
-        
-        if (panel.classList.contains('active')) {
-            panel.classList.remove('active');
-            button.classList.remove('active');
-        } else {
-            panel.classList.add('active');
-            button.classList.add('active');
-        }
-    }
-}
-
-// Register Custom Element
-customElements.define('info-center', InfoCenter);
+})();

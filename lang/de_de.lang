@@ -16,8 +16,9 @@ info_center_theme_dark = Dunkel
 
 # System Widget
 info_center_system_title = System
-info_center_system_settings = Systemeinstellungen
-info_center_system_report = Systembericht
+info_center_system_settings = System
+info_center_system_report = Bericht
+info_center_system_phpinfo = PHP Info
 info_center_database = Datenbank
 info_center_help = Hilfe
 info_center_documentation = Dokumentation lesen
@@ -27,15 +28,25 @@ info_center_online_help = Online Hilfe
 # Artikel Widget
 info_center_article_title = Artikel
 info_center_no_article_found = Kein Artikel gefunden
-info_center_article_name = Artikelname
-info_center_article_id = Artikel ID
+info_center_article_name = Name
+info_center_article_id = ID
 info_center_article_status = Status
 info_center_article_path = Pfad
-info_center_article_metadata = Metadaten
-info_center_article_edit = Im Backend bearbeiten
-info_center_article_view = Artikel anzeigen
-info_center_article_metadata_updated = Zuletzt aktualisiert
-info_center_article_metadata_created = Erstellt am
+info_center_article_metadata = Meta
+info_center_article_edit = Bearbeiten
+info_center_article_view = Anzeigen
+info_center_article_structure = Struktur
+info_center_article_metadata_updated = Aktualisiert
+info_center_article_metadata_created = Erstellt
+
+# Upkeep Widget
+info_center_upkeep_title = Upkeep
+info_center_upkeep_status = Status
+info_center_upkeep_maintenance = Wartung
+info_center_upkeep_security = Sicherheit
+info_center_upkeep_performance = Performance
+info_center_upkeep_dashboard = Dashboard
+info_center_upkeep_settings = Einstellungen
 
 # Statusinformationen
 info_center_status_online = Online
