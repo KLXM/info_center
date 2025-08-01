@@ -20,15 +20,15 @@ default_config:
         article:
             enabled: true 
             prio: 1
-        system:
+        upkeep:
             enabled: true
-            prio: 10
+            prio: 2
         stats:
             enabled: true
             prio: 5
-        upkeep:
+        system:
             enabled: true
-            prio: 30
+            prio: 10
 
 conflicts:
     packages:

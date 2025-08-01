@@ -1,0 +1,79 @@
+# General
+info_center_title = Info Center
+info_center_settings = Settings
+info_center_no_permission = No permission
+
+# Position
+info_center_position = Position
+info_center_position_left = Left
+info_center_position_right = Right
+
+# Theme
+info_center_theme = Theme
+info_center_theme_auto = Automatic
+info_center_theme_light = Light
+info_center_theme_dark = Dark
+
+# System Widget
+info_center_system_title = System
+info_center_system_settings = System
+info_center_system_report = Report
+info_center_system_phpinfo = PHP Info
+info_center_database = Database
+info_center_help = Help
+info_center_documentation = Read Documentation
+info_center_report_issue = Report Issue
+info_center_online_help = Online Help
+
+# Article Widget
+info_center_article_title = Articles
+info_center_no_article_found = No article found
+info_center_article_name = Name
+info_center_article_id = ID
+info_center_article_status = Status
+info_center_article_path = Path
+info_center_article_metadata = Meta
+info_center_article_edit = Edit
+info_center_article_view = View
+info_center_article_structure = Structure
+info_center_article_metadata_updated = Updated
+info_center_article_metadata_created = Created
+info_center_structure_overview = Structure Overview
+info_center_add_article = New Page
+info_center_content_overview = Content Area
+info_center_recent_articles = Recently Edited
+
+# Upkeep Widget
+info_center_upkeep_title = Upkeep
+info_center_upkeep_status = Status
+info_center_upkeep_maintenance = Maintenance
+info_center_upkeep_security = Security
+info_center_upkeep_performance = Performance
+info_center_upkeep_dashboard = Dashboard
+info_center_upkeep_settings = Settings
+
+# Stats Widget
+info_center_stats_title = Performance
+info_center_stats_execution_time = Load Time
+info_center_stats_memory_usage = Memory
+info_center_stats_peak_memory = Peak RAM
+info_center_stats_db_queries = DB Queries
+info_center_stats_request = Request
+
+# Status Information
+info_center_status_online = Online
+info_center_status_offline = Offline
+
+# User Hints
+info_center_toggle_info = Toggle Info Center
+info_center_loading = Loading information...
+info_center_error_loading = Error loading information
+info_center_refresh = Refresh
+
+# Permissions
+info_center_perm_general = Show Info Center
+info_center_perm_settings = Configure Info Center
+
+# System Messages
+info_center_saved = Settings have been saved
+info_center_error_saving = Error saving settings

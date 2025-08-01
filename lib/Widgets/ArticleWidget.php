@@ -120,17 +120,6 @@ class ArticleWidget extends AbstractWidget
                 rex_i18n::msg('info_center_structure_overview')
             );
         }
-        
-        // Content-Bereich
-        if ($user->hasPerm('content')) {
-            $html .= sprintf(
-                '<div class="info-center-quick-link">
-                    <a href="%s">📝 %s</a>
-                </div>',
-                rex_url::backendPage('content'),
-                rex_i18n::msg('info_center_content_overview')
-            );
-        }
 
         $html .= '</div>';
         return $html;
@@ -476,13 +465,12 @@ class ArticleWidget extends AbstractWidget
 
     protected function wrapContent(string $content): string
     {
-        // Status-Punkt basierend auf Artikel-Status
-        $statusClass = 'unknown';
-        if ($this->article) {
+        // Status-Punkt nur im Frontend anzeigen
+        $statusDot = '';
+        if (rex::isFrontend() && $this->article) {
             $statusClass = $this->article->isOnline() ? 'online' : 'offline';
+            $statusDot = '<span class="info-center-status-dot info-center-status-' . $statusClass . '"></span>';
         }
-        
-        $statusDot = '<span class="info-center-status-dot info-center-status-' . $statusClass . '"></span>';
         
         return sprintf(
             '<div class="info-center-widget" data-id="%s" data-lazy="%s">
