@@ -28,6 +28,9 @@
             
             // Article Widget Daten nach PJAX-Updates aktualisieren
             refreshArticleWidget(viewRoot);
+            
+            // URL Widget nach PJAX-Updates aktualisieren  
+            refreshUrlWidget(viewRoot);
         });
     }
 
@@ -123,5 +126,10 @@
     function refreshArticleWidget(viewRoot) {
         // Article Widget verwendet kein Lazy Loading mehr - nicht benötigt
         console.log('InfoCenter: Article widget refresh not needed (no lazy loading)');
+    }
+    
+    function refreshUrlWidget(viewRoot) {
+        // URL Widget verwendet kein Lazy Loading - nicht benötigt
+        console.log('InfoCenter: URL widget refresh not needed (no lazy loading)');
     }
 })(); // Self-executing anonymous function without jQuery dependency

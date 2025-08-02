@@ -12,22 +12,46 @@ use rex_escape;
 use rex_sql;
 use rex_yform_manager_table;
 use rex_csrf_token;
+use rex_logger;
 
 class UrlWidget extends AbstractWidget
 {
     protected bool $supportsLazyLoading = false;
     private ?array $url2Info = null;
+    private bool $url2InfoLoaded = false;
 
     public function __construct()
     {
         parent::__construct();
         $this->title = rex_i18n::msg('info_center_url_title');
-        $this->url2Info = $this->analyzeUrl2Url();
+        // Don't analyze URL2 in constructor - do it lazily to avoid errors during boot
+    }
+
+    /**
+     * Lazy loading of URL2 info with proper error handling
+     */
+    private function getUrl2Info(): ?array
+    {
+        if (!$this->url2InfoLoaded) {
+            try {
+                $this->url2Info = $this->analyzeUrl2Url();
+            } catch (\Exception $e) {
+                // Log error but don't break the page
+                if (rex::isDebugMode()) {
+                    rex_logger::logException($e);
+                }
+                $this->url2Info = null;
+            }
+            $this->url2InfoLoaded = true;
+        }
+        
+        return $this->url2Info;
     }
 
     public function getInitialContent(): string
     {
-        if (!$this->url2Info) {
+        $url2Info = $this->getUrl2Info();
+        if (!$url2Info) {
             return '';
         }
 
@@ -39,7 +63,7 @@ class UrlWidget extends AbstractWidget
                     <span class="value">%s</span>
                 </div>
             </div>',
-            rex_escape($this->url2Info['table_label'])
+            rex_escape($url2Info['table_label'])
         );
 
         return $this->wrapContent($content);
@@ -48,7 +72,8 @@ class UrlWidget extends AbstractWidget
     public function render(): string
     {
         // Only show this widget if URL2 is detected
-        if (!$this->url2Info) {
+        $url2Info = $this->getUrl2Info();
+        if (!$url2Info) {
             return '';
         }
 
@@ -81,25 +106,30 @@ class UrlWidget extends AbstractWidget
 
     private function renderUrl2Info(): string
     {
+        $url2Info = $this->getUrl2Info();
+        if (!$url2Info) {
+            return '';
+        }
+        
         $html = '';
         
         // Table info
         $html .= $this->renderInfoItem(
             'Tabelle',
-            rex_escape($this->url2Info['table_label'])
+            rex_escape($url2Info['table_label'])
         );
         
         // Record ID
-        if ($this->url2Info['record_id']) {
+        if ($url2Info['record_id']) {
             $html .= $this->renderInfoItem(
                 'Datensatz-ID',
-                $this->url2Info['record_id']
+                $url2Info['record_id']
             );
         }
         
         // Try to show a meaningful title from the record data
-        if ($this->url2Info['record_data']) {
-            $recordData = $this->url2Info['record_data'];
+        if ($url2Info['record_data']) {
+            $recordData = $url2Info['record_data'];
             
             // Try to find a title/name field in the record data
             $title = null;
@@ -139,6 +169,11 @@ class UrlWidget extends AbstractWidget
 
     private function renderUrl2ActionLinks(): string
     {
+        $url2Info = $this->getUrl2Info();
+        if (!$url2Info) {
+            return '';
+        }
+        
         $html = '<div class="info-center-url2-actions">';
         
         // Check permissions
@@ -166,13 +201,13 @@ class UrlWidget extends AbstractWidget
         }
         
         // Only show YForm buttons if it's actually a YForm table
-        if ($this->url2Info['is_yform_table']) {
+        if ($url2Info['is_yform_table']) {
             // Get CSRF token for YForm operations
             $csrf_token = null;
             if (rex::isFrontend() && rex_backend_login::hasSession()) {
                 rex::setProperty('redaxo', true);
                 try {
-                    $table = rex_yform_manager_table::get($this->url2Info['table']);
+                    $table = rex_yform_manager_table::get($url2Info['table']);
                     if ($table) {
                         $_csrf_key = $table->getCSRFKey();
                         $_csrf_params = rex_csrf_token::factory($_csrf_key)->getUrlParams();
@@ -186,7 +221,7 @@ class UrlWidget extends AbstractWidget
             
             // YForm table management link
             $tableParams = [
-                'table_name' => $this->url2Info['table'],
+                'table_name' => $url2Info['table'],
             ];
             if ($csrf_token) {
                 $tableParams['_csrf_token'] = $csrf_token;
@@ -199,14 +234,14 @@ class UrlWidget extends AbstractWidget
                     📋 %s öffnen
                 </a>',
                 $tableUrl,
-                rex_escape($this->url2Info['table_label'])
+                rex_escape($url2Info['table_label'])
             );
             
             // Record edit link (if record found)
-            if ($this->url2Info['record_id']) {
+            if ($url2Info['record_id']) {
                 $recordParams = [
-                    'table_name' => $this->url2Info['table'],
-                    'data_id' => $this->url2Info['record_id'],
+                    'table_name' => $url2Info['table'],
+                    'data_id' => $url2Info['record_id'],
                     'func' => 'edit'
                 ];
                 if ($csrf_token) {
@@ -230,7 +265,7 @@ class UrlWidget extends AbstractWidget
             if (rex_addon::get('adminer')->isAvailable()) {
                 $adminerUrl = rex_url::backendPage('adminer', [
                     'username' => '', // Will use default connection
-                    'table' => $this->url2Info['table']
+                    'table' => $url2Info['table']
                 ]);
                 
                 $html .= sprintf(
@@ -238,7 +273,7 @@ class UrlWidget extends AbstractWidget
                         🗄️ Tabelle "%s" in Adminer öffnen
                     </a>',
                     $adminerUrl,
-                    rex_escape($this->url2Info['table'])
+                    rex_escape($url2Info['table'])
                 );
             }
             
@@ -322,7 +357,12 @@ class UrlWidget extends AbstractWidget
             ];
             
         } catch (\Exception $e) {
-            // URL2 couldn't resolve the current URL - not a URL2 managed URL
+            // URL2 couldn't resolve the current URL or other error occurred
+            // Don't log this as it's expected behavior for non-URL2 URLs
+            return null;
+        } catch (\Error $e) {
+            // Fatal errors like "Call to a member function on null"
+            // Don't log this as it's expected behavior for broken URL2 states
             return null;
         }
     }
