@@ -89,11 +89,14 @@ class ArticleWidget extends AbstractWidget
     {
         $html = '';
 
+        // Check for URL2 first to get correct article info
+        $url2Info = $this->analyzeUrl2Url();
+        
         // Basic article information
-        $html .= $this->renderBasicInfo();
+        $html .= $this->renderBasicInfo($url2Info);
         
         // Article path
-        $html .= $this->renderPathInfo();
+        $html .= $this->renderPathInfo($url2Info);
         
         // Edit/View links
         $html .= $this->renderActionLinks();
@@ -253,38 +256,99 @@ class ArticleWidget extends AbstractWidget
         return substr($string, 0, $length - 3) . '...';
     }
 
-    private function renderBasicInfo(): string
+    private function renderBasicInfo(?array $url2Info = null): string
     {
         $html = '';
         
-        // Article name
-        $html .= $this->renderInfoItem(
-            rex_i18n::msg('info_center_article_name'),
-            rex_escape($this->article->getName())
-        );
+        // If URL2 info is available, use the record data
+        if ($url2Info && $url2Info['record_data']) {
+            $recordData = $url2Info['record_data'];
+            
+            // Try to find a title/name field in the record data
+            $title = null;
+            $possibleTitleFields = ['title', 'name', 'bezeichnung', 'titel', 'subject'];
+            foreach ($possibleTitleFields as $field) {
+                if (isset($recordData[$field]) && !empty($recordData[$field])) {
+                    $title = $recordData[$field];
+                    break;
+                }
+            }
+            
+            // Article name from URL2 record
+            $html .= $this->renderInfoItem(
+                rex_i18n::msg('info_center_article_name'),
+                rex_escape($title ?: ('Record ID: ' . $url2Info['record_id']))
+            );
+            
+            // Record ID
+            $html .= $this->renderInfoItem(
+                'Record ID',
+                $url2Info['record_id']
+            );
+            
+            // Table info
+            $html .= $this->renderInfoItem(
+                'Tabelle',
+                rex_escape($url2Info['table_label'])
+            );
+            
+            // Status: URL2-managed records are always "online" if accessible
+            $html .= $this->renderInfoItem(
+                rex_i18n::msg('info_center_article_status'),
+                '<span class="info-center-status-online">Online (URL2)</span>'
+            );
+            
+        } else {
+            // Fallback to standard article info
+            
+            // Article name
+            $html .= $this->renderInfoItem(
+                rex_i18n::msg('info_center_article_name'),
+                rex_escape($this->article->getName())
+            );
 
-        // Article ID
-        $html .= $this->renderInfoItem(
-            'ID',
-            $this->article->getId()
-        );
+            // Article ID
+            $html .= $this->renderInfoItem(
+                'ID',
+                $this->article->getId()
+            );
 
-        // Status
-        $statusClass = $this->article->isOnline() ? 'online' : 'offline';
-        $statusText = $this->article->isOnline() ? 
-            rex_i18n::msg('info_center_status_online') : 
-            rex_i18n::msg('info_center_status_offline');
-        
-        $html .= $this->renderInfoItem(
-            rex_i18n::msg('info_center_article_status'),
-            sprintf('<span class="info-center-status-%s">%s</span>', $statusClass, $statusText)
-        );
+            // Status
+            $statusClass = $this->article->isOnline() ? 'online' : 'offline';
+            $statusText = $this->article->isOnline() ? 
+                rex_i18n::msg('info_center_status_online') : 
+                rex_i18n::msg('info_center_status_offline');
+            
+            $html .= $this->renderInfoItem(
+                rex_i18n::msg('info_center_article_status'),
+                sprintf('<span class="info-center-status-%s">%s</span>', $statusClass, $statusText)
+            );
+        }
 
         return $html;
     }
 
-    private function renderPathInfo(): string
+    private function renderPathInfo(?array $url2Info = null): string
     {
+        // If URL2 info is available, show URL2 path
+        if ($url2Info) {
+            $pathParts = [];
+            
+            // Add URL2 table info
+            $pathParts[] = '<strong>URL2:</strong> ' . rex_escape($url2Info['table_label']);
+            
+            // Add current URL path
+            $currentUrl = $url2Info['debug_info']['current_url'];
+            $urlParts = explode('/', trim($currentUrl, '/'));
+            $pathParts[] = implode(' / ', array_map('rex_escape', array_slice($urlParts, 0, -1))); // Exclude last part (ID)
+            
+            return $this->renderInfoItem(
+                rex_i18n::msg('info_center_article_path'),
+                implode(' → ', $pathParts)
+            );
+        }
+        
+        // Standard REDAXO article path
         $path = [];
         // Verwende rex_backend_login::createUser() wie bei der Minibar
         $user = rex_backend_login::createUser();
