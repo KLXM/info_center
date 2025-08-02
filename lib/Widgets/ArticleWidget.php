@@ -88,21 +88,23 @@ class ArticleWidget extends AbstractWidget
     {
         $html = '';
 
-        // Check for URL2 first - if found, use URL2 logic
-        $url2Info = $this->analyzeUrl2Url();
+        // Always show the standard REDAXO article info first
+        $html .= $this->renderBasicInfo();
+        $html .= $this->renderPathInfo();
         
+        // Check for URL2 - if found, add URL2 info additionally
+        $url2Info = $this->analyzeUrl2Url();
         if ($url2Info) {
-            // URL2 detected - use URL2-specific rendering
-            $html .= $this->renderBasicInfo($url2Info);
-            $html .= $this->renderPathInfo($url2Info);
-        } else {
-            // Normal REDAXO article - use standard rendering (without URL2 parameter)
-            $html .= $this->renderBasicInfo();
-            $html .= $this->renderPathInfo();
+            $html .= $this->renderUrl2Info($url2Info);
         }
         
-        // Edit/View links (handles both URL2 and normal articles)
-        $html .= $this->renderActionLinks();
+        // Standard REDAXO edit/view links
+        $html .= $this->renderStandardActionLinks();
+        
+        // URL2 edit links (if URL2 detected)
+        if ($url2Info) {
+            $html .= $this->renderUrl2ActionLinks($url2Info);
+        }
         
         // Metadata
         if ($this->shouldShowMetaInfo()) {
@@ -259,102 +261,40 @@ class ArticleWidget extends AbstractWidget
         return substr($string, 0, $length - 3) . '...';
     }
 
-    private function renderBasicInfo(?array $url2Info = null): string
+    private function renderBasicInfo(): string
     {
         $html = '';
         
-        // If URL2 info is available, use the record data
-        if ($url2Info && $url2Info['record_data']) {
-            $recordData = $url2Info['record_data'];
-            
-            // Try to find a title/name field in the record data
-            $title = null;
-            $possibleTitleFields = ['title', 'name', 'bezeichnung', 'titel', 'subject'];
-            foreach ($possibleTitleFields as $field) {
-                if (isset($recordData[$field]) && !empty($recordData[$field])) {
-                    $title = $recordData[$field];
-                    break;
-                }
-            }
-            
-            // Article name from URL2 record
-            $html .= $this->renderInfoItem(
-                rex_i18n::msg('info_center_article_name'),
-                rex_escape($title ?: ('Record ID: ' . $url2Info['record_id']))
-            );
-            
-            // Record ID
-            $html .= $this->renderInfoItem(
-                'Record ID',
-                $url2Info['record_id']
-            );
-            
-            // Table info
-            $html .= $this->renderInfoItem(
-                'Tabelle',
-                rex_escape($url2Info['table_label'])
-            );
-            
-            // Status: URL2-managed records are always "online" if accessible
-            $html .= $this->renderInfoItem(
-                rex_i18n::msg('info_center_article_status'),
-                '<span class="info-center-status-online">Online (URL2)</span>'
-            );
-            
-        } else {
-            // Standard REDAXO article info (original behavior)
-            
-            // Article name
-            $html .= $this->renderInfoItem(
-                rex_i18n::msg('info_center_article_name'),
-                rex_escape($this->article->getName())
-            );
+        // Standard REDAXO article info (original behavior)
+        
+        // Article name
+        $html .= $this->renderInfoItem(
+            rex_i18n::msg('info_center_article_name'),
+            rex_escape($this->article->getName())
+        );
 
-            // Article ID
-            $html .= $this->renderInfoItem(
-                'ID',
-                $this->article->getId()
-            );
+        // Article ID
+        $html .= $this->renderInfoItem(
+            'ID',
+            $this->article->getId()
+        );
 
-            // Status
-            $statusClass = $this->article->isOnline() ? 'online' : 'offline';
-            $statusText = $this->article->isOnline() ? 
-                rex_i18n::msg('info_center_status_online') : 
-                rex_i18n::msg('info_center_status_offline');
-            
-            $html .= $this->renderInfoItem(
-                rex_i18n::msg('info_center_article_status'),
-                sprintf('<span class="info-center-status-%s">%s</span>', $statusClass, $statusText)
-            );
-        }
+        // Status
+        $statusClass = $this->article->isOnline() ? 'online' : 'offline';
+        $statusText = $this->article->isOnline() ? 
+            rex_i18n::msg('info_center_status_online') : 
+            rex_i18n::msg('info_center_status_offline');
+        
+        $html .= $this->renderInfoItem(
+            rex_i18n::msg('info_center_article_status'),
+            sprintf('<span class="info-center-status-%s">%s</span>', $statusClass, $statusText)
+        );
 
         return $html;
     }
 
-    private function renderPathInfo(?array $url2Info = null): string
+    private function renderPathInfo(): string
     {
-        // If URL2 info is available, show URL2 path
-        if ($url2Info) {
-            $pathParts = [];
-            
-            // Add URL2 table info
-            $pathParts[] = '<strong>URL2:</strong> ' . rex_escape($url2Info['table_label']);
-            
-            // Show the current URL path (without debug_info dependency)
-            $currentUrl = $_SERVER['REQUEST_URI'] ?? '';
-            if (!empty($currentUrl)) {
-                $urlParts = explode('/', trim($currentUrl, '/'));
-                if (count($urlParts) > 1) {
-                    $pathParts[] = implode(' / ', array_map('rex_escape', array_slice($urlParts, 0, -1)));
-                }
-            }
-            
-            return $this->renderInfoItem(
-                rex_i18n::msg('info_center_article_path'),
-                implode(' → ', $pathParts)
-            );
-        }
-        
         // Standard REDAXO article path (original behavior)
         $path = [];
         // Verwende rex_backend_login::createUser() wie bei der Minibar
@@ -393,7 +333,61 @@ class ArticleWidget extends AbstractWidget
         );
     }
 
-    private function renderActionLinks(): string
+    private function renderUrl2Info(array $url2Info): string
+    {
+        $html = '<div class="info-center-url2-section">';
+        $html .= '<h4 style="margin-top:15px;margin-bottom:8px;font-size:13px;color:#666;">🔗 URL2-Informationen</h4>';
+        
+        // Table info
+        $html .= $this->renderInfoItem(
+            'Tabelle',
+            rex_escape($url2Info['table_label'])
+        );
+        
+        // Record ID
+        if ($url2Info['record_id']) {
+            $html .= $this->renderInfoItem(
+                'Datensatz-ID',
+                $url2Info['record_id']
+            );
+        }
+        
+        // Try to show a meaningful title from the record data
+        if ($url2Info['record_data']) {
+            $recordData = $url2Info['record_data'];
+            
+            // Try to find a title/name field in the record data
+            $title = null;
+            $possibleTitleFields = ['title', 'name', 'bezeichnung', 'titel', 'subject'];
+            foreach ($possibleTitleFields as $field) {
+                if (isset($recordData[$field]) && !empty($recordData[$field])) {
+                    $title = $recordData[$field];
+                    break;
+                }
+            }
+            
+            if ($title) {
+                $html .= $this->renderInfoItem(
+                    'Datensatz-Titel',
+                    rex_escape($title)
+                );
+            }
+        }
+        
+        // URL2 path
+        $currentUrl = $_SERVER['REQUEST_URI'] ?? '';
+        if (!empty($currentUrl)) {
+            $html .= $this->renderInfoItem(
+                'URL2-Pfad',
+                rex_escape($currentUrl)
+            );
+        }
+        
+        $html .= '</div>';
+        return $html;
+    }
+
+    private function renderStandardActionLinks(): string
     {
         $html = '<div class="info-center-article-actions">';
         
@@ -420,15 +414,117 @@ class ArticleWidget extends AbstractWidget
             return $html;
         }
 
-        // Check for URL2/YForm-URLs first
-        $url2Info = $this->analyzeUrl2Url();
-        if ($url2Info) {
-            $html .= $this->renderUrl2Actions($url2Info);
-        } else {
-            // Standard REDAXO article actions
-            $html .= $this->renderStandardActions();
+        // Edit link - im Backend und Frontend für eingeloggte Backend-Benutzer
+        $editUrl = rex_url::backendPage('content/edit', [
+            'article_id' => $this->article->getId(),
+            'category_id' => $this->article->getCategoryId(),
+            'clang' => $this->article->getClangId(),
+            'mode' => 'edit'
+        ]);
+        
+        $html .= sprintf(
+            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-edit">
+                ✏️ %s
+            </a>',
+            $editUrl,
+            rex_i18n::msg('info_center_article_edit')
+        );
+        
+        // Structure/Category link - für Navigation zur Kategorie-Verwaltung
+        $structureUrl = rex_url::backendPage('structure', [
+            'category_id' => $this->article->getCategoryId(),
+            'clang' => $this->article->getClangId()
+        ]);
+        
+        $html .= sprintf(
+            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-structure">
+                🗂️ %s
+            </a>',
+            $structureUrl,
+            rex_i18n::msg('info_center_article_structure')
+        );
+        
+        // View link - nur im Backend, da im Frontend bereits sichtbar
+        if (rex::isBackend()) {
+            $html .= sprintf(
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-view">
+                    👁️ %s
+                </a>',
+                $this->article->getUrl(),
+                rex_i18n::msg('info_center_article_view')
+            );
         }
 
+        $html .= '</div>';
+        return $html;
+    }
+
+    private function renderUrl2ActionLinks(array $url2Info): string
+    {
+        $html = '<div class="info-center-url2-actions" style="margin-top:10px;">';
+        
+        // Only show YForm buttons if it's actually a YForm table
+        if ($url2Info['is_yform_table']) {
+            // Get CSRF token for YForm operations
+            $csrf_token = null;
+            if (rex::isFrontend() && rex_backend_login::hasSession()) {
+                rex::setProperty('redaxo', true);
+                try {
+                    $table = rex_yform_manager_table::get($url2Info['table']);
+                    if ($table) {
+                        $_csrf_key = $table->getCSRFKey();
+                        $_csrf_params = rex_csrf_token::factory($_csrf_key)->getUrlParams();
+                        $csrf_token = $_csrf_params['_csrf_token'];
+                    }
+                } catch (\Exception $e) {
+                    // CSRF token generation failed, continue without token
+                }
+                rex::setProperty('redaxo', false);
+            }
+            
+            // YForm table management link
+            $tableParams = [
+                'table_name' => $url2Info['table'],
+            ];
+            if ($csrf_token) {
+                $tableParams['_csrf_token'] = $csrf_token;
+            }
+            
+            $tableUrl = rex_url::backendPage('yform/manager/data_edit', $tableParams);
+            
+            $html .= sprintf(
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-table">
+                    📋 %s öffnen
+                </a>',
+                $tableUrl,
+                rex_escape($url2Info['table_label'])
+            );
+            
+            // Record edit link (if record found)
+            if ($url2Info['record_id']) {
+                $recordParams = [
+                    'table_name' => $url2Info['table'],
+                    'data_id' => $url2Info['record_id'],
+                    'func' => 'edit'
+                ];
+                if ($csrf_token) {
+                    $recordParams['_csrf_token'] = $csrf_token;
+                }
+                
+                $recordUrl = rex_url::backendPage('yform/manager/data_edit', $recordParams);
+                
+                $html .= sprintf(
+                    '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-edit">
+                        ✏️ Datensatz bearbeiten
+                    </a>',
+                    $recordUrl
+                );
+            }
+        } else {
+            // For non-YForm URL2 tables, show generic database editing options
+            $html .= '<div class="info-center-url2-note">⚠️ Keine YForm-Tabelle, aber URL2-verwaltet</div>';
+        }
+        
         $html .= '</div>';
         return $html;
     }
@@ -532,168 +628,6 @@ class ArticleWidget extends AbstractWidget
         } catch (\Exception $e) {
             return [];
         }
-    }
-
-    /**
-     * Render URL2/YForm specific actions
-     */
-    private function renderUrl2Actions(array $url2Info): string
-    {
-        $html = '<div class="info-center-url2-detection">';
-        
-        $html .= '<div class="info-center-url2-info">';
-        $html .= '<strong>🔗 URL2 erkannt:</strong> ' . rex_escape($url2Info['table_label']);
-        
-        if ($url2Info['record_id']) {
-            $html .= ' (ID: ' . $url2Info['record_id'] . ')';
-        }
-        
-        $html .= '</div>';
-        
-        // Only show YForm buttons if it's actually a YForm table
-        if ($url2Info['is_yform_table']) {
-            // Get CSRF token for YForm operations
-            $csrf_token = null;
-            if (rex::isFrontend() && rex_backend_login::hasSession()) {
-                rex::setProperty('redaxo', true);
-                try {
-                    $table = rex_yform_manager_table::get($url2Info['table']);
-                    if ($table) {
-                        $_csrf_key = $table->getCSRFKey();
-                        $_csrf_params = rex_csrf_token::factory($_csrf_key)->getUrlParams();
-                        $csrf_token = $_csrf_params['_csrf_token'];
-                    }
-                } catch (\Exception $e) {
-                    // CSRF token generation failed, continue without token
-                }
-                rex::setProperty('redaxo', false);
-            }
-            
-            // YForm table management link
-            $tableParams = [
-                'table_name' => $url2Info['table'],
-            ];
-            if ($csrf_token) {
-                $tableParams['_csrf_token'] = $csrf_token;
-            }
-            
-            $tableUrl = rex_url::backendPage('yform/manager/data_edit', $tableParams);
-            
-            $html .= sprintf(
-                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-table">
-                    📋 %s öffnen
-                </a>',
-                $tableUrl,
-                rex_escape($url2Info['table_label'])
-            );
-            
-            // Record edit link (if record found)
-            if ($url2Info['record_id']) {
-                $recordParams = [
-                    'table_name' => $url2Info['table'],
-                    'data_id' => $url2Info['record_id'],
-                    'func' => 'edit'
-                ];
-                if ($csrf_token) {
-                    $recordParams['_csrf_token'] = $csrf_token;
-                }
-                
-                $recordUrl = rex_url::backendPage('yform/manager/data_edit', $recordParams);
-                
-                $html .= sprintf(
-                    '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-edit">
-                        ✏️ Datensatz bearbeiten
-                    </a>',
-                    $recordUrl
-                );
-            }
-        } else {
-            // For non-YForm URL2 tables, show generic database editing options
-            $html .= '<div class="info-center-url2-note">⚠️ Keine YForm-Tabelle, aber URL2-verwaltet</div>';
-            
-            // Try to provide useful links anyway
-            if (rex_addon::get('adminer')->isAvailable()) {
-                $adminerUrl = rex_url::backendPage('adminer', [
-                    'username' => '', // Will use default connection
-                    'table' => $url2Info['table']
-                ]);
-                
-                $html .= sprintf(
-                    '<a href="%s" target="_blank" class="info-center-btn info-center-btn-adminer">
-                        🗄️ Tabelle "%s" in Adminer öffnen
-                    </a>',
-                    $adminerUrl,
-                    rex_escape($url2Info['table'])
-                );
-            }
-            
-            // Always show URL2 profile management
-            if (rex_addon::get('url')->isAvailable()) {
-                $urlProfileUrl = rex_url::backendPage('url/generator');
-                
-                $html .= sprintf(
-                    '<a href="%s" target="_blank" class="info-center-btn info-center-btn-url-profiles">
-                        🔧 URL2-Profile verwalten
-                    </a>',
-                    $urlProfileUrl
-                );
-            }
-        }
-        
-        $html .= '</div>';
-        
-        return $html;
-    }
-
-    /**
-     * Render standard REDAXO article actions
-     */
-    private function renderStandardActions(): string
-    {
-        $html = '';
-        
-        // Edit link - im Backend und Frontend für eingeloggte Backend-Benutzer
-        $editUrl = rex_url::backendPage('content/edit', [
-            'article_id' => $this->article->getId(),
-            'category_id' => $this->article->getCategoryId(),
-            'clang' => $this->article->getClangId(),
-            'mode' => 'edit'
-        ]);
-        
-        $html .= sprintf(
-            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-edit">
-                ✏️ %s
-            </a>',
-            $editUrl,
-            rex_i18n::msg('info_center_article_edit')
-        );
-        
-        // Structure/Category link - für Navigation zur Kategorie-Verwaltung
-        $structureUrl = rex_url::backendPage('structure', [
-            'category_id' => $this->article->getCategoryId(),
-            'clang' => $this->article->getClangId()
-        ]);
-        
-        $html .= sprintf(
-            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-structure">
-                🗂️ %s
-            </a>',
-            $structureUrl,
-            rex_i18n::msg('info_center_article_structure')
-        );
-        
-        // View link - nur im Backend, da im Frontend bereits sichtbar
-        if (rex::isBackend()) {
-            $html .= sprintf(
-                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-view">
-                    👁️ %s
-                </a>',
-                $this->article->getUrl(),
-                rex_i18n::msg('info_center_article_view')
-            );
-        }
-
-        return $html;
     }
 
     private function renderMetaInfo(): string
