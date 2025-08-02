@@ -20,7 +20,7 @@ use rex_csrf_token;
 
 class ArticleWidget extends AbstractWidget
 {
-    protected bool $supportsLazyLoading = true;
+    protected bool $supportsLazyLoading = false; // Deaktiviert um Artikel-Kontext zu erhalten
     private ?rex_article $article = null;
 
     public function __construct()
@@ -88,16 +88,20 @@ class ArticleWidget extends AbstractWidget
     {
         $html = '';
 
-        // Check for URL2 first to get correct article info
+        // Check for URL2 first - if found, use URL2 logic
         $url2Info = $this->analyzeUrl2Url();
         
-        // Basic article information
-        $html .= $this->renderBasicInfo($url2Info);
+        if ($url2Info) {
+            // URL2 detected - use URL2-specific rendering
+            $html .= $this->renderBasicInfo($url2Info);
+            $html .= $this->renderPathInfo($url2Info);
+        } else {
+            // Normal REDAXO article - use standard rendering (without URL2 parameter)
+            $html .= $this->renderBasicInfo();
+            $html .= $this->renderPathInfo();
+        }
         
-        // Article path
-        $html .= $this->renderPathInfo($url2Info);
-        
-        // Edit/View links
+        // Edit/View links (handles both URL2 and normal articles)
         $html .= $this->renderActionLinks();
         
         // Metadata
@@ -298,7 +302,7 @@ class ArticleWidget extends AbstractWidget
             );
             
         } else {
-            // Fallback to standard article info
+            // Standard REDAXO article info (original behavior)
             
             // Article name
             $html .= $this->renderInfoItem(
@@ -351,7 +355,7 @@ class ArticleWidget extends AbstractWidget
             );
         }
         
-        // Standard REDAXO article path
+        // Standard REDAXO article path (original behavior)
         $path = [];
         // Verwende rex_backend_login::createUser() wie bei der Minibar
         $user = rex_backend_login::createUser();
@@ -745,7 +749,16 @@ class ArticleWidget extends AbstractWidget
         } 
         // In frontend
         else {
+            // Try to get current article first
             $article = rex_article::getCurrent();
+            
+            // Alternative: Try to use current article ID from REDAXO
+            if (!$article) {
+                $currentArticleId = rex_article::getCurrentId();
+                if ($currentArticleId > 0) {
+                    $article = rex_article::get($currentArticleId, rex_clang::getCurrentId());
+                }
+            }
         }
 
         // Fallback to start article
