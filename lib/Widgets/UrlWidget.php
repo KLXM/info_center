@@ -67,12 +67,12 @@ class UrlWidget extends AbstractWidget
             return '';
         }
 
-        // Kompakter Initial Content - nur wichtigste Info
+        // Tabellenname prominent anzeigen anstelle von "URL2 Datensatz"
         $content = sprintf(
             '<div class="info-center-url-basic">
                 <div class="info-center-url-item">
                     <span class="label">🔗 %s</span>
-                    <span class="value">Datensatz</span>
+                    <span class="value">Datensatz erkannt</span>
                 </div>
                 <div class="info-center-url-note">
                     Sie können diesen Datensatz direkt bearbeiten.
