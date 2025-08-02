@@ -14,6 +14,7 @@ use rex_i18n;
 use rex_backend_login;
 use rex_escape;
 use rex_sql;
+use rex_logger;
 
 class ArticleWidget extends AbstractWidget
 {
@@ -361,6 +362,16 @@ class ArticleWidget extends AbstractWidget
         if ($url2Info) {
             $html .= $this->renderUrl2Actions($url2Info);
         } else {
+            // Add debug info even when URL2 is not detected
+            if (rex::isFrontend()) {
+                $html .= '<div class="info-center-debug" style="background:#fff3cd;padding:8px;margin-bottom:8px;font-size:11px;">';
+                $html .= '<strong>🔍 URL2 Debug:</strong><br>';
+                $html .= 'URL Addon verfügbar: ' . (rex_addon::get('url')->isAvailable() ? 'Ja' : 'Nein') . '<br>';
+                $html .= 'YForm Addon verfügbar: ' . (rex_addon::get('yform')->isAvailable() ? 'Ja' : 'Nein') . '<br>';
+                $html .= 'Aktuelle URL: ' . rex_escape($_SERVER['REQUEST_URI'] ?? 'unknown') . '<br>';
+                $html .= 'Ist Frontend: ' . (rex::isFrontend() ? 'Ja' : 'Nein');
+                $html .= '</div>';
+            }            
             // Standard REDAXO article actions
             $html .= $this->renderStandardActions();
         }
@@ -412,19 +423,23 @@ class ArticleWidget extends AbstractWidget
                 }
             }
             
-            if (!$tableInfo) {
-                return null;
-            }
-
+            // Return URL2 info even if not a YForm table (for debugging)
             return [
                 'table' => $tableName,
-                'table_label' => $tableInfo['label'] ?? $tableName,
+                'table_label' => $tableInfo ? $tableInfo['label'] : $tableName,
                 'record_id' => $dataset ? $dataset->getId() : $urlManager->getDatasetId(),
                 'record_identifier' => $urlManager->getDatasetId(),
                 'record_data' => $dataset ? $dataset->getData() : null,
                 'profile_id' => $urlManager->getProfileId(),
                 'url_manager' => $urlManager,
-                'profile' => $profile
+                'profile' => $profile,
+                'is_yform_table' => $tableInfo !== null,
+                'debug_info' => [
+                    'current_url' => $_SERVER['REQUEST_URI'] ?? 'unknown',
+                    'table_name' => $tableName,
+                    'yform_tables_count' => count($yformTables),
+                    'has_dataset' => $dataset !== null
+                ]
             ];
             
         } catch (\Exception $e) {
@@ -468,6 +483,19 @@ class ArticleWidget extends AbstractWidget
     private function renderUrl2Actions(array $url2Info): string
     {
         $html = '<div class="info-center-url2-detection">';
+        
+        // Debug information (always show in frontend for now)
+        if (rex::isFrontend()) {
+            $html .= '<div class="info-center-debug" style="background:#f0f0f0;padding:8px;margin-bottom:8px;font-size:11px;">';
+            $html .= '<strong>🔍 URL2 Debug:</strong><br>';
+            $html .= 'Table: ' . rex_escape($url2Info['table']) . '<br>';
+            $html .= 'Record ID: ' . ($url2Info['record_id'] ?: 'null') . '<br>';
+            $html .= 'Is YForm: ' . ($url2Info['is_yform_table'] ? 'Yes' : 'No') . '<br>';
+            $html .= 'Current URL: ' . rex_escape($url2Info['debug_info']['current_url']) . '<br>';
+            $html .= 'YForm Tables: ' . $url2Info['debug_info']['yform_tables_count'];
+            $html .= '</div>';
+        }
+        
         $html .= '<div class="info-center-url2-info">';
         $html .= '<strong>🔗 URL2 erkannt:</strong> ' . rex_escape($url2Info['table_label']);
         
@@ -477,33 +505,38 @@ class ArticleWidget extends AbstractWidget
         
         $html .= '</div>';
         
-        // YForm table management link
-        $tableUrl = rex_url::backendPage('yform/manager/data_edit', [
-            'table_name' => $url2Info['table'],
-        ]);
-        
-        $html .= sprintf(
-            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-table">
-                📋 %s öffnen
-            </a>',
-            $tableUrl,
-            rex_escape($url2Info['table_label'])
-        );
-        
-        // Record edit link (if record found)
-        if ($url2Info['record_id']) {
-            $recordUrl = rex_url::backendPage('yform/manager/data_edit', [
+        // Only show YForm buttons if it's actually a YForm table
+        if ($url2Info['is_yform_table']) {
+            // YForm table management link
+            $tableUrl = rex_url::backendPage('yform/manager/data_edit', [
                 'table_name' => $url2Info['table'],
-                'data_id' => $url2Info['record_id'],
-                'func' => 'edit'
             ]);
             
             $html .= sprintf(
-                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-edit">
-                    ✏️ Datensatz bearbeiten
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-table">
+                    📋 %s öffnen
                 </a>',
-                $recordUrl
+                $tableUrl,
+                rex_escape($url2Info['table_label'])
             );
+            
+            // Record edit link (if record found)
+            if ($url2Info['record_id']) {
+                $recordUrl = rex_url::backendPage('yform/manager/data_edit', [
+                    'table_name' => $url2Info['table'],
+                    'data_id' => $url2Info['record_id'],
+                    'func' => 'edit'
+                ]);
+                
+                $html .= sprintf(
+                    '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-edit">
+                        ✏️ Datensatz bearbeiten
+                    </a>',
+                    $recordUrl
+                );
+            }
+        } else {
+            $html .= '<div class="info-center-url2-note">⚠️ Keine YForm-Tabelle erkannt</div>';
         }
         
         $html .= '</div>';
