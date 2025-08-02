@@ -53,6 +53,9 @@ info_center_add_article = Neue Seite
 info_center_content_overview = Content-Bereich
 info_center_recent_articles = Zuletzt bearbeitet
 
+# URL Widget (URL2)
+info_center_url_title = URL2 Datensatz
+
 # Upkeep Widget
 info_center_upkeep_title = Upkeep
 info_center_upkeep_status = Status

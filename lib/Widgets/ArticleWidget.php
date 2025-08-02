@@ -23,11 +23,16 @@ class ArticleWidget extends AbstractWidget
     {
         parent::__construct();
         $this->title = rex_i18n::msg('info_center_article_title');
-        $this->article = $this->getCurrentArticle();
+        // Artikel NICHT im Constructor holen - wird bei render() gemacht
     }
 
     public function getInitialContent(): string
     {
+        // Sicherstellen, dass Artikel verfügbar ist
+        if (!$this->article) {
+            $this->article = $this->getCurrentArticle();
+        }
+        
         if (!$this->article) {
             return $this->wrapContent(rex_i18n::msg('info_center_no_article_found'));
         }
@@ -49,6 +54,14 @@ class ArticleWidget extends AbstractWidget
 
     public function render(): string
     {
+        // Backend-User-Session erstellen (wie bei Minibar) - VOR der Artikel-Verarbeitung
+        rex_backend_login::createUser();
+        
+        // Artikel holen (jetzt mit korrekter Session)
+        if (!$this->article) {
+            $this->article = $this->getCurrentArticle();
+        }
+        
         $content = '<div class="info-center-article-items">';
 
         if (rex::isBackend()) {
@@ -114,7 +127,7 @@ class ArticleWidget extends AbstractWidget
         if ($user->hasPerm('structure')) {
             $html .= sprintf(
                 '<div class="info-center-quick-link">
-                    <a href="%s">🗂️ %s</a>
+                    <a href="%s">%s</a>
                 </div>',
                 rex_url::backendPage('structure'),
                 rex_i18n::msg('info_center_structure_overview')
@@ -294,9 +307,9 @@ class ArticleWidget extends AbstractWidget
                 } else {
                     // Im Frontend: Erweiterte Prüfung für Backend-Benutzer
                     $canLinkToStructure = $user->isAdmin() || 
-                                         $user->hasPerm('structure') || 
-                                         $user->hasPerm('content') ||
-                                         $user->hasPerm('article');
+                                          $user->hasPerm('structure') || 
+                                          $user->hasPerm('content') ||
+                                          $user->hasPerm('article');
                 }
             }
             
@@ -320,7 +333,7 @@ class ArticleWidget extends AbstractWidget
     private function renderActionLinks(): string
     {
         $html = '<div class="info-center-article-actions">';
-        
+
         // Verwende rex_backend_login::createUser() wie bei der Minibar
         $user = rex_backend_login::createUser();
         $hasStructurePerm = false;
@@ -344,9 +357,9 @@ class ArticleWidget extends AbstractWidget
             } else {
                 // Im Frontend: Erweiterte Prüfung für Backend-Benutzer
                 $hasStructurePerm = $user->isAdmin() || 
-                                   $user->hasPerm('structure') || 
-                                   $user->hasPerm('content') ||
-                                   $user->hasPerm('article');
+                                    $user->hasPerm('structure') || 
+                                    $user->hasPerm('content') ||
+                                    $user->hasPerm('article');
             }
         }
         
@@ -361,7 +374,7 @@ class ArticleWidget extends AbstractWidget
             
             $html .= sprintf(
                 '<a href="%s" target="_blank" class="info-center-btn info-center-btn-edit">
-                    ✏️ %s
+                    %s
                 </a>',
                 $editUrl,
                 rex_i18n::msg('info_center_article_edit')
@@ -377,7 +390,7 @@ class ArticleWidget extends AbstractWidget
             
             $html .= sprintf(
                 '<a href="%s" target="_blank" class="info-center-btn info-center-btn-structure">
-                    🗂️ %s
+                    %s
                 </a>',
                 $structureUrl,
                 rex_i18n::msg('info_center_article_structure')
@@ -388,7 +401,7 @@ class ArticleWidget extends AbstractWidget
         if (rex::isBackend()) {
             $html .= sprintf(
                 '<a href="%s" target="_blank" class="info-center-btn info-center-btn-view">
-                    👁️ %s
+                    %s
                 </a>',
                 $this->article->getUrl(),
                 rex_i18n::msg('info_center_article_view')
@@ -420,7 +433,7 @@ class ArticleWidget extends AbstractWidget
             
             $html .= '</div>';
         }
-
+        
         return $html;
     }
 
@@ -438,24 +451,19 @@ class ArticleWidget extends AbstractWidget
 
     private function getCurrentArticle(): ?rex_article
     {
-        // In backend
+        $clangId = rex_request('clang', 'int');
+        $clangId = rex_clang::exists($clangId) ? $clangId : rex_clang::getStartId();
+
         if (rex::isBackend()) {
-            $articleId = rex_request('article_id', 'int');
-            $clangId = rex_request('clang', 'int', rex_clang::getCurrentId());
-            
-            $article = rex_article::get($articleId, $clangId);
-            
-            // Fallback to current category
+            $article = rex_article::get(rex_request('article_id', 'int'), $clangId);
+
             if (!$article) {
                 $article = rex_article::get(rex_request('category_id', 'int'), $clangId);
             }
-        } 
-        // In frontend
-        else {
+        } else {
             $article = rex_article::getCurrent();
         }
 
-        // Fallback to start article
         if (!$article) {
             $article = rex_article::getSiteStartArticle();
         }

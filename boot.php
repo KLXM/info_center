@@ -21,28 +21,35 @@ $addon = rex_addon::get('info_center');
 // Initialisiere das Info Center
 $infoCenter = InfoCenter::getInstance();
 
-// Registriere Widgets in der gewünschten Reihenfolge
-// TimeTracker Widget zuerst
+// Registriere Widgets in der Reihenfolge ihrer Prioritäten (niedrigste zuerst)
+// URL Widget (prio: -1)
+if ($addon->getConfig('widgets')['url']['enabled'] ?? true) {
+    $infoCenter->registerWidget(new Widgets\UrlWidget());
+}
+
+// TimeTracker Widget (prio: 0)
 if ($addon->getConfig('widgets')['timetracker']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\TimeTrackerWidget());
 }
 
-// Article Widget
+// Article Widget (prio: 1)
 if ($addon->getConfig('widgets')['article']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\ArticleWidget());
 }
 
-// Dann die anderen Widgets
-if ($addon->getConfig('widgets')['system']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\SystemWidget());
+// Upkeep Widget (prio: 2)
+if ($addon->getConfig('widgets')['upkeep']['enabled'] ?? true) {
+    $infoCenter->registerWidget(new Widgets\UpkeepWidget());
 }
 
+// Stats Widget (prio: 5)
 if ($addon->getConfig('widgets')['stats']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\StatsWidget());
 }
 
-if ($addon->getConfig('widgets')['upkeep']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\UpkeepWidget());
+// System Widget (prio: 10)
+if ($addon->getConfig('widgets')['system']['enabled'] ?? true) {
+    $infoCenter->registerWidget(new Widgets\SystemWidget());
 }
 
 
@@ -87,7 +94,8 @@ if (rex::isFrontend() && rex_backend_login::createUser()) {
                     <link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/timetracker.css') . '" /></head>',
                     $infoCenterOutput . '
                     <script src="' . $addon->getAssetsUrl('js/info-center.js') . '"></script>
-                    <script src="' . $addon->getAssetsUrl('js/timetracker.js') . '"></script></body>'
+                    <script src="' . $addon->getAssetsUrl('js/timetracker.js') . '"></script>
+                    </body>'
                 ],
                 $content
             );

@@ -28,6 +28,9 @@
             
             // Article Widget Daten nach PJAX-Updates aktualisieren
             refreshArticleWidget(viewRoot);
+            
+            // URL Widget nach PJAX-Updates aktualisieren  
+            refreshUrlWidget(viewRoot);
         });
     }
 
@@ -121,40 +124,12 @@
     }
     
     function refreshArticleWidget(viewRoot) {
-        // Nach PJAX-Update: Überprüfe ob wir uns auf einer Artikel-/Kategorie-Seite befinden
-        const currentUrl = window.location.href;
-        const isArticlePage = currentUrl.includes('page=content') || currentUrl.includes('page=structure');
-        
-        if (isArticlePage) {
-            // Versuche das Article Widget zu aktualisieren
-            const articleWidget = document.querySelector('.info-center-widget[data-id*="article"]');
-            if (articleWidget) {
-                // Trigger refresh des Article Widgets via AJAX
-                refreshArticleWidgetContent(articleWidget);
-            }
-        }
+        // Article Widget verwendet kein Lazy Loading mehr - nicht benötigt
+        console.log('InfoCenter: Article widget refresh not needed (no lazy loading)');
     }
     
-    function refreshArticleWidgetContent(widget) {
-        // Simple reload des Widget-Inhalts via AJAX
-        const widgetContent = widget.querySelector('.info-center-widget-content');
-        if (!widgetContent) return;
-        
-        // Temporären Loading-Indikator anzeigen
-        const originalContent = widgetContent.innerHTML;
-        widgetContent.innerHTML = '<div style="text-align:center;padding:20px;opacity:0.6;">Aktualisiere...</div>';
-        
-        // Nach kurzer Verzögerung wieder ursprünglichen Inhalt anzeigen
-        // In einer echten Implementierung würde hier ein AJAX-Call zum Server gemacht
-        setTimeout(() => {
-            widgetContent.innerHTML = originalContent;
-            
-            // Event für andere Komponenten triggern
-            const event = new CustomEvent('infocenter:widget-refreshed', {
-                detail: { widget: widget, type: 'article' }
-            });
-            document.dispatchEvent(event);
-        }, 500);
+    function refreshUrlWidget(viewRoot) {
+        // URL Widget verwendet kein Lazy Loading - nicht benötigt
+        console.log('InfoCenter: URL widget refresh not needed (no lazy loading)');
     }
-
 })(); // Self-executing anonymous function without jQuery dependency
