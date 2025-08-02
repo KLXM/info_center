@@ -94,7 +94,8 @@ if (rex::isFrontend() && rex_backend_login::createUser()) {
                     <link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/timetracker.css') . '" /></head>',
                     $infoCenterOutput . '
                     <script src="' . $addon->getAssetsUrl('js/info-center.js') . '"></script>
-                    <script src="' . $addon->getAssetsUrl('js/timetracker.js') . '"></script></body>'
+                    <script src="' . $addon->getAssetsUrl('js/timetracker.js') . '"></script>
+                    </body>'
                 ],
                 $content
             );

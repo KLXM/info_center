@@ -28,6 +28,18 @@ class UrlWidget extends AbstractWidget
     }
 
     /**
+     * Get dynamic title based on URL2 detection
+     */
+    public function getTitle(): string
+    {
+        $url2Info = $this->getUrl2Info();
+        if ($url2Info && !empty($url2Info['table_label'])) {
+            return $url2Info['table_label'];
+        }
+        return $this->title;
+    }
+
+    /**
      * Lazy loading of URL2 info with proper error handling
      */
     private function getUrl2Info(): ?array
@@ -194,7 +206,24 @@ class UrlWidget extends AbstractWidget
             rex::setProperty('redaxo', false);
         }
         
-        // Button 1: Datensatz bearbeiten (Hauptbutton)
+        // Button 2: Tabelle öffnen (Hauptbutton - zuerst)  
+        $tableParams = [
+            'table_name' => $url2Info['table'],
+        ];
+        if ($csrf_token) {
+            $tableParams['_csrf_token'] = $csrf_token;
+        }
+        
+        $tableUrl = rex_url::backendPage('yform/manager/data_edit', $tableParams);
+        
+        $html .= sprintf(
+            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-primary">
+                📋 Tabelle öffnen
+            </a>',
+            $tableUrl
+        );
+        
+        // Button 1: Datensatz bearbeiten (Sekundärbutton - zweite Position)
         if ($url2Info['record_id']) {
             $recordParams = [
                 'table_name' => $url2Info['table'],
@@ -208,29 +237,12 @@ class UrlWidget extends AbstractWidget
             $recordUrl = rex_url::backendPage('yform/manager/data_edit', $recordParams);
             
             $html .= sprintf(
-                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-primary">
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-secondary">
                     ✏️ Datensatz bearbeiten
                 </a>',
                 $recordUrl
             );
         }
-        
-        // Button 2: Tabelle öffnen (Sekundärbutton)  
-        $tableParams = [
-            'table_name' => $url2Info['table'],
-        ];
-        if ($csrf_token) {
-            $tableParams['_csrf_token'] = $csrf_token;
-        }
-        
-        $tableUrl = rex_url::backendPage('yform/manager/data_edit', $tableParams);
-        
-        $html .= sprintf(
-            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-secondary">
-                📋 Tabelle öffnen
-            </a>',
-            $tableUrl
-        );
         
         return $html;
     }
@@ -239,19 +251,7 @@ class UrlWidget extends AbstractWidget
     {
         $html = '';
         
-        // Button 1: URL2-Profile verwalten (Hauptbutton)
-        if (rex_addon::get('url')->isAvailable()) {
-            $urlProfileUrl = rex_url::backendPage('url/generator');
-            
-            $html .= sprintf(
-                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-primary">
-                    🔧 URL2-Profile verwalten
-                </a>',
-                $urlProfileUrl
-            );
-        }
-        
-        // Button 2: Adminer öffnen (falls verfügbar)
+        // Button 1: Adminer öffnen (Hauptbutton - falls verfügbar)
         if (rex_addon::get('adminer')->isAvailable()) {
             $adminerUrl = rex_url::backendPage('adminer', [
                 'username' => '', // Will use default connection
@@ -259,10 +259,22 @@ class UrlWidget extends AbstractWidget
             ]);
             
             $html .= sprintf(
-                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-secondary">
-                    🗄️ Tabelle in Adminer
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-primary">
+                    �️ Tabelle in Adminer
                 </a>',
                 $adminerUrl
+            );
+        }
+        
+        // Button 2: URL2-Profile verwalten (Sekundärbutton)
+        if (rex_addon::get('url')->isAvailable()) {
+            $urlProfileUrl = rex_url::backendPage('url/generator');
+            
+            $html .= sprintf(
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-secondary">
+                    � URL2-Profile verwalten
+                </a>',
+                $urlProfileUrl
             );
         }
         
