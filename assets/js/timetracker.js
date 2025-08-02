@@ -497,22 +497,37 @@ class InfoCenterTimeTracker {
     }
 }
 
-// Initialize when DOM is ready (mit REDAXO rex:ready Support)
-$(document).on('rex:ready', function() {
+// Initialize TimeTracker - Frontend und Backend kompatibel
+function initializeTimeTracker() {
     // Nur initialisieren wenn TimeTracker-Elemente vorhanden sind
     if (document.getElementById('timeDisplay')) {
         if (!window.InfoCenterTimeTracker || !window.InfoCenterTimeTracker.initialized) {
+            console.log('TimeTracker: Initializing new instance');
             new InfoCenterTimeTracker();
         } else {
             // Bereits existierend, nur refreshen
+            console.log('TimeTracker: Refreshing existing instance');
             window.InfoCenterTimeTracker.refreshAfterPjax();
         }
     }
-});
+}
 
-// Fallback für Vanilla JS (ohne jQuery)
-document.addEventListener('DOMContentLoaded', function() {
-    if (document.getElementById('timeDisplay') && !window.InfoCenterTimeTracker) {
-        new InfoCenterTimeTracker();
-    }
-});
+// REDAXO Backend: rex:ready Event (nur wenn jQuery verfügbar)
+if (typeof $ !== 'undefined') {
+    $(document).on('rex:ready', function() {
+        console.log('TimeTracker: rex:ready event triggered');
+        initializeTimeTracker();
+    });
+}
+
+// Frontend/Universal: DOMContentLoaded Event
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('TimeTracker: DOMContentLoaded event triggered');
+        initializeTimeTracker();
+    });
+} else {
+    // DOM already loaded
+    console.log('TimeTracker: DOM already loaded, initializing immediately');
+    initializeTimeTracker();
+}
