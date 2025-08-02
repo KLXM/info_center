@@ -55,12 +55,15 @@ class UrlWidget extends AbstractWidget
             return '';
         }
 
-        // Light initial content showing only URL2 detection
+        // Kompakter Initial Content - nur wichtigste Info
         $content = sprintf(
             '<div class="info-center-url-basic">
                 <div class="info-center-url-item">
-                    <span class="label">🔗 URL2 erkannt</span>
+                    <span class="label">🔗 URL2-Datensatz</span>
                     <span class="value">%s</span>
+                </div>
+                <div class="info-center-url-note">
+                    Sie können diesen Datensatz direkt bearbeiten.
                 </div>
             </div>',
             rex_escape($url2Info['table_label'])
@@ -95,75 +98,37 @@ class UrlWidget extends AbstractWidget
     {
         $html = '';
 
-        // URL2 basic information
-        $html .= $this->renderUrl2Info();
+        // Kurze Info über den erkannten Datensatz
+        $html .= $this->renderUrl2BasicInfo();
         
-        // URL2 action links
+        // Die zwei Hauptbuttons
         $html .= $this->renderUrl2ActionLinks();
         
         return $html;
     }
 
-    private function renderUrl2Info(): string
+    private function renderUrl2BasicInfo(): string
     {
         $url2Info = $this->getUrl2Info();
         if (!$url2Info) {
             return '';
         }
         
-        $html = '';
+        $html = '<div class="info-center-url-info">';
         
-        // Table info
+        // Nur die wichtigsten Infos
         $html .= $this->renderInfoItem(
             'Tabelle',
             rex_escape($url2Info['table_label'])
         );
         
-        // Record ID
-        if ($url2Info['record_id']) {
-            $html .= $this->renderInfoItem(
-                'Datensatz-ID',
-                $url2Info['record_id']
-            );
-        }
+        // Info-Text
+        $html .= '<div class="info-center-url-note">';
+        $html .= 'Sie können diesen Datensatz direkt bearbeiten.';
+        $html .= '</div>';
         
-        // Try to show a meaningful title from the record data
-        if ($url2Info['record_data']) {
-            $recordData = $url2Info['record_data'];
-            
-            // Try to find a title/name field in the record data
-            $title = null;
-            $possibleTitleFields = ['title', 'name', 'bezeichnung', 'titel', 'subject'];
-            foreach ($possibleTitleFields as $field) {
-                if (isset($recordData[$field]) && !empty($recordData[$field])) {
-                    $title = $recordData[$field];
-                    break;
-                }
-            }
-            
-            if ($title) {
-                $html .= $this->renderInfoItem(
-                    'Datensatz-Titel',
-                    rex_escape($title)
-                );
-            }
-        }
+        $html .= '</div>';
         
-        // URL2 path
-        $currentUrl = $_SERVER['REQUEST_URI'] ?? '';
-        if (!empty($currentUrl)) {
-            $html .= $this->renderInfoItem(
-                'URL2-Pfad',
-                rex_escape($currentUrl)
-            );
-        }
-        
-        // Status: URL2-managed records are always "online" if accessible
-        $html .= $this->renderInfoItem(
-            'Status',
-            '<span class="info-center-status-online">Online (URL2)</span>'
-        );
-
         return $html;
     }
 
@@ -196,101 +161,117 @@ class UrlWidget extends AbstractWidget
         }
 
         if (!$hasPermissions) {
+            $html .= '<div class="info-center-url-note">Keine Berechtigungen für Datensatz-Bearbeitung.</div>';
             $html .= '</div>';
             return $html;
         }
         
-        // Only show YForm buttons if it's actually a YForm table
+        // Die zwei Hauptbuttons - unabhängig davon ob YForm-Tabelle oder nicht
         if ($url2Info['is_yform_table']) {
-            // Get CSRF token for YForm operations
-            $csrf_token = null;
-            if (rex::isFrontend() && rex_backend_login::hasSession()) {
-                rex::setProperty('redaxo', true);
-                try {
-                    $table = rex_yform_manager_table::get($url2Info['table']);
-                    if ($table) {
-                        $_csrf_key = $table->getCSRFKey();
-                        $_csrf_params = rex_csrf_token::factory($_csrf_key)->getUrlParams();
-                        $csrf_token = $_csrf_params['_csrf_token'];
-                    }
-                } catch (\Exception $e) {
-                    // CSRF token generation failed, continue without token
-                }
-                rex::setProperty('redaxo', false);
-            }
-            
-            // YForm table management link
-            $tableParams = [
-                'table_name' => $url2Info['table'],
-            ];
-            if ($csrf_token) {
-                $tableParams['_csrf_token'] = $csrf_token;
-            }
-            
-            $tableUrl = rex_url::backendPage('yform/manager/data_edit', $tableParams);
-            
-            $html .= sprintf(
-                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-table">
-                    📋 %s öffnen
-                </a>',
-                $tableUrl,
-                rex_escape($url2Info['table_label'])
-            );
-            
-            // Record edit link (if record found)
-            if ($url2Info['record_id']) {
-                $recordParams = [
-                    'table_name' => $url2Info['table'],
-                    'data_id' => $url2Info['record_id'],
-                    'func' => 'edit'
-                ];
-                if ($csrf_token) {
-                    $recordParams['_csrf_token'] = $csrf_token;
-                }
-                
-                $recordUrl = rex_url::backendPage('yform/manager/data_edit', $recordParams);
-                
-                $html .= sprintf(
-                    '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-edit">
-                        ✏️ Datensatz bearbeiten
-                    </a>',
-                    $recordUrl
-                );
-            }
+            // YForm-Tabelle: Die zwei Standard-Buttons
+            $html .= $this->renderYFormButtons($url2Info);
         } else {
-            // For non-YForm URL2 tables, show generic database editing options
-            $html .= '<div class="info-center-url2-note">⚠️ Keine YForm-Tabelle, aber URL2-verwaltet</div>';
-            
-            // Try to provide useful links anyway
-            if (rex_addon::get('adminer')->isAvailable()) {
-                $adminerUrl = rex_url::backendPage('adminer', [
-                    'username' => '', // Will use default connection
-                    'table' => $url2Info['table']
-                ]);
-                
-                $html .= sprintf(
-                    '<a href="%s" target="_blank" class="info-center-btn info-center-btn-adminer">
-                        🗄️ Tabelle "%s" in Adminer öffnen
-                    </a>',
-                    $adminerUrl,
-                    rex_escape($url2Info['table'])
-                );
-            }
-            
-            // Always show URL2 profile management
-            if (rex_addon::get('url')->isAvailable()) {
-                $urlProfileUrl = rex_url::backendPage('url/generator');
-                
-                $html .= sprintf(
-                    '<a href="%s" target="_blank" class="info-center-btn info-center-btn-url-profiles">
-                        🔧 URL2-Profile verwalten
-                    </a>',
-                    $urlProfileUrl
-                );
-            }
+            // Nicht-YForm-Tabelle: Alternative Buttons
+            $html .= $this->renderGenericButtons($url2Info);
         }
         
         $html .= '</div>';
+        return $html;
+    }
+
+    private function renderYFormButtons(array $url2Info): string
+    {
+        $html = '';
+        
+        // Get CSRF token for YForm operations
+        $csrf_token = null;
+        if (rex::isFrontend() && rex_backend_login::hasSession()) {
+            rex::setProperty('redaxo', true);
+            try {
+                $table = rex_yform_manager_table::get($url2Info['table']);
+                if ($table) {
+                    $_csrf_key = $table->getCSRFKey();
+                    $_csrf_params = rex_csrf_token::factory($_csrf_key)->getUrlParams();
+                    $csrf_token = $_csrf_params['_csrf_token'];
+                }
+            } catch (\Exception $e) {
+                // CSRF token generation failed, continue without token
+            }
+            rex::setProperty('redaxo', false);
+        }
+        
+        // Button 1: Datensatz bearbeiten (Hauptbutton)
+        if ($url2Info['record_id']) {
+            $recordParams = [
+                'table_name' => $url2Info['table'],
+                'data_id' => $url2Info['record_id'],
+                'func' => 'edit'
+            ];
+            if ($csrf_token) {
+                $recordParams['_csrf_token'] = $csrf_token;
+            }
+            
+            $recordUrl = rex_url::backendPage('yform/manager/data_edit', $recordParams);
+            
+            $html .= sprintf(
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-primary">
+                    ✏️ Datensatz bearbeiten
+                </a>',
+                $recordUrl
+            );
+        }
+        
+        // Button 2: Tabelle öffnen (Sekundärbutton)  
+        $tableParams = [
+            'table_name' => $url2Info['table'],
+        ];
+        if ($csrf_token) {
+            $tableParams['_csrf_token'] = $csrf_token;
+        }
+        
+        $tableUrl = rex_url::backendPage('yform/manager/data_edit', $tableParams);
+        
+        $html .= sprintf(
+            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-secondary">
+                📋 Tabelle öffnen
+            </a>',
+            $tableUrl
+        );
+        
+        return $html;
+    }
+
+    private function renderGenericButtons(array $url2Info): string
+    {
+        $html = '';
+        
+        // Button 1: URL2-Profile verwalten (Hauptbutton)
+        if (rex_addon::get('url')->isAvailable()) {
+            $urlProfileUrl = rex_url::backendPage('url/generator');
+            
+            $html .= sprintf(
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-primary">
+                    � URL2-Profile verwalten
+                </a>',
+                $urlProfileUrl
+            );
+        }
+        
+        // Button 2: Adminer öffnen (falls verfügbar)
+        if (rex_addon::get('adminer')->isAvailable()) {
+            $adminerUrl = rex_url::backendPage('adminer', [
+                'username' => '', // Will use default connection
+                'table' => $url2Info['table']
+            ]);
+            
+            $html .= sprintf(
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-secondary">
+                    �️ Tabelle in Adminer
+                </a>',
+                $adminerUrl
+            );
+        }
+        
         return $html;
     }
 

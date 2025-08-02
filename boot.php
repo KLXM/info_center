@@ -22,7 +22,12 @@ $addon = rex_addon::get('info_center');
 $infoCenter = InfoCenter::getInstance();
 
 // Registriere Widgets in der gewünschten Reihenfolge
-// TimeTracker Widget zuerst
+// URL Widget zuerst (nur im Frontend für URL2-erkannte URLs)
+if ($addon->getConfig('widgets')['url']['enabled'] ?? true) {
+    $infoCenter->registerWidget(new Widgets\UrlWidget());
+}
+
+// TimeTracker Widget
 if ($addon->getConfig('widgets')['timetracker']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\TimeTrackerWidget());
 }
@@ -30,11 +35,6 @@ if ($addon->getConfig('widgets')['timetracker']['enabled'] ?? true) {
 // Article Widget
 if ($addon->getConfig('widgets')['article']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\ArticleWidget());
-}
-
-// URL Widget (nur im Frontend für URL2-erkannte URLs)
-if ($addon->getConfig('widgets')['url']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\UrlWidget());
 }
 
 // Dann die anderen Widgets
