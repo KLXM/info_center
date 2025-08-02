@@ -59,8 +59,8 @@ class UrlWidget extends AbstractWidget
         $content = sprintf(
             '<div class="info-center-url-basic">
                 <div class="info-center-url-item">
-                    <span class="label">🔗 URL2-Datensatz</span>
-                    <span class="value">%s</span>
+                    <span class="label">🔗 %s</span>
+                    <span class="value">Datensatz</span>
                 </div>
                 <div class="info-center-url-note">
                     Sie können diesen Datensatz direkt bearbeiten.
@@ -116,13 +116,7 @@ class UrlWidget extends AbstractWidget
         
         $html = '<div class="info-center-url-info">';
         
-        // Nur die wichtigsten Infos
-        $html .= $this->renderInfoItem(
-            'Tabelle',
-            rex_escape($url2Info['table_label'])
-        );
-        
-        // Info-Text
+        // Info-Text ohne redundante Tabellen-Information
         $html .= '<div class="info-center-url-note">';
         $html .= 'Sie können diesen Datensatz direkt bearbeiten.';
         $html .= '</div>';
@@ -251,7 +245,7 @@ class UrlWidget extends AbstractWidget
             
             $html .= sprintf(
                 '<a href="%s" target="_blank" class="info-center-btn info-center-btn-primary">
-                    � URL2-Profile verwalten
+                    🔧 URL2-Profile verwalten
                 </a>',
                 $urlProfileUrl
             );
@@ -266,7 +260,7 @@ class UrlWidget extends AbstractWidget
             
             $html .= sprintf(
                 '<a href="%s" target="_blank" class="info-center-btn info-center-btn-secondary">
-                    �️ Tabelle in Adminer
+                    🗄️ Tabelle in Adminer
                 </a>',
                 $adminerUrl
             );

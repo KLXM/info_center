@@ -21,33 +21,35 @@ $addon = rex_addon::get('info_center');
 // Initialisiere das Info Center
 $infoCenter = InfoCenter::getInstance();
 
-// Registriere Widgets in der gewünschten Reihenfolge
-// URL Widget zuerst (nur im Frontend für URL2-erkannte URLs)
+// Registriere Widgets in der Reihenfolge ihrer Prioritäten (niedrigste zuerst)
+// URL Widget (prio: -1)
 if ($addon->getConfig('widgets')['url']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\UrlWidget());
 }
 
-// TimeTracker Widget
+// TimeTracker Widget (prio: 0)
 if ($addon->getConfig('widgets')['timetracker']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\TimeTrackerWidget());
 }
 
-// Article Widget
+// Article Widget (prio: 1)
 if ($addon->getConfig('widgets')['article']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\ArticleWidget());
 }
 
-// Dann die anderen Widgets
-if ($addon->getConfig('widgets')['system']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\SystemWidget());
+// Upkeep Widget (prio: 2)
+if ($addon->getConfig('widgets')['upkeep']['enabled'] ?? true) {
+    $infoCenter->registerWidget(new Widgets\UpkeepWidget());
 }
 
+// Stats Widget (prio: 5)
 if ($addon->getConfig('widgets')['stats']['enabled'] ?? true) {
     $infoCenter->registerWidget(new Widgets\StatsWidget());
 }
 
-if ($addon->getConfig('widgets')['upkeep']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\UpkeepWidget());
+// System Widget (prio: 10)
+if ($addon->getConfig('widgets')['system']['enabled'] ?? true) {
+    $infoCenter->registerWidget(new Widgets\SystemWidget());
 }
 
 
