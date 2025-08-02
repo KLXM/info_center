@@ -15,6 +15,8 @@ use rex_backend_login;
 use rex_escape;
 use rex_sql;
 use rex_logger;
+use rex_yform_manager_table;
+use rex_csrf_token;
 
 class ArticleWidget extends AbstractWidget
 {
@@ -550,10 +552,32 @@ class ArticleWidget extends AbstractWidget
         
         // Only show YForm buttons if it's actually a YForm table
         if ($url2Info['is_yform_table']) {
+            // Get CSRF token for YForm operations
+            $csrf_token = null;
+            if (rex::isFrontend() && rex_backend_login::hasSession()) {
+                rex::setProperty('redaxo', true);
+                try {
+                    $table = rex_yform_manager_table::get($url2Info['table']);
+                    if ($table) {
+                        $_csrf_key = $table->getCSRFKey();
+                        $_csrf_params = rex_csrf_token::factory($_csrf_key)->getUrlParams();
+                        $csrf_token = $_csrf_params['_csrf_token'];
+                    }
+                } catch (\Exception $e) {
+                    // CSRF token generation failed, continue without token
+                }
+                rex::setProperty('redaxo', false);
+            }
+            
             // YForm table management link
-            $tableUrl = rex_url::backendPage('yform/manager/data_edit', [
+            $tableParams = [
                 'table_name' => $url2Info['table'],
-            ]);
+            ];
+            if ($csrf_token) {
+                $tableParams['_csrf_token'] = $csrf_token;
+            }
+            
+            $tableUrl = rex_url::backendPage('yform/manager/data_edit', $tableParams);
             
             $html .= sprintf(
                 '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-table">
@@ -565,11 +589,16 @@ class ArticleWidget extends AbstractWidget
             
             // Record edit link (if record found)
             if ($url2Info['record_id']) {
-                $recordUrl = rex_url::backendPage('yform/manager/data_edit', [
+                $recordParams = [
                     'table_name' => $url2Info['table'],
                     'data_id' => $url2Info['record_id'],
                     'func' => 'edit'
-                ]);
+                ];
+                if ($csrf_token) {
+                    $recordParams['_csrf_token'] = $csrf_token;
+                }
+                
+                $recordUrl = rex_url::backendPage('yform/manager/data_edit', $recordParams);
                 
                 $html .= sprintf(
                     '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-edit">
