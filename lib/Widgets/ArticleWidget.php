@@ -22,7 +22,6 @@ class ArticleWidget extends AbstractWidget
 {
     protected bool $supportsLazyLoading = true;
     private ?rex_article $article = null;
-    private array $yformDebugInfo = [];
 
     public function __construct()
     {
@@ -337,10 +336,14 @@ class ArticleWidget extends AbstractWidget
             // Add URL2 table info
             $pathParts[] = '<strong>URL2:</strong> ' . rex_escape($url2Info['table_label']);
             
-            // Add current URL path
-            $currentUrl = $url2Info['debug_info']['current_url'];
-            $urlParts = explode('/', trim($currentUrl, '/'));
-            $pathParts[] = implode(' / ', array_map('rex_escape', array_slice($urlParts, 0, -1))); // Exclude last part (ID)
+            // Show the current URL path (without debug_info dependency)
+            $currentUrl = $_SERVER['REQUEST_URI'] ?? '';
+            if (!empty($currentUrl)) {
+                $urlParts = explode('/', trim($currentUrl, '/'));
+                if (count($urlParts) > 1) {
+                    $pathParts[] = implode(' / ', array_map('rex_escape', array_slice($urlParts, 0, -1)));
+                }
+            }
             
             return $this->renderInfoItem(
                 rex_i18n::msg('info_center_article_path'),
@@ -394,17 +397,6 @@ class ArticleWidget extends AbstractWidget
         $user = rex_backend_login::createUser();
         $hasStructurePerm = false;
         
-        // Debug-Info hinzufügen
-        if (rex::isFrontend()) {
-            $debugInfo = sprintf(
-                'Debug: Frontend-Modus, User: %s, Session: %s, Perms: %s',
-                $user ? 'Ja' : 'Nein',
-                rex_backend_login::hasSession() ? 'Ja' : 'Nein',
-                $user ? ($user->isAdmin() ? 'Admin' : ($user->hasPerm('structure') ? 'Structure' : ($user->hasPerm('content') ? 'Content' : 'Andere'))) : 'Keine'
-            );
-            $html .= '<div style="font-size:10px;color:#888;margin-bottom:8px;">' . $debugInfo . '</div>';
-        }
-        
         // Prüfe Berechtigung - Backend oder Frontend mit Backend-Session
         if ($user) {
             if (rex::isBackend()) {
@@ -429,16 +421,6 @@ class ArticleWidget extends AbstractWidget
         if ($url2Info) {
             $html .= $this->renderUrl2Actions($url2Info);
         } else {
-            // Add debug info even when URL2 is not detected
-            if (rex::isFrontend()) {
-                $html .= '<div class="info-center-debug" style="background:#fff3cd;padding:8px;margin-bottom:8px;font-size:11px;">';
-                $html .= '<strong>🔍 URL2 Debug:</strong><br>';
-                $html .= 'URL Addon verfügbar: ' . (rex_addon::get('url')->isAvailable() ? 'Ja' : 'Nein') . '<br>';
-                $html .= 'YForm Addon verfügbar: ' . (rex_addon::get('yform')->isAvailable() ? 'Ja' : 'Nein') . '<br>';
-                $html .= 'Aktuelle URL: ' . rex_escape($_SERVER['REQUEST_URI'] ?? 'unknown') . '<br>';
-                $html .= 'Ist Frontend: ' . (rex::isFrontend() ? 'Ja' : 'Nein');
-                $html .= '</div>';
-            }            
             // Standard REDAXO article actions
             $html .= $this->renderStandardActions();
         }
@@ -466,6 +448,7 @@ class ArticleWidget extends AbstractWidget
             // Use URL2 API to resolve current URL
             $urlManager = \Url\Url::resolveCurrent();
             
+            // If no URL manager found, this is not a URL2-managed URL
             if (!$urlManager) {
                 return null;
             }
@@ -479,6 +462,11 @@ class ArticleWidget extends AbstractWidget
             $dataset = $urlManager->getDataset();
             $tableName = $profile->getTableName();
             
+            // Verify this is actually a custom URL2 table, not a standard REDAXO article
+            if (empty($tableName) || $tableName === 'rex_article') {
+                return null;
+            }
+            
             // Get YForm table info
             $yformTables = $this->getYFormTables();
             $tableInfo = null;
@@ -490,7 +478,7 @@ class ArticleWidget extends AbstractWidget
                 }
             }
             
-            // Return URL2 info even if not a YForm table (for debugging)
+            // Return URL2 info even if not a YForm table
             return [
                 'table' => $tableName,
                 'table_label' => $tableInfo ? $tableInfo['label'] : $tableName,
@@ -500,13 +488,7 @@ class ArticleWidget extends AbstractWidget
                 'profile_id' => $urlManager->getProfileId(),
                 'url_manager' => $urlManager,
                 'profile' => $profile,
-                'is_yform_table' => $tableInfo !== null,
-                'debug_info' => [
-                    'current_url' => $_SERVER['REQUEST_URI'] ?? 'unknown',
-                    'table_name' => $tableName,
-                    'yform_tables_count' => count($yformTables),
-                    'has_dataset' => $dataset !== null
-                ]
+                'is_yform_table' => $tableInfo !== null
             ];
             
         } catch (\Exception $e) {
@@ -542,26 +524,8 @@ class ArticleWidget extends AbstractWidget
                 $sql->next();
             }
             
-            // Store debug info for later use
-            if (rex::isFrontend()) {
-                $this->yformDebugInfo = [
-                    'total_tables' => count($tables),
-                    'returned_tables' => count($tables),
-                    'all_tables' => $tables, // Show all tables for debugging
-                    'sql_query' => 'SELECT table_name, name, status FROM ' . rex::getTable('yform_table') . ' WHERE status = 1 ORDER BY name, table_name'
-                ];
-            }
-            
             return $tables;
         } catch (\Exception $e) {
-            // Store error for debugging
-            if (rex::isFrontend()) {
-                $this->yformDebugInfo = [
-                    'error' => $e->getMessage(),
-                    'yform_table_name' => rex::getTable('yform_table'),
-                    'yform_available' => rex_addon::get('yform')->isAvailable()
-                ];
-            }
             return [];
         }
     }
@@ -572,38 +536,6 @@ class ArticleWidget extends AbstractWidget
     private function renderUrl2Actions(array $url2Info): string
     {
         $html = '<div class="info-center-url2-detection">';
-        
-        // Debug information (always show in frontend for now)
-        if (rex::isFrontend()) {
-            $html .= '<div class="info-center-debug" style="background:#f0f0f0;padding:8px;margin-bottom:8px;font-size:11px;">';
-            $html .= '<strong>🔍 URL2 Debug:</strong><br>';
-            $html .= 'Table: ' . rex_escape($url2Info['table']) . '<br>';
-            $html .= 'Record ID: ' . ($url2Info['record_id'] ?: 'null') . '<br>';
-            $html .= 'Is YForm: ' . ($url2Info['is_yform_table'] ? 'Yes' : 'No') . '<br>';
-            $html .= 'Current URL: ' . rex_escape($url2Info['debug_info']['current_url']) . '<br>';
-            $html .= 'YForm Tables: ' . $url2Info['debug_info']['yform_tables_count'] . '<br>';
-            
-            // Show YForm debug info if available
-            if (!empty($this->yformDebugInfo)) {
-                $html .= '<strong>YForm Debug:</strong><br>';
-                if (isset($this->yformDebugInfo['error'])) {
-                    $html .= 'Error: ' . rex_escape($this->yformDebugInfo['error']) . '<br>';
-                    $html .= 'Table name: ' . rex_escape($this->yformDebugInfo['yform_table_name'] ?? 'unknown') . '<br>';
-                } else {
-                    $html .= 'Total tables found: ' . $this->yformDebugInfo['total_tables'] . '<br>';
-                    $html .= 'Tables returned: ' . $this->yformDebugInfo['returned_tables'] . '<br>';
-                    if (!empty($this->yformDebugInfo['all_tables'])) {
-                        $html .= 'Tables: ';
-                        foreach (array_slice($this->yformDebugInfo['all_tables'], 0, 3) as $table) {
-                            $html .= rex_escape($table['name']) . '(status:' . $table['status'] . '), ';
-                        }
-                        $html .= '<br>';
-                    }
-                }
-            }
-            
-            $html .= '</div>';
-        }
         
         $html .= '<div class="info-center-url2-info">';
         $html .= '<strong>🔗 URL2 erkannt:</strong> ' . rex_escape($url2Info['table_label']);
