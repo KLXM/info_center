@@ -88,23 +88,14 @@ class ArticleWidget extends AbstractWidget
     {
         $html = '';
 
-        // Always show the standard REDAXO article info first
+        // Basic article information (original behavior)
         $html .= $this->renderBasicInfo();
+        
+        // Article path
         $html .= $this->renderPathInfo();
         
-        // Check for URL2 - if found, add URL2 info additionally
-        $url2Info = $this->analyzeUrl2Url();
-        if ($url2Info) {
-            $html .= $this->renderUrl2Info($url2Info);
-        }
-        
-        // Standard REDAXO edit/view links
-        $html .= $this->renderStandardActionLinks();
-        
-        // URL2 edit links (if URL2 detected)
-        if ($url2Info) {
-            $html .= $this->renderUrl2ActionLinks($url2Info);
-        }
+        // Edit/View links
+        $html .= $this->renderActionLinks();
         
         // Metadata
         if ($this->shouldShowMetaInfo()) {
@@ -333,61 +324,7 @@ class ArticleWidget extends AbstractWidget
         );
     }
 
-    private function renderUrl2Info(array $url2Info): string
-    {
-        $html = '<div class="info-center-url2-section">';
-        $html .= '<h4 style="margin-top:15px;margin-bottom:8px;font-size:13px;color:#666;">🔗 URL2-Informationen</h4>';
-        
-        // Table info
-        $html .= $this->renderInfoItem(
-            'Tabelle',
-            rex_escape($url2Info['table_label'])
-        );
-        
-        // Record ID
-        if ($url2Info['record_id']) {
-            $html .= $this->renderInfoItem(
-                'Datensatz-ID',
-                $url2Info['record_id']
-            );
-        }
-        
-        // Try to show a meaningful title from the record data
-        if ($url2Info['record_data']) {
-            $recordData = $url2Info['record_data'];
-            
-            // Try to find a title/name field in the record data
-            $title = null;
-            $possibleTitleFields = ['title', 'name', 'bezeichnung', 'titel', 'subject'];
-            foreach ($possibleTitleFields as $field) {
-                if (isset($recordData[$field]) && !empty($recordData[$field])) {
-                    $title = $recordData[$field];
-                    break;
-                }
-            }
-            
-            if ($title) {
-                $html .= $this->renderInfoItem(
-                    'Datensatz-Titel',
-                    rex_escape($title)
-                );
-            }
-        }
-        
-        // URL2 path
-        $currentUrl = $_SERVER['REQUEST_URI'] ?? '';
-        if (!empty($currentUrl)) {
-            $html .= $this->renderInfoItem(
-                'URL2-Pfad',
-                rex_escape($currentUrl)
-            );
-        }
-        
-        $html .= '</div>';
-        return $html;
-    }
-
-    private function renderStandardActionLinks(): string
+    private function renderActionLinks(): string
     {
         $html = '<div class="info-center-article-actions">';
         
@@ -459,142 +396,13 @@ class ArticleWidget extends AbstractWidget
         return $html;
     }
 
-    private function renderUrl2ActionLinks(array $url2Info): string
-    {
-        $html = '<div class="info-center-url2-actions" style="margin-top:10px;">';
-        
-        // Only show YForm buttons if it's actually a YForm table
-        if ($url2Info['is_yform_table']) {
-            // Get CSRF token for YForm operations
-            $csrf_token = null;
-            if (rex::isFrontend() && rex_backend_login::hasSession()) {
-                rex::setProperty('redaxo', true);
-                try {
-                    $table = rex_yform_manager_table::get($url2Info['table']);
-                    if ($table) {
-                        $_csrf_key = $table->getCSRFKey();
-                        $_csrf_params = rex_csrf_token::factory($_csrf_key)->getUrlParams();
-                        $csrf_token = $_csrf_params['_csrf_token'];
-                    }
-                } catch (\Exception $e) {
-                    // CSRF token generation failed, continue without token
-                }
-                rex::setProperty('redaxo', false);
-            }
-            
-            // YForm table management link
-            $tableParams = [
-                'table_name' => $url2Info['table'],
-            ];
-            if ($csrf_token) {
-                $tableParams['_csrf_token'] = $csrf_token;
-            }
-            
-            $tableUrl = rex_url::backendPage('yform/manager/data_edit', $tableParams);
-            
-            $html .= sprintf(
-                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-table">
-                    📋 %s öffnen
-                </a>',
-                $tableUrl,
-                rex_escape($url2Info['table_label'])
-            );
-            
-            // Record edit link (if record found)
-            if ($url2Info['record_id']) {
-                $recordParams = [
-                    'table_name' => $url2Info['table'],
-                    'data_id' => $url2Info['record_id'],
-                    'func' => 'edit'
-                ];
-                if ($csrf_token) {
-                    $recordParams['_csrf_token'] = $csrf_token;
-                }
-                
-                $recordUrl = rex_url::backendPage('yform/manager/data_edit', $recordParams);
-                
-                $html .= sprintf(
-                    '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-edit">
-                        ✏️ Datensatz bearbeiten
-                    </a>',
-                    $recordUrl
-                );
-            }
-        } else {
-            // For non-YForm URL2 tables, show generic database editing options
-            $html .= '<div class="info-center-url2-note">⚠️ Keine YForm-Tabelle, aber URL2-verwaltet</div>';
-        }
-        
-        $html .= '</div>';
-        return $html;
-    }
-
     /**
      * Analyze current URL to detect URL2/YForm patterns using proper URL2 API
      */
     private function analyzeUrl2Url(): ?array
     {
-        // Only in frontend
-        if (rex::isBackend()) {
-            return null;
-        }
-
-        // Check if url addon is available
-        if (!rex_addon::get('url')->isAvailable()) {
-            return null;
-        }
-
-        try {
-            // Use URL2 API to resolve current URL
-            $urlManager = \Url\Url::resolveCurrent();
-            
-            // If no URL manager found, this is not a URL2-managed URL
-            if (!$urlManager) {
-                return null;
-            }
-
-            // Get the profile and dataset information
-            $profile = $urlManager->getProfile();
-            if (!$profile) {
-                return null;
-            }
-
-            $dataset = $urlManager->getDataset();
-            $tableName = $profile->getTableName();
-            
-            // Verify this is actually a custom URL2 table, not a standard REDAXO article
-            if (empty($tableName) || $tableName === 'rex_article') {
-                return null;
-            }
-            
-            // Get YForm table info
-            $yformTables = $this->getYFormTables();
-            $tableInfo = null;
-            
-            foreach ($yformTables as $table) {
-                if ($table['name'] === $tableName) {
-                    $tableInfo = $table;
-                    break;
-                }
-            }
-            
-            // Return URL2 info even if not a YForm table
-            return [
-                'table' => $tableName,
-                'table_label' => $tableInfo ? $tableInfo['label'] : $tableName,
-                'record_id' => $dataset ? $dataset->getId() : $urlManager->getDatasetId(),
-                'record_identifier' => $urlManager->getDatasetId(),
-                'record_data' => $dataset ? $dataset->getData() : null,
-                'profile_id' => $urlManager->getProfileId(),
-                'url_manager' => $urlManager,
-                'profile' => $profile,
-                'is_yform_table' => $tableInfo !== null
-            ];
-            
-        } catch (\Exception $e) {
-            // URL2 couldn't resolve the current URL - not a URL2 managed URL
-            return null;
-        }
+        // Moved to UrlWidget - keeping for backward compatibility but not used
+        return null;
     }
 
     /**
@@ -602,32 +410,8 @@ class ArticleWidget extends AbstractWidget
      */
     private function getYFormTables(): array
     {
-        if (!rex_addon::get('yform')->isAvailable()) {
-            return [];
-        }
-
-        try {
-            // Get YForm tables from database - use correct column names
-            $sql = rex_sql::factory();
-            $sql->setQuery('SELECT table_name, name, status FROM ' . rex::getTable('yform_table') . ' WHERE status = 1 ORDER BY name, table_name');
-            
-            $tables = [];
-            
-            while ($sql->hasNext()) {
-                $table = [
-                    'name' => $sql->getValue('table_name'), // The actual table name in database
-                    'label' => $sql->getValue('name') ?: $sql->getValue('table_name'), // The display name
-                    'status' => $sql->getValue('status')
-                ];
-                
-                $tables[] = $table;
-                $sql->next();
-            }
-            
-            return $tables;
-        } catch (\Exception $e) {
-            return [];
-        }
+        // Moved to UrlWidget - keeping for backward compatibility but not used
+        return [];
     }
 
     private function renderMetaInfo(): string
