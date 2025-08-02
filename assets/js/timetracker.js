@@ -8,7 +8,15 @@ class InfoCenterTimeTracker {
         this.state = this.loadState();
         this.intervalId = null;
         this.displayStartTime = null;
+        this.initialized = false;
         
+        // Globale Referenz für PJAX-Updates
+        window.InfoCenterTimeTracker = this;
+        
+        this.init();
+    }
+    
+    init() {
         this.initializeElements();
         this.createMiniTracker();
         this.bindEvents();
@@ -28,6 +36,43 @@ class InfoCenterTimeTracker {
         } else {
             this.updateSessionInfo('Bereit zum Starten');
         }
+        
+        this.initialized = true;
+    }
+    
+    refreshAfterPjax() {
+        // Nach PJAX-Update: Elemente neu initialisieren aber State beibehalten
+        if (!this.initialized) return;
+        
+        console.log('TimeTracker: Refreshing after PJAX');
+        
+        // Timer stoppen für Reinitialisierung
+        if (this.intervalId) {
+            clearInterval(this.intervalId);
+            this.intervalId = null;
+        }
+        
+        // Elemente neu finden
+        this.initializeElements();
+        
+        // Display und Buttons aktualisieren
+        this.updateDisplay();
+        this.updateButtons();
+        this.loadTodayStats();
+        
+        // Timer wieder starten falls aktiv
+        if (this.state.isRunning && !this.state.isPaused) {
+            this.resumeTimer();
+            this.updateSessionInfo('Tracking läuft...');
+            this.elements.container?.classList.add('tracking');
+        } else if (this.state.isRunning && this.state.isPaused) {
+            this.updateSessionInfo('Pausiert');
+            this.elements.container?.classList.add('paused');
+        } else {
+            this.updateSessionInfo('Bereit zum Starten');
+        }
+        
+        this.updateMiniVisibility();
     }
 
     initializeElements() {
@@ -452,10 +497,22 @@ class InfoCenterTimeTracker {
     }
 }
 
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    // Only initialize if timetracker elements exist
+// Initialize when DOM is ready (mit REDAXO rex:ready Support)
+$(document).on('rex:ready', function() {
+    // Nur initialisieren wenn TimeTracker-Elemente vorhanden sind
     if (document.getElementById('timeDisplay')) {
+        if (!window.InfoCenterTimeTracker || !window.InfoCenterTimeTracker.initialized) {
+            new InfoCenterTimeTracker();
+        } else {
+            // Bereits existierend, nur refreshen
+            window.InfoCenterTimeTracker.refreshAfterPjax();
+        }
+    }
+});
+
+// Fallback für Vanilla JS (ohne jQuery)
+document.addEventListener('DOMContentLoaded', function() {
+    if (document.getElementById('timeDisplay') && !window.InfoCenterTimeTracker) {
         new InfoCenterTimeTracker();
     }
 });
