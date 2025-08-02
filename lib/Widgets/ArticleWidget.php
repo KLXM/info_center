@@ -4,7 +4,6 @@ namespace KLXM\InfoCenter\Widgets;
 
 use KLXM\InfoCenter\AbstractWidget;
 use rex;
-use rex_addon;
 use rex_article;
 use rex_url;
 use rex_clang;
@@ -14,13 +13,10 @@ use rex_i18n;
 use rex_backend_login;
 use rex_escape;
 use rex_sql;
-use rex_logger;
-use rex_yform_manager_table;
-use rex_csrf_token;
 
 class ArticleWidget extends AbstractWidget
 {
-    protected bool $supportsLazyLoading = false; // Deaktiviert um Artikel-Kontext zu erhalten
+    protected bool $supportsLazyLoading = true;
     private ?rex_article $article = null;
 
     public function __construct()
@@ -88,7 +84,7 @@ class ArticleWidget extends AbstractWidget
     {
         $html = '';
 
-        // Basic article information (original behavior)
+        // Basic article information
         $html .= $this->renderBasicInfo();
         
         // Article path
@@ -118,7 +114,7 @@ class ArticleWidget extends AbstractWidget
         if ($user->hasPerm('structure')) {
             $html .= sprintf(
                 '<div class="info-center-quick-link">
-                    <a href="%s">🗂️ %s</a>
+                    <a href="%s">%s</a>
                 </div>',
                 rex_url::backendPage('structure'),
                 rex_i18n::msg('info_center_structure_overview')
@@ -256,8 +252,6 @@ class ArticleWidget extends AbstractWidget
     {
         $html = '';
         
-        // Standard REDAXO article info (original behavior)
-        
         // Article name
         $html .= $this->renderInfoItem(
             rex_i18n::msg('info_center_article_name'),
@@ -286,7 +280,6 @@ class ArticleWidget extends AbstractWidget
 
     private function renderPathInfo(): string
     {
-        // Standard REDAXO article path (original behavior)
         $path = [];
         // Verwende rex_backend_login::createUser() wie bei der Minibar
         $user = rex_backend_login::createUser();
@@ -301,9 +294,9 @@ class ArticleWidget extends AbstractWidget
                 } else {
                     // Im Frontend: Erweiterte Prüfung für Backend-Benutzer
                     $canLinkToStructure = $user->isAdmin() || 
-                                         $user->hasPerm('structure') || 
-                                         $user->hasPerm('content') ||
-                                         $user->hasPerm('article');
+                                          $user->hasPerm('structure') || 
+                                          $user->hasPerm('content') ||
+                                          $user->hasPerm('article');
                 }
             }
             
@@ -327,10 +320,21 @@ class ArticleWidget extends AbstractWidget
     private function renderActionLinks(): string
     {
         $html = '<div class="info-center-article-actions">';
-        
+
         // Verwende rex_backend_login::createUser() wie bei der Minibar
         $user = rex_backend_login::createUser();
         $hasStructurePerm = false;
+        
+        // Debug-Info hinzufügen
+        if (rex::isFrontend()) {
+            $debugInfo = sprintf(
+                'Debug: Frontend-Modus, User: %s, Session: %s, Perms: %s',
+                $user ? 'Ja' : 'Nein',
+                rex_backend_login::hasSession() ? 'Ja' : 'Nein',
+                $user ? ($user->isAdmin() ? 'Admin' : ($user->hasPerm('structure') ? 'Structure' : ($user->hasPerm('content') ? 'Content' : 'Andere'))) : 'Keine'
+            );
+            $html .= '<div style="font-size:10px;color:#888;margin-bottom:8px;">' . $debugInfo . '</div>';
+        }
         
         // Prüfe Berechtigung - Backend oder Frontend mit Backend-Session
         if ($user) {
@@ -340,52 +344,51 @@ class ArticleWidget extends AbstractWidget
             } else {
                 // Im Frontend: Erweiterte Prüfung für Backend-Benutzer
                 $hasStructurePerm = $user->isAdmin() || 
-                                   $user->hasPerm('structure') || 
-                                   $user->hasPerm('content') ||
-                                   $user->hasPerm('article');
+                                    $user->hasPerm('structure') || 
+                                    $user->hasPerm('content') ||
+                                    $user->hasPerm('article');
             }
         }
         
-        if (!$hasStructurePerm) {
-            $html .= '</div>';
-            return $html;
-        }
-
         // Edit link - im Backend und Frontend für eingeloggte Backend-Benutzer
-        $editUrl = rex_url::backendPage('content/edit', [
-            'article_id' => $this->article->getId(),
-            'category_id' => $this->article->getCategoryId(),
-            'clang' => $this->article->getClangId(),
-            'mode' => 'edit'
-        ]);
-        
-        $html .= sprintf(
-            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-edit">
-                ✏️ %s
-            </a>',
-            $editUrl,
-            rex_i18n::msg('info_center_article_edit')
-        );
+        if ($hasStructurePerm) {
+            $editUrl = rex_url::backendPage('content/edit', [
+                'article_id' => $this->article->getId(),
+                'category_id' => $this->article->getCategoryId(),
+                'clang' => $this->article->getClangId(),
+                'mode' => 'edit'
+            ]);
+            
+            $html .= sprintf(
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-edit">
+                    %s
+                </a>',
+                $editUrl,
+                rex_i18n::msg('info_center_article_edit')
+            );
+        }
         
         // Structure/Category link - für Navigation zur Kategorie-Verwaltung
-        $structureUrl = rex_url::backendPage('structure', [
-            'category_id' => $this->article->getCategoryId(),
-            'clang' => $this->article->getClangId()
-        ]);
-        
-        $html .= sprintf(
-            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-structure">
-                🗂️ %s
-            </a>',
-            $structureUrl,
-            rex_i18n::msg('info_center_article_structure')
-        );
+        if ($hasStructurePerm) {
+            $structureUrl = rex_url::backendPage('structure', [
+                'category_id' => $this->article->getCategoryId(),
+                'clang' => $this->article->getClangId()
+            ]);
+            
+            $html .= sprintf(
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-structure">
+                    %s
+                </a>',
+                $structureUrl,
+                rex_i18n::msg('info_center_article_structure')
+            );
+        }
         
         // View link - nur im Backend, da im Frontend bereits sichtbar
         if (rex::isBackend()) {
             $html .= sprintf(
                 '<a href="%s" target="_blank" class="info-center-btn info-center-btn-view">
-                    👁️ %s
+                    %s
                 </a>',
                 $this->article->getUrl(),
                 rex_i18n::msg('info_center_article_view')
@@ -394,24 +397,6 @@ class ArticleWidget extends AbstractWidget
 
         $html .= '</div>';
         return $html;
-    }
-
-    /**
-     * Analyze current URL to detect URL2/YForm patterns using proper URL2 API
-     */
-    private function analyzeUrl2Url(): ?array
-    {
-        // Moved to UrlWidget - keeping for backward compatibility but not used
-        return null;
-    }
-
-    /**
-     * Get all YForm tables
-     */
-    private function getYFormTables(): array
-    {
-        // Moved to UrlWidget - keeping for backward compatibility but not used
-        return [];
     }
 
     private function renderMetaInfo(): string
@@ -435,7 +420,7 @@ class ArticleWidget extends AbstractWidget
             
             $html .= '</div>';
         }
-
+        
         return $html;
     }
 
@@ -467,16 +452,7 @@ class ArticleWidget extends AbstractWidget
         } 
         // In frontend
         else {
-            // Try to get current article first
             $article = rex_article::getCurrent();
-            
-            // Alternative: Try to use current article ID from REDAXO
-            if (!$article) {
-                $currentArticleId = rex_article::getCurrentId();
-                if ($currentArticleId > 0) {
-                    $article = rex_article::get($currentArticleId, rex_clang::getCurrentId());
-                }
-            }
         }
 
         // Fallback to start article
