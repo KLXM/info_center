@@ -23,11 +23,16 @@ class ArticleWidget extends AbstractWidget
     {
         parent::__construct();
         $this->title = rex_i18n::msg('info_center_article_title');
-        $this->article = $this->getCurrentArticle();
+        // Artikel NICHT im Constructor holen - wird bei render() gemacht
     }
 
     public function getInitialContent(): string
     {
+        // Sicherstellen, dass Artikel verfügbar ist
+        if (!$this->article) {
+            $this->article = $this->getCurrentArticle();
+        }
+        
         if (!$this->article) {
             return $this->wrapContent(rex_i18n::msg('info_center_no_article_found'));
         }
@@ -49,6 +54,14 @@ class ArticleWidget extends AbstractWidget
 
     public function render(): string
     {
+        // Backend-User-Session erstellen (wie bei Minibar) - VOR der Artikel-Verarbeitung
+        rex_backend_login::createUser();
+        
+        // Artikel holen (jetzt mit korrekter Session)
+        if (!$this->article) {
+            $this->article = $this->getCurrentArticle();
+        }
+        
         $content = '<div class="info-center-article-items">';
 
         if (rex::isBackend()) {
@@ -438,24 +451,19 @@ class ArticleWidget extends AbstractWidget
 
     private function getCurrentArticle(): ?rex_article
     {
-        // In backend
+        $clangId = rex_request('clang', 'int');
+        $clangId = rex_clang::exists($clangId) ? $clangId : rex_clang::getStartId();
+
         if (rex::isBackend()) {
-            $articleId = rex_request('article_id', 'int');
-            $clangId = rex_request('clang', 'int', rex_clang::getCurrentId());
-            
-            $article = rex_article::get($articleId, $clangId);
-            
-            // Fallback to current category
+            $article = rex_article::get(rex_request('article_id', 'int'), $clangId);
+
             if (!$article) {
                 $article = rex_article::get(rex_request('category_id', 'int'), $clangId);
             }
-        } 
-        // In frontend
-        else {
+        } else {
             $article = rex_article::getCurrent();
         }
 
-        // Fallback to start article
         if (!$article) {
             $article = rex_article::getSiteStartArticle();
         }
