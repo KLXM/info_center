@@ -4,6 +4,7 @@ namespace KLXM\InfoCenter\Widgets;
 
 use KLXM\InfoCenter\AbstractWidget;
 use rex;
+use rex_addon;
 use rex_article;
 use rex_url;
 use rex_clang;
@@ -350,39 +351,202 @@ class ArticleWidget extends AbstractWidget
             }
         }
         
-        // Edit link - im Backend und Frontend für eingeloggte Backend-Benutzer
-        if ($hasStructurePerm) {
-            $editUrl = rex_url::backendPage('content/edit', [
-                'article_id' => $this->article->getId(),
-                'category_id' => $this->article->getCategoryId(),
-                'clang' => $this->article->getClangId(),
-                'mode' => 'edit'
+        if (!$hasStructurePerm) {
+            $html .= '</div>';
+            return $html;
+        }
+
+        // Check for URL2/YForm-URLs first
+        $url2Info = $this->analyzeUrl2Url();
+        if ($url2Info) {
+            $html .= $this->renderUrl2Actions($url2Info);
+        } else {
+            // Standard REDAXO article actions
+            $html .= $this->renderStandardActions();
+        }
+
+        $html .= '</div>';
+        return $html;
+    }
+
+    /**
+     * Analyze current URL to detect URL2/YForm patterns using proper URL2 API
+     */
+    private function analyzeUrl2Url(): ?array
+    {
+        // Only in frontend
+        if (rex::isBackend()) {
+            return null;
+        }
+
+        // Check if url addon is available
+        if (!rex_addon::get('url')->isAvailable()) {
+            return null;
+        }
+
+        try {
+            // Use URL2 API to resolve current URL
+            $urlManager = \Url\Url::resolveCurrent();
+            
+            if (!$urlManager) {
+                return null;
+            }
+
+            // Get the profile and dataset information
+            $profile = $urlManager->getProfile();
+            if (!$profile) {
+                return null;
+            }
+
+            $dataset = $urlManager->getDataset();
+            $tableName = $profile->getTableName();
+            
+            // Get YForm table info
+            $yformTables = $this->getYFormTables();
+            $tableInfo = null;
+            
+            foreach ($yformTables as $table) {
+                if ($table['name'] === $tableName) {
+                    $tableInfo = $table;
+                    break;
+                }
+            }
+            
+            if (!$tableInfo) {
+                return null;
+            }
+
+            return [
+                'table' => $tableName,
+                'table_label' => $tableInfo['label'] ?? $tableName,
+                'record_id' => $dataset ? $dataset->getId() : $urlManager->getDatasetId(),
+                'record_identifier' => $urlManager->getDatasetId(),
+                'record_data' => $dataset ? $dataset->getData() : null,
+                'profile_id' => $urlManager->getProfileId(),
+                'url_manager' => $urlManager,
+                'profile' => $profile
+            ];
+            
+        } catch (\Exception $e) {
+            // URL2 couldn't resolve the current URL - not a URL2 managed URL
+            return null;
+        }
+    }
+
+    /**
+     * Get all YForm tables
+     */
+    private function getYFormTables(): array
+    {
+        if (!rex_addon::get('yform')->isAvailable()) {
+            return [];
+        }
+
+        try {
+            // Get YForm tables from database
+            $sql = rex_sql::factory();
+            $sql->setQuery('SELECT name, label FROM ' . rex::getTable('yform_table') . ' WHERE status = 1 ORDER BY label, name');
+            
+            $tables = [];
+            while ($sql->hasNext()) {
+                $tables[] = [
+                    'name' => $sql->getValue('name'),
+                    'label' => $sql->getValue('label') ?: $sql->getValue('name')
+                ];
+                $sql->next();
+            }
+            
+            return $tables;
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Render URL2/YForm specific actions
+     */
+    private function renderUrl2Actions(array $url2Info): string
+    {
+        $html = '<div class="info-center-url2-detection">';
+        $html .= '<div class="info-center-url2-info">';
+        $html .= '<strong>🔗 URL2 erkannt:</strong> ' . rex_escape($url2Info['table_label']);
+        
+        if ($url2Info['record_id']) {
+            $html .= ' (ID: ' . $url2Info['record_id'] . ')';
+        }
+        
+        $html .= '</div>';
+        
+        // YForm table management link
+        $tableUrl = rex_url::backendPage('yform/manager/data_edit', [
+            'table_name' => $url2Info['table'],
+        ]);
+        
+        $html .= sprintf(
+            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-table">
+                📋 %s öffnen
+            </a>',
+            $tableUrl,
+            rex_escape($url2Info['table_label'])
+        );
+        
+        // Record edit link (if record found)
+        if ($url2Info['record_id']) {
+            $recordUrl = rex_url::backendPage('yform/manager/data_edit', [
+                'table_name' => $url2Info['table'],
+                'data_id' => $url2Info['record_id'],
+                'func' => 'edit'
             ]);
             
             $html .= sprintf(
-                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-edit">
-                    ✏️ %s
+                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-yform-edit">
+                    ✏️ Datensatz bearbeiten
                 </a>',
-                $editUrl,
-                rex_i18n::msg('info_center_article_edit')
+                $recordUrl
             );
         }
         
+        $html .= '</div>';
+        
+        return $html;
+    }
+
+    /**
+     * Render standard REDAXO article actions
+     */
+    private function renderStandardActions(): string
+    {
+        $html = '';
+        
+        // Edit link - im Backend und Frontend für eingeloggte Backend-Benutzer
+        $editUrl = rex_url::backendPage('content/edit', [
+            'article_id' => $this->article->getId(),
+            'category_id' => $this->article->getCategoryId(),
+            'clang' => $this->article->getClangId(),
+            'mode' => 'edit'
+        ]);
+        
+        $html .= sprintf(
+            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-edit">
+                ✏️ %s
+            </a>',
+            $editUrl,
+            rex_i18n::msg('info_center_article_edit')
+        );
+        
         // Structure/Category link - für Navigation zur Kategorie-Verwaltung
-        if ($hasStructurePerm) {
-            $structureUrl = rex_url::backendPage('structure', [
-                'category_id' => $this->article->getCategoryId(),
-                'clang' => $this->article->getClangId()
-            ]);
-            
-            $html .= sprintf(
-                '<a href="%s" target="_blank" class="info-center-btn info-center-btn-structure">
-                    🗂️ %s
-                </a>',
-                $structureUrl,
-                rex_i18n::msg('info_center_article_structure')
-            );
-        }
+        $structureUrl = rex_url::backendPage('structure', [
+            'category_id' => $this->article->getCategoryId(),
+            'clang' => $this->article->getClangId()
+        ]);
+        
+        $html .= sprintf(
+            '<a href="%s" target="_blank" class="info-center-btn info-center-btn-structure">
+                🗂️ %s
+            </a>',
+            $structureUrl,
+            rex_i18n::msg('info_center_article_structure')
+        );
         
         // View link - nur im Backend, da im Frontend bereits sichtbar
         if (rex::isBackend()) {
@@ -395,7 +559,6 @@ class ArticleWidget extends AbstractWidget
             );
         }
 
-        $html .= '</div>';
         return $html;
     }
 
