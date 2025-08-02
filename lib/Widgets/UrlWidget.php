@@ -71,7 +71,7 @@ class UrlWidget extends AbstractWidget
         $content = sprintf(
             '<div class="info-center-url-basic">
                 <div class="info-center-url-item">
-                    <span class="label">🔗 %s</span>
+                    <span class="label">%s</span>
                     <span class="value">Datensatz erkannt</span>
                 </div>
                 <div class="info-center-url-note">
@@ -218,7 +218,7 @@ class UrlWidget extends AbstractWidget
         
         $html .= sprintf(
             '<a href="%s" target="_blank" class="info-center-btn info-center-btn-primary">
-                📋 Tabelle öffnen
+                Tabelle öffnen
             </a>',
             $tableUrl
         );
@@ -238,7 +238,7 @@ class UrlWidget extends AbstractWidget
             
             $html .= sprintf(
                 '<a href="%s" target="_blank" class="info-center-btn info-center-btn-secondary">
-                    ✏️ Datensatz bearbeiten
+                    Datensatz bearbeiten
                 </a>',
                 $recordUrl
             );
@@ -260,7 +260,7 @@ class UrlWidget extends AbstractWidget
             
             $html .= sprintf(
                 '<a href="%s" target="_blank" class="info-center-btn info-center-btn-primary">
-                    �️ Tabelle in Adminer
+                    Tabelle in Adminer
                 </a>',
                 $adminerUrl
             );
@@ -272,7 +272,7 @@ class UrlWidget extends AbstractWidget
             
             $html .= sprintf(
                 '<a href="%s" target="_blank" class="info-center-btn info-center-btn-secondary">
-                    � URL2-Profile verwalten
+                    URL2-Profile verwalten
                 </a>',
                 $urlProfileUrl
             );
