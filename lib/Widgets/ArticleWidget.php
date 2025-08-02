@@ -459,35 +459,30 @@ class ArticleWidget extends AbstractWidget
         }
 
         try {
-            // Get YForm tables from database - check all status values for debugging
+            // Get YForm tables from database - use correct column names
             $sql = rex_sql::factory();
-            $sql->setQuery('SELECT name, label, status FROM ' . rex::getTable('yform_table') . ' ORDER BY label, name');
+            $sql->setQuery('SELECT table_name, name, status FROM ' . rex::getTable('yform_table') . ' WHERE status = 1 ORDER BY name, table_name');
             
             $tables = [];
-            $allTables = []; // For debugging
             
             while ($sql->hasNext()) {
                 $table = [
-                    'name' => $sql->getValue('name'),
-                    'label' => $sql->getValue('label') ?: $sql->getValue('name'),
+                    'name' => $sql->getValue('table_name'), // The actual table name in database
+                    'label' => $sql->getValue('name') ?: $sql->getValue('table_name'), // The display name
                     'status' => $sql->getValue('status')
                 ];
                 
-                $allTables[] = $table; // Keep all for debugging
-                
-                // Return all tables for now (not just status = 1) to debug
                 $tables[] = $table;
-                
                 $sql->next();
             }
             
             // Store debug info for later use
             if (rex::isFrontend()) {
                 $this->yformDebugInfo = [
-                    'total_tables' => count($allTables),
+                    'total_tables' => count($tables),
                     'returned_tables' => count($tables),
-                    'all_tables' => $allTables, // Show all tables for debugging
-                    'sql_query' => 'SELECT name, label, status FROM ' . rex::getTable('yform_table') . ' ORDER BY label, name'
+                    'all_tables' => $tables, // Show all tables for debugging
+                    'sql_query' => 'SELECT table_name, name, status FROM ' . rex::getTable('yform_table') . ' WHERE status = 1 ORDER BY name, table_name'
                 ];
             }
             
