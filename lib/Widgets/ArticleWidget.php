@@ -20,6 +20,7 @@ class ArticleWidget extends AbstractWidget
 {
     protected bool $supportsLazyLoading = true;
     private ?rex_article $article = null;
+    private array $yformDebugInfo = [];
 
     public function __construct()
     {
@@ -458,21 +459,48 @@ class ArticleWidget extends AbstractWidget
         }
 
         try {
-            // Get YForm tables from database
+            // Get YForm tables from database - check all status values for debugging
             $sql = rex_sql::factory();
-            $sql->setQuery('SELECT name, label FROM ' . rex::getTable('yform_table') . ' WHERE status = 1 ORDER BY label, name');
+            $sql->setQuery('SELECT name, label, status FROM ' . rex::getTable('yform_table') . ' ORDER BY label, name');
             
             $tables = [];
+            $allTables = []; // For debugging
+            
             while ($sql->hasNext()) {
-                $tables[] = [
+                $table = [
                     'name' => $sql->getValue('name'),
-                    'label' => $sql->getValue('label') ?: $sql->getValue('name')
+                    'label' => $sql->getValue('label') ?: $sql->getValue('name'),
+                    'status' => $sql->getValue('status')
                 ];
+                
+                $allTables[] = $table; // Keep all for debugging
+                
+                // Return all tables for now (not just status = 1) to debug
+                $tables[] = $table;
+                
                 $sql->next();
+            }
+            
+            // Store debug info for later use
+            if (rex::isFrontend()) {
+                $this->yformDebugInfo = [
+                    'total_tables' => count($allTables),
+                    'returned_tables' => count($tables),
+                    'all_tables' => $allTables, // Show all tables for debugging
+                    'sql_query' => 'SELECT name, label, status FROM ' . rex::getTable('yform_table') . ' ORDER BY label, name'
+                ];
             }
             
             return $tables;
         } catch (\Exception $e) {
+            // Store error for debugging
+            if (rex::isFrontend()) {
+                $this->yformDebugInfo = [
+                    'error' => $e->getMessage(),
+                    'yform_table_name' => rex::getTable('yform_table'),
+                    'yform_available' => rex_addon::get('yform')->isAvailable()
+                ];
+            }
             return [];
         }
     }
@@ -492,7 +520,27 @@ class ArticleWidget extends AbstractWidget
             $html .= 'Record ID: ' . ($url2Info['record_id'] ?: 'null') . '<br>';
             $html .= 'Is YForm: ' . ($url2Info['is_yform_table'] ? 'Yes' : 'No') . '<br>';
             $html .= 'Current URL: ' . rex_escape($url2Info['debug_info']['current_url']) . '<br>';
-            $html .= 'YForm Tables: ' . $url2Info['debug_info']['yform_tables_count'];
+            $html .= 'YForm Tables: ' . $url2Info['debug_info']['yform_tables_count'] . '<br>';
+            
+            // Show YForm debug info if available
+            if (!empty($this->yformDebugInfo)) {
+                $html .= '<strong>YForm Debug:</strong><br>';
+                if (isset($this->yformDebugInfo['error'])) {
+                    $html .= 'Error: ' . rex_escape($this->yformDebugInfo['error']) . '<br>';
+                    $html .= 'Table name: ' . rex_escape($this->yformDebugInfo['yform_table_name'] ?? 'unknown') . '<br>';
+                } else {
+                    $html .= 'Total tables found: ' . $this->yformDebugInfo['total_tables'] . '<br>';
+                    $html .= 'Tables returned: ' . $this->yformDebugInfo['returned_tables'] . '<br>';
+                    if (!empty($this->yformDebugInfo['all_tables'])) {
+                        $html .= 'Tables: ';
+                        foreach (array_slice($this->yformDebugInfo['all_tables'], 0, 3) as $table) {
+                            $html .= rex_escape($table['name']) . '(status:' . $table['status'] . '), ';
+                        }
+                        $html .= '<br>';
+                    }
+                }
+            }
+            
             $html .= '</div>';
         }
         
@@ -536,7 +584,36 @@ class ArticleWidget extends AbstractWidget
                 );
             }
         } else {
-            $html .= '<div class="info-center-url2-note">⚠️ Keine YForm-Tabelle erkannt</div>';
+            // For non-YForm URL2 tables, show generic database editing options
+            $html .= '<div class="info-center-url2-note">⚠️ Keine YForm-Tabelle, aber URL2-verwaltet</div>';
+            
+            // Try to provide useful links anyway
+            if (rex_addon::get('adminer')->isAvailable()) {
+                $adminerUrl = rex_url::backendPage('adminer', [
+                    'username' => '', // Will use default connection
+                    'table' => $url2Info['table']
+                ]);
+                
+                $html .= sprintf(
+                    '<a href="%s" target="_blank" class="info-center-btn info-center-btn-adminer">
+                        🗄️ Tabelle "%s" in Adminer öffnen
+                    </a>',
+                    $adminerUrl,
+                    rex_escape($url2Info['table'])
+                );
+            }
+            
+            // Always show URL2 profile management
+            if (rex_addon::get('url')->isAvailable()) {
+                $urlProfileUrl = rex_url::backendPage('url/generator');
+                
+                $html .= sprintf(
+                    '<a href="%s" target="_blank" class="info-center-btn info-center-btn-url-profiles">
+                        🔧 URL2-Profile verwalten
+                    </a>',
+                    $urlProfileUrl
+                );
+            }
         }
         
         $html .= '</div>';
