@@ -34,7 +34,7 @@ class MessagingWidget extends AbstractWidget
         $html .= '</div>';
         $html .= '<div class="widget-content">';
         $html .= '<div class="messaging-actions">';
-        $html .= '<button type="button" class="btn btn-sm btn-primary messaging-send-btn" data-url="' . rex_escape($currentUrl) . '" data-context="' . rex_escape($currentContext) . '">';
+        $html .= '<button type="button" class="btn btn-sm btn-primary messaging-send-btn" data-url="' . rex_escape($currentUrl) . '" data-context="' . htmlspecialchars($currentContext, ENT_QUOTES, 'UTF-8') . '">';
         $html .= '<i class="rex-icon rex-icon-mail"></i> ' . $addon->i18n('messaging_send_message');
         $html .= '</button>';
         $html .= '<button type="button" class="btn btn-sm btn-default messaging-screenshot-btn" title="' . $addon->i18n('messaging_take_screenshot') . '">';

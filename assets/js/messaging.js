@@ -23,6 +23,12 @@
                 e.preventDefault();
                 var currentUrl = $(this).data('url') || window.location.href;
                 var currentContext = $(this).data('context') || '';
+                
+                // Falls currentContext ein Object ist, zu String konvertieren
+                if (typeof currentContext === 'object') {
+                    currentContext = JSON.stringify(currentContext, null, 2);
+                }
+                
                 self.openMessageModal(currentUrl, currentContext);
             });
             

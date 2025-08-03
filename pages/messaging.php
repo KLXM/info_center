@@ -9,6 +9,8 @@ use rex_url;
 use rex_view;
 use rex_request;
 use rex_escape;
+use rex_be_controller;
+use rex_article;
 
 try {
     $package = rex_addon::get('info_center');
@@ -24,6 +26,46 @@ try {
     // Aktuelle URL und Kontext ermitteln
     $currentUrl = rex_request('current_url', 'string', '');
     $currentContext = rex_request('current_context', 'string', '');
+    
+    // Falls kein Kontext übergeben wurde, aktuellen Kontext ermitteln
+    if (empty($currentContext)) {
+        $context = [];
+        
+        if (rex::isBackend()) {
+            $context['backend'] = true;
+            $context['page'] = rex_be_controller::getCurrentPage();
+            $context['user'] = rex::getUser()->getLogin();
+            
+            // Artikel-Kontext
+            if (rex_request('article_id', 'int')) {
+                $context['article_id'] = rex_request('article_id', 'int');
+            }
+            
+            // Kategorie-Kontext  
+            if (rex_request('category_id', 'int')) {
+                $context['category_id'] = rex_request('category_id', 'int');
+            }
+        } else {
+            $context['frontend'] = true;
+            $article = rex_article::getCurrent();
+            if ($article) {
+                $context['article_id'] = $article->getId();
+                $context['category_id'] = $article->getCategoryId();
+                $context['template_id'] = $article->getTemplateId();
+            }
+        }
+        
+        $currentContext = json_encode($context, JSON_PRETTY_PRINT);
+    }
+    
+    // Falls keine URL übergeben wurde, aktuelle URL ermitteln
+    if (empty($currentUrl)) {
+        if (rex::isBackend()) {
+            $currentUrl = rex_url::currentBackendPage();
+        } else {
+            $currentUrl = rex_url::frontend();
+        }
+    }
 
 $content .= '<fieldset><legend>' . $package->i18n('messaging_send_message') . '</legend>';
 
@@ -107,9 +149,9 @@ $output = $fragment->parse('core/page/section.php');
 
     echo $output;
 
-    // CSS und JS für Messaging
-    rex_view::addCssFile($package->getAssetsUrl('css/messaging.css'));
-    rex_view::addJsFile($package->getAssetsUrl('js/messaging.js'));
+    // CSS und JS werden bereits im boot.php geladen, hier nicht nochmal
+    // rex_view::addCssFile($package->getAssetsUrl('css/messaging.css'));
+    // rex_view::addJsFile($package->getAssetsUrl('js/messaging.js'));
 
 } catch (\Exception $e) {
     echo '<div class="alert alert-danger">';
