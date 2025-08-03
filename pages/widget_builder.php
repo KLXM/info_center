@@ -163,7 +163,7 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     $formElements[] = $n;
     $fragment = new rex_fragment();
     $fragment->setVar('elements', $formElements, false);
-    $content .= $fragment->parse('core/form/input.php');
+    $content .= $fragment->parse('core/form/form.php');
     
     // YForm-Tabelle
     $formElements = [];
@@ -180,7 +180,7 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     $formElements[] = $n;
     $fragment = new rex_fragment();
     $fragment->setVar('elements', $formElements, false);
-    $content .= $fragment->parse('core/form/select.php');
+    $content .= $fragment->parse('core/form/form.php');
     
     // Anzahl Datensätze
     $formElements = [];
@@ -190,7 +190,7 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     $formElements[] = $n;
     $fragment = new rex_fragment();
     $fragment->setVar('elements', $formElements, false);
-    $content .= $fragment->parse('core/form/input.php');
+    $content .= $fragment->parse('core/form/form.php');
     
     // Status
     $formElements = [];
