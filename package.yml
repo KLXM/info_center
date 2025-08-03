@@ -17,13 +17,16 @@ pages:
     info_center:
         title: 'translate:info_center_title'
         perm: info_center[]
+        icon: rex-icon fa-info-circle
         subpages:
             config:
                 title: 'translate:info_center_settings'
                 perm: info_center[config]
+                icon: rex-icon fa-cog
             messaging:
                 title: 'translate:messaging_title'
                 perm: info_center[]
+                icon: rex-icon fa-envelope
 
 default_config:
     darkmode: auto

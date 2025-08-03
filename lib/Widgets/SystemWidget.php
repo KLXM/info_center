@@ -98,13 +98,19 @@ class SystemWidget extends AbstractWidget
                         <i class="rex-icon rex-icon-info"></i>
                         <span>%s</span>
                     </a>
+                    <a href="%s">
+                        <i class="rex-icon rex-icon-settings"></i>
+                        <span>%s Settings</span>
+                    </a>
                 </div>',
                 rex_url::backendPage('system'),
                 rex_i18n::msg('info_center_system_settings'),
                 rex_url::backendPage('system/report'),
                 rex_i18n::msg('info_center_system_report'),
                 rex_url::backendPage('system/phpinfo'),
-                rex_i18n::msg('info_center_system_phpinfo')
+                rex_i18n::msg('info_center_system_phpinfo'),
+                rex_url::backendPage('info_center/config'),
+                rex_i18n::msg('info_center_title')
             );
         }
 
