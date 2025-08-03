@@ -30,23 +30,6 @@ $widgetId = rex_request('widget_id', 'string', '');
 // Widget-Konfigurationen laden
 $customWidgets = $package->getConfig('custom_widgets', []);
 
-// AJAX Handler für Feldauswahl
-if ($func === 'get_table_fields') {
-    $tableName = rex_request('table_name', 'string', '');
-    $widgetId = rex_request('widget_id', 'string', '');
-    $selectedFields = [];
-    
-    // Bei Edit-Modus vorhandene Felder laden
-    if ($widgetId && isset($customWidgets[$widgetId])) {
-        $selectedFields = $customWidgets[$widgetId]['fields'] ?? [];
-    }
-    
-    if ($tableName) {
-        echo renderFieldSelection($tableName, $selectedFields);
-        exit;
-    }
-}
-
 switch ($func) {
     case 'add':
     case 'edit':
@@ -196,13 +179,13 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     $fragment->setVar('elements', $formElements, false);
     $content .= $fragment->parse('core/form/form.php');
     
-    // Feldauswahl Container (dynamisch geladen)
+    // Feldauswahl Container (dynamisch geladen via API)
     $formElements = [];
     $n = [];
     $n['label'] = '<label>Anzuzeigende Felder</label>';
     $fieldsHtml = '<div id="table-fields-container">';
     if (!empty($widget['table_name'])) {
-        $fieldsHtml .= renderFieldSelection($widget['table_name'], $widget['fields'] ?? []);
+        $fieldsHtml .= '<p class="help-block text-muted">Felder werden geladen...</p>';
     } else {
         // Hinweis für neue Widgets
         $fieldsHtml .= '<p class="help-block text-muted">Wählen Sie zuerst eine YForm-Tabelle aus, um die verfügbaren Felder zu sehen.</p>';
@@ -308,7 +291,7 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     
     <script>
     // JavaScript für dynamische Feldauswahl und Link-Optionen
-    document.addEventListener("DOMContentLoaded", function() {
+    jQuery(document).on("rex:ready", function() {
         // Tabellen-Auswahl Handler
         const tableSelect = document.getElementById("widget-table");
         if (tableSelect) {
@@ -322,17 +305,27 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
             }
         }
         
-        // Link-Type Radio Handler
+        // Link-Type Radio Handler  
         const linkRadios = document.querySelectorAll("input[name=\'widget_config[link_type]\']");
         linkRadios.forEach(function(radio) {
             radio.addEventListener("change", function() {
-                const customContainer = document.getElementById("custom-link-container");
-                if (customContainer) {
-                    customContainer.style.display = (this.value === "custom") ? "block" : "none";
-                }
+                toggleCustomUrlContainer(this.value === "custom");
             });
         });
+        
+        // Initial state für Custom URL Container
+        const checkedRadio = document.querySelector("input[name=\'widget_config[link_type]\']:checked");
+        if (checkedRadio) {
+            toggleCustomUrlContainer(checkedRadio.value === "custom");
+        }
     });
+    
+    function toggleCustomUrlContainer(show) {
+        const customContainer = document.getElementById("custom-link-container");
+        if (customContainer) {
+            customContainer.style.display = show ? "block" : "none";
+        }
+    }
     
     function loadTableFields(tableName) {
         const container = document.getElementById("table-fields-container");
@@ -349,20 +342,25 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
         const widgetIdInput = document.querySelector("input[name=\'widget_id\']");
         const widgetId = widgetIdInput ? widgetIdInput.value : "";
         
-        // AJAX Request für Feldliste
-        let requestBody = "func=get_table_fields&table_name=" + encodeURIComponent(tableName);
+        // Verwende REDAXO API statt direktem AJAX
+        let apiUrl = "' . rex_url::backendController() . '?rex-api-call=widget_builder&action=get_table_fields&table_name=" + encodeURIComponent(tableName);
+        
         if (widgetId) {
-            requestBody += "&widget_id=" + encodeURIComponent(widgetId);
+            apiUrl += "&widget_id=" + encodeURIComponent(widgetId);
         }
         
-        fetch("' . rex_url::currentBackendPage() . '", {
-            method: "POST",
+        fetch(apiUrl, {
+            method: "GET",
             headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: requestBody
+                "X-Requested-With": "XMLHttpRequest"
+            }
         })
-        .then(response => response.text())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.text();
+        })
         .then(html => {
             container.innerHTML = html;
         })
@@ -427,42 +425,4 @@ function saveWidget($package, $customWidgets)
         'message' => rex_view::success($package->i18n('info_center_widget_created')),
         'widgets' => $customWidgets
     ];
-}
-
-function renderFieldSelection($tableName, $selectedFields = [])
-{
-    if (!$tableName) {
-        return '';
-    }
-    
-    $sql = rex_sql::factory();
-    try {
-        $fields = $sql->getArray('DESCRIBE `' . $tableName . '`');
-    } catch (Exception $e) {
-        return '<div class="alert alert-danger">Fehler beim Laden der Tabellenfelder: ' . rex_escape($e->getMessage()) . '</div>';
-    }
-    
-    $html = '<div class="widget-field-selection">';
-    $html .= '<p class="help-block">Wählen Sie die Felder aus, die im Widget angezeigt werden sollen:</p>';
-    
-    foreach ($fields as $field) {
-        $fieldName = $field['Field'];
-        $fieldType = $field['Type'];
-        $isChecked = in_array($fieldName, $selectedFields) ? ' checked' : '';
-        
-        // System-Felder markieren
-        $isSystemField = in_array($fieldName, ['id', 'createdate', 'updatedate', 'createuser', 'updateuser', 'prio']);
-        $fieldLabel = $fieldName . ($isSystemField ? ' <small class="text-muted">(System)</small>' : '');
-        
-        $html .= '<div class="checkbox">';
-        $html .= '<label>';
-        $html .= '<input type="checkbox" name="fields[]" value="' . rex_escape($fieldName) . '"' . $isChecked . '> ';
-        $html .= $fieldLabel . ' <small class="text-muted">(' . $fieldType . ')</small>';
-        $html .= '</label>';
-        $html .= '</div>';
-    }
-    
-    $html .= '</div>';
-    
-    return $html;
 }
