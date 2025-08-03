@@ -62,13 +62,19 @@ class CustomListWidget extends AbstractWidget
             $yformTable = rex_yform_manager_table::get($tableName);
         }
 
-        // Felder auswählen
+        // Felder auswählen - ID IMMER dabei für URL-Generierung
         $selectedFields = $this->customConfig['fields'] ?? [];
         $fieldList = '*';
         if (!empty($selectedFields)) {
+            // ID immer hinzufügen für Links, auch wenn nicht explizit gewählt
+            $fieldsToSelect = $selectedFields;
+            if (!in_array('id', $fieldsToSelect)) {
+                array_unshift($fieldsToSelect, 'id'); // ID an den Anfang
+            }
+            
             // SQL-Feldliste erstellen mit korrekter Escape-Funktion
             $escapedFields = [];
-            foreach ($selectedFields as $field) {
+            foreach ($fieldsToSelect as $field) {
                 $escapedFields[] = '`' . str_replace('`', '``', $field) . '`';
             }
             $fieldList = implode(', ', $escapedFields);
@@ -149,7 +155,13 @@ class CustomListWidget extends AbstractWidget
         $displayFields = $this->getDisplayFields($row);
         
         if (empty($displayFields)) {
-            return '';
+            // Fallback: Zeige ID und eventuell andere wichtige Felder
+            $primaryValue = $row['id'] ?? 'Datensatz';
+            $displayFields = [[
+                'name' => 'id',
+                'label' => 'ID',
+                'value' => $primaryValue
+            ]];
         }
         
         $primaryField = reset($displayFields);
@@ -295,6 +307,7 @@ class CustomListWidget extends AbstractWidget
         $selectedFields = $this->customConfig['fields'] ?? [];
         
         // Wenn spezifische Felder ausgewählt wurden, diese verwenden
+        // ABER: ID nur anzeigen wenn explizit gewählt (nicht die automatisch hinzugefügte)
         if (!empty($selectedFields)) {
             foreach ($selectedFields as $fieldName) {
                 if (isset($row[$fieldName]) && !empty($row[$fieldName])) {

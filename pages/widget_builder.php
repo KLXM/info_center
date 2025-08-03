@@ -203,6 +203,9 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     $fieldsHtml = '<div id="table-fields-container">';
     if (!empty($widget['table_name'])) {
         $fieldsHtml .= renderFieldSelection($widget['table_name'], $widget['fields'] ?? []);
+    } else {
+        // Hinweis für neue Widgets
+        $fieldsHtml .= '<p class="help-block text-muted">Wählen Sie zuerst eine YForm-Tabelle aus, um die verfügbaren Felder zu sehen.</p>';
     }
     $fieldsHtml .= '</div>';
     $n['field'] = $fieldsHtml;
@@ -312,6 +315,11 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
             tableSelect.addEventListener("change", function() {
                 loadTableFields(this.value);
             });
+            
+            // Beim Page-Load: Falls bereits eine Tabelle ausgewählt ist, Felder laden
+            if (tableSelect.value) {
+                loadTableFields(tableSelect.value);
+            }
         }
         
         // Link-Type Radio Handler
@@ -331,11 +339,11 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
         if (!container) return;
         
         if (!tableName) {
-            container.innerHTML = "";
+            container.innerHTML = "<p class=\"help-block text-muted\">Wählen Sie zuerst eine YForm-Tabelle aus, um die verfügbaren Felder zu sehen.</p>";
             return;
         }
         
-        container.innerHTML = "<p>Lade Felder...</p>";
+        container.innerHTML = "<p><i class=\"rex-icon fa-spinner fa-spin\"></i> Lade Felder...</p>";
         
         // Widget-ID für AJAX-Request ermitteln
         const widgetIdInput = document.querySelector("input[name=\'widget_id\']");
@@ -360,7 +368,7 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
         })
         .catch(error => {
             console.error("Error loading fields:", error);
-            container.innerHTML = "<div class=\"alert alert-danger\">Fehler beim Laden der Felder</div>";
+            container.innerHTML = "<div class=\"alert alert-danger\">Fehler beim Laden der Felder: " + error.message + "</div>";
         });
     }
     </script>';
