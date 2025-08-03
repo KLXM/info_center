@@ -16,7 +16,7 @@ requires:
 page:
     title: 'translate:info_center_title'
     perm: info_center[]
-    pjax: true
+    pjax: false
     icon: rex-icon fa-info-circle
     hidden: true
     subpages:
@@ -26,6 +26,7 @@ page:
         widget_builder: 
             title: 'translate:info_center_widget_builder'
             perm: info_center[admin]
+            pjax: false
 
 default_config:
     darkmode: auto

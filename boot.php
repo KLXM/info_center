@@ -11,7 +11,6 @@ use rex_addon;
 use rex_backend_login;
 
 
-
 // Frontend-Session starten, damit rex::getUser() funktioniert
 if (rex::isFrontend()) {
     rex_backend_login::startSession();

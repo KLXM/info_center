@@ -90,6 +90,8 @@ function renderWidgetList($package, $customWidgets)
         $content .= '<thead><tr>';
         $content .= '<th>Widget-Name</th>';
         $content .= '<th>YForm-Tabelle</th>';
+        $content .= '<th>Verlinkung</th>';
+        $content .= '<th>Sichtbarkeit</th>';
         $content .= '<th>Status</th>';
         $content .= '<th>Aktionen</th>';
         $content .= '</tr></thead><tbody>';
@@ -98,6 +100,49 @@ function renderWidgetList($package, $customWidgets)
             $content .= '<tr>';
             $content .= '<td><strong>' . rex_escape($widget['name']) . '</strong></td>';
             $content .= '<td>' . rex_escape($widget['table_name']) . '</td>';
+            
+            // Link-Typ anzeigen
+            $content .= '<td>';
+            $linkType = $widget['link_type'] ?? 'yform';
+            switch ($linkType) {
+                case 'none':
+                    $content .= '<span class="label label-default">Keine</span>';
+                    break;
+                case 'yform':
+                    $content .= '<span class="label label-info">YForm</span>';
+                    break;
+                case 'url_addon':
+                    $content .= '<span class="label label-primary">URL Addon</span>';
+                    break;
+                case 'yrewrite':
+                    $content .= '<span class="label label-primary">YRewrite</span>';
+                    break;
+                case 'custom':
+                    $content .= '<span class="label label-warning">Custom</span>';
+                    break;
+                default:
+                    $content .= '<span class="label label-default">-</span>';
+            }
+            $content .= '</td>';
+            
+            // Sichtbarkeit anzeigen
+            $content .= '<td>';
+            $visibility = $widget['visibility'] ?? 'both';
+            switch ($visibility) {
+                case 'both':
+                    $content .= '<span class="label label-success">Backend + Frontend</span>';
+                    break;
+                case 'backend':
+                    $content .= '<span class="label label-info">Nur Backend</span>';
+                    break;
+                case 'frontend':
+                    $content .= '<span class="label label-warning">Nur Frontend</span>';
+                    break;
+                default:
+                    $content .= '<span class="label label-default">-</span>';
+            }
+            $content .= '</td>';
+            
             $content .= '<td>';
             if ($widget['enabled']) {
                 $content .= '<span class="label label-success">Aktiv</span>';
@@ -226,6 +271,10 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     $linkType = $widget['link_type'] ?? 'yform';
     $linkTarget = $widget['link_target'] ?? '';
     
+    // Prüfe verfügbare URL-Addons
+    $urlAddonAvailable = rex_addon::get('url')->isAvailable();
+    $yrewriteAvailable = rex_addon::get('yrewrite')->isAvailable();
+    
     $linkOptions = '
     <div class="radio">
         <label><input type="radio" name="widget_config[link_type]" value="none"' . ($linkType === 'none' ? ' checked' : '') . '> Keine Verlinkung</label>
@@ -236,7 +285,31 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
             Links zur YForm-Datensatz-Bearbeitung. Im Frontend wird automatisch eine Backend-Session erstellt.<br>
             <strong>Sicherheit:</strong> CSRF-Token werden automatisch hinzugefügt für sichere YForm-Operationen.
         </small>
-    </div>
+    </div>';
+    
+    // URL Addon Schema Option
+    if ($urlAddonAvailable) {
+        $linkOptions .= '
+        <div class="radio">
+            <label><input type="radio" name="widget_config[link_type]" value="url_addon"' . ($linkType === 'url_addon' ? ' checked' : '') . '> URL Addon Schema</label>
+            <small class="text-muted" style="margin-left: 20px; display: block;">
+                Verwendet URL Addon Schemas für saubere URLs (z.B. /artikel/{id}/)
+            </small>
+        </div>';
+    }
+    
+    // YRewrite Schema Option
+    if ($yrewriteAvailable) {
+        $linkOptions .= '
+        <div class="radio">
+            <label><input type="radio" name="widget_config[link_type]" value="yrewrite"' . ($linkType === 'yrewrite' ? ' checked' : '') . '> YRewrite Schema</label>
+            <small class="text-muted" style="margin-left: 20px; display: block;">
+                Verwendet YRewrite für strukturierte URLs
+            </small>
+        </div>';
+    }
+    
+    $linkOptions .= '
     <div class="radio">
         <label><input type="radio" name="widget_config[link_type]" value="custom"' . ($linkType === 'custom' ? ' checked' : '') . '> Benutzerdefinierte URL</label>
         <div class="form-group" id="custom-link-container" style="margin-top: 10px; margin-left: 20px; ' . ($linkType !== 'custom' ? 'display: none;' : '') . '">
@@ -246,6 +319,34 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     </div>';
     
     $n['field'] = $linkOptions;
+    $formElements[] = $n;
+    $fragment = new rex_fragment();
+    $fragment->setVar('elements', $formElements, false);
+    $content .= $fragment->parse('core/form/form.php');
+    
+    // Sichtbarkeit
+    $formElements = [];
+    $n = [];
+    $n['label'] = '<label>Sichtbarkeit</label>';
+    $visibility = $widget['visibility'] ?? 'both';
+    
+    $visibilityOptions = '
+    <div class="checkbox-group">
+        <div class="radio">
+            <label><input type="radio" name="widget_config[visibility]" value="both"' . ($visibility === 'both' ? ' checked' : '') . '> Backend und Frontend</label>
+            <small class="text-muted" style="margin-left: 20px; display: block;">Widget wird in beiden Bereichen angezeigt</small>
+        </div>
+        <div class="radio">
+            <label><input type="radio" name="widget_config[visibility]" value="backend"' . ($visibility === 'backend' ? ' checked' : '') . '> Nur Backend</label>
+            <small class="text-muted" style="margin-left: 20px; display: block;">Widget wird nur im REDAXO Backend angezeigt</small>
+        </div>
+        <div class="radio">
+            <label><input type="radio" name="widget_config[visibility]" value="frontend"' . ($visibility === 'frontend' ? ' checked' : '') . '> Nur Frontend</label>
+            <small class="text-muted" style="margin-left: 20px; display: block;">Widget wird nur im Frontend für eingeloggte Backend-Benutzer angezeigt</small>
+        </div>
+    </div>';
+    
+    $n['field'] = $visibilityOptions;
     $formElements[] = $n;
     $fragment = new rex_fragment();
     $fragment->setVar('elements', $formElements, false);
@@ -414,6 +515,7 @@ function saveWidget($package, $customWidgets)
         'filter' => trim($config['filter'] ?? ''),
         'link_type' => $config['link_type'] ?? 'yform',
         'link_target' => trim($config['link_target'] ?? ''),
+        'visibility' => $config['visibility'] ?? 'both',
         'created' => $customWidgets[$widgetId]['created'] ?? date('Y-m-d H:i:s'),
         'updated' => date('Y-m-d H:i:s')
     ];

@@ -101,12 +101,30 @@ class InfoCenter
         
         foreach ($customWidgets as $widgetId => $config) {
             if ($config['enabled'] ?? false) {
-                try {
-                    $widget = new \KLXM\InfoCenter\Widgets\CustomListWidget($widgetId, $config);
-                    $this->registerWidget($widget);
-                } catch (\Exception $e) {
-                    // Log error, aber nicht die ganze App zum Absturz bringen
-                    rex_logger::logException($e);
+                // Prüfe Sichtbarkeits-Einstellungen
+                $visibility = $config['visibility'] ?? 'both';
+                $shouldShow = false;
+                
+                switch ($visibility) {
+                    case 'both':
+                        $shouldShow = true;
+                        break;
+                    case 'backend':
+                        $shouldShow = rex::isBackend();
+                        break;
+                    case 'frontend':
+                        $shouldShow = rex::isFrontend();
+                        break;
+                }
+                
+                if ($shouldShow) {
+                    try {
+                        $widget = new \KLXM\InfoCenter\Widgets\CustomListWidget($widgetId, $config);
+                        $this->registerWidget($widget);
+                    } catch (\Exception $e) {
+                        // Log error, aber nicht die ganze App zum Absturz bringen
+                        rex_logger::logException($e);
+                    }
                 }
             }
         }

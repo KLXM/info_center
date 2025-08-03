@@ -11,6 +11,8 @@ use rex_url;
 use rex_formatter;
 use rex_backend_login;
 use rex_csrf_token;
+use rex_config;
+use rex_yrewrite;
 
 class CustomListWidget extends AbstractWidget
 {
@@ -295,6 +297,40 @@ class CustomListWidget extends AbstractWidget
                     $url = str_replace('{' . $field . '}', urlencode($value), $url);
                 }
                 return $url;
+                
+            case 'url_addon':
+                // URL Addon Schema verwenden
+                if (rex_addon::get('url')->isAvailable()) {
+                    $tableName = $this->customConfig['table_name'];
+                    $recordId = $row['id'] ?? null;
+                    if ($recordId) {
+                        // Versuche URL Addon Profile zu finden
+                        $profiles = rex_sql::factory()->getArray("SELECT namespace FROM rex_url_generator_profile WHERE table_name = ?", [$tableName]);
+                        if (!empty($profiles)) {
+                            $namespace = $profiles[0]['namespace'];
+                            // URL generieren mit URL Addon
+                            if (class_exists('rex_getUrl') && method_exists('rex_getUrl', 'getUrl')) {
+                                return rex_getUrl('', '', ['id' => $recordId], '&');
+                            } elseif (function_exists('rex_getUrl')) {
+                                return rex_getUrl('', '', ['id' => $recordId]);
+                            }
+                        }
+                    }
+                }
+                return '';
+                
+            case 'yrewrite':
+                // YRewrite Schema verwenden
+                if (rex_addon::get('yrewrite')->isAvailable()) {
+                    $tableName = $this->customConfig['table_name'];
+                    $recordId = $row['id'] ?? null;
+                    if ($recordId && class_exists('rex_yrewrite')) {
+                        // Versuche eine passende Artikel-ID zu finden oder default
+                        $articleId = rex_config::get('info_center', 'yrewrite_article_id', 1);
+                        return rex_yrewrite::getFullUrlByArticleId($articleId, '', ['id' => $recordId]);
+                    }
+                }
+                return '';
                 
             default:
                 return '';
