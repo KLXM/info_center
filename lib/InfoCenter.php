@@ -8,6 +8,7 @@ use rex_extension;
 use rex_extension_point;
 use rex_url;
 use rex_view;
+use rex_logger;
 
 class InfoCenter
 {
@@ -91,5 +92,23 @@ class InfoCenter
     public function registerWidget(WidgetInterface $widget): void
     {
         $this->widgets[$widget->getId()] = $widget;
+    }
+
+    public function registerCustomWidgets(): void
+    {
+        $addon = rex_addon::get('info_center');
+        $customWidgets = $addon->getConfig('custom_widgets', []);
+        
+        foreach ($customWidgets as $widgetId => $config) {
+            if ($config['enabled'] ?? false) {
+                try {
+                    $widget = new \KLXM\InfoCenter\Widgets\CustomListWidget($widgetId, $config);
+                    $this->registerWidget($widget);
+                } catch (\Exception $e) {
+                    // Log error, aber nicht die ganze App zum Absturz bringen
+                    rex_logger::logException($e);
+                }
+            }
+        }
     }
 }

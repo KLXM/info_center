@@ -23,6 +23,9 @@ page:
         config: 
             title: 'translate:info_center_settings'
             perm: info_center[config]
+        widget_builder: 
+            title: 'translate:info_center_widget_builder'
+            perm: info_center[admin]
 
 default_config:
     darkmode: auto

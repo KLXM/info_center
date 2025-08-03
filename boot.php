@@ -88,6 +88,9 @@ if ($isWidgetEnabled('system') && rex::getUser() && rex::getUser()->isAdmin()) {
     $infoCenter->registerWidget($widget);
 }
 
+// Registriere Custom Widgets (prio: 20+)
+$infoCenter->registerCustomWidgets();
+
 // Assets einbinden - Backend und Frontend
 if (rex::isBackend() && rex::getUser()) {
     // Backend: Normale Asset-Einbindung

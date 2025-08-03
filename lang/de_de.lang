@@ -95,3 +95,21 @@ info_center_widget_settings = Widget-Einstellungen
 info_center_widget_configuration = Widget-Konfiguration
 info_center_config_save = Einstellungen speichern
 info_center_widget_disabled_globally = Dieses Widget ist global deaktiviert
+
+# Widget Builder
+info_center_widget_builder = Widget Builder
+info_center_widget_builder_title = Custom Widgets erstellen
+info_center_widget_builder_description = Erstellen Sie eigene Widgets basierend auf YForm-Tabellen
+info_center_widget_create_new = Neues Widget erstellen
+info_center_widget_edit = Widget bearbeiten
+info_center_widget_delete = Widget löschen
+info_center_widget_name = Widget-Name
+info_center_widget_table = YForm-Tabelle
+info_center_widget_fields = Anzuzeigende Felder
+info_center_widget_limit = Anzahl Datensätze
+info_center_widget_filters = Filter/Einschränkungen
+info_center_widget_permissions = Berechtigungen
+info_center_widget_save = Widget speichern
+info_center_widget_created = Widget wurde erfolgreich erstellt
+info_center_widget_updated = Widget wurde erfolgreich aktualisiert
+info_center_widget_deleted = Widget wurde erfolgreich gelöscht
