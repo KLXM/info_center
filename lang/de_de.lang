@@ -90,3 +90,24 @@ info_center_perm_settings = Info Center konfigurieren
 # Systemmeldungen
 info_center_saved = Einstellungen wurden gespeichert
 info_center_error_saving = Fehler beim Speichern der Einstellungen
+info_center_config_saved = Einstellungen erfolgreich gespeichert
+info_center_widget_settings = Widget-Einstellungen
+info_center_widget_configuration = Widget-Konfiguration
+info_center_config_save = Einstellungen speichern
+info_center_widget_disabled_globally = Dieses Widget ist global deaktiviert
+
+# Messaging Widget
+messaging_widget_title = Nachrichten
+messaging_send_message = Nachricht senden
+messaging_take_screenshot = Screenshot erstellen
+messaging_title = Nachricht an Agentur senden
+messaging_current_url = Aktuelle URL
+messaging_current_context = Kontext-Informationen
+messaging_subject = Betreff
+messaging_subject_placeholder = Kurze Beschreibung Ihrer Nachricht
+messaging_message = Nachricht
+messaging_message_placeholder = Beschreiben Sie Ihr Problem, Ihre Frage oder Ihr Feedback detailliert...
+messaging_include_screenshot = Screenshot anhängen
+messaging_screenshot_note = Ein Screenshot wird automatisch erstellt und angehängt
+messaging_send = Nachricht senden
+messaging_cancel = Abbrechen
