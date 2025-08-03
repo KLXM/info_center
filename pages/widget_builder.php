@@ -33,8 +33,16 @@ $customWidgets = $package->getConfig('custom_widgets', []);
 // AJAX Handler für Feldauswahl
 if ($func === 'get_table_fields') {
     $tableName = rex_request('table_name', 'string', '');
+    $widgetId = rex_request('widget_id', 'string', '');
+    $selectedFields = [];
+    
+    // Bei Edit-Modus vorhandene Felder laden
+    if ($widgetId && isset($customWidgets[$widgetId])) {
+        $selectedFields = $customWidgets[$widgetId]['fields'] ?? [];
+    }
+    
     if ($tableName) {
-        echo renderFieldSelection($tableName, []);
+        echo renderFieldSelection($tableName, $selectedFields);
         exit;
     }
 }
@@ -77,6 +85,12 @@ function renderWidgetList($package, $customWidgets)
     $content .= '<div class="alert alert-info">';
     $content .= '<h4>' . $package->i18n('info_center_widget_builder_title') . '</h4>';
     $content .= '<p>' . $package->i18n('info_center_widget_builder_description') . '</p>';
+    $content .= '<ul style="margin-top: 10px; margin-bottom: 0;">';
+    $content .= '<li><strong>Darstellung:</strong> Widgets werden wie das "Zuletzt bearbeitet" Widget angezeigt</li>';
+    $content .= '<li><strong>Links:</strong> YForm-Links funktionieren im Backend und Frontend (automatische Session-Erstellung)</li>';
+    $content .= '<li><strong>Sicherheit:</strong> CSRF-Token werden automatisch für YForm-Links hinzugefügt</li>';
+    $content .= '<li><strong>Felder:</strong> Wählen Sie spezifische Felder oder lassen Sie das System die wichtigsten auswählen</li>';
+    $content .= '</ul>';
     $content .= '</div>';
     
     // Neues Widget Button
@@ -231,7 +245,11 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
         <label><input type="radio" name="widget_config[link_type]" value="none"' . ($linkType === 'none' ? ' checked' : '') . '> Keine Verlinkung</label>
     </div>
     <div class="radio">
-        <label><input type="radio" name="widget_config[link_type]" value="yform"' . ($linkType === 'yform' ? ' checked' : '') . '> YForm Tabelle bearbeiten (Standard)</label>
+        <label><input type="radio" name="widget_config[link_type]" value="yform"' . ($linkType === 'yform' ? ' checked' : '') . '> YForm Tabelle bearbeiten (empfohlen)</label>
+        <small class="text-muted" style="margin-left: 20px; display: block;">
+            Links zur YForm-Datensatz-Bearbeitung. Im Frontend wird automatisch eine Backend-Session erstellt.<br>
+            <strong>Sicherheit:</strong> CSRF-Token werden automatisch hinzugefügt für sichere YForm-Operationen.
+        </small>
     </div>
     <div class="radio">
         <label><input type="radio" name="widget_config[link_type]" value="custom"' . ($linkType === 'custom' ? ' checked' : '') . '> Benutzerdefinierte URL</label>
@@ -319,13 +337,22 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
         
         container.innerHTML = "<p>Lade Felder...</p>";
         
+        // Widget-ID für AJAX-Request ermitteln
+        const widgetIdInput = document.querySelector("input[name=\'widget_id\']");
+        const widgetId = widgetIdInput ? widgetIdInput.value : "";
+        
         // AJAX Request für Feldliste
+        let requestBody = "func=get_table_fields&table_name=" + encodeURIComponent(tableName);
+        if (widgetId) {
+            requestBody += "&widget_id=" + encodeURIComponent(widgetId);
+        }
+        
         fetch("' . rex_url::currentBackendPage() . '", {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
             },
-            body: "func=get_table_fields&table_name=" + encodeURIComponent(tableName)
+            body: requestBody
         })
         .then(response => response.text())
         .then(html => {
@@ -345,6 +372,9 @@ function saveWidget($package, $customWidgets)
 {
     $widgetId = rex_post('widget_id', 'string', '');
     $config = rex_post('widget_config', 'array', []);
+    
+    // Felder-Array separat abrufen, da es außerhalb von widget_config ist
+    $fieldsArray = rex_post('fields', 'array', []);
     
     // Validierung
     if (empty($config['name'])) {
@@ -374,7 +404,7 @@ function saveWidget($package, $customWidgets)
         'table_name' => $config['table_name'],
         'limit' => max(1, min(50, (int)($config['limit'] ?? 5))),
         'enabled' => isset($config['enabled']),
-        'fields' => $config['fields'] ?? [],
+        'fields' => $fieldsArray, // Verwende die separat abgerufenen Felder
         'filter' => trim($config['filter'] ?? ''),
         'link_type' => $config['link_type'] ?? 'yform',
         'link_target' => trim($config['link_target'] ?? ''),

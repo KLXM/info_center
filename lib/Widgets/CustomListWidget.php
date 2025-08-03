@@ -9,6 +9,8 @@ use rex_sql;
 use rex_yform_manager_table;
 use rex_url;
 use rex_formatter;
+use rex_backend_login;
+use rex_csrf_token;
 
 class CustomListWidget extends AbstractWidget
 {
@@ -64,7 +66,12 @@ class CustomListWidget extends AbstractWidget
         $selectedFields = $this->customConfig['fields'] ?? [];
         $fieldList = '*';
         if (!empty($selectedFields)) {
-            $fieldList = '`' . implode('`, `', array_map('rex_sql::escape', $selectedFields)) . '`';
+            // SQL-Feldliste erstellen mit korrekter Escape-Funktion
+            $escapedFields = [];
+            foreach ($selectedFields as $field) {
+                $escapedFields[] = '`' . str_replace('`', '``', $field) . '`';
+            }
+            $fieldList = implode(', ', $escapedFields);
         }
 
         // Basis-Query mit optionalem Filter
@@ -103,7 +110,9 @@ class CustomListWidget extends AbstractWidget
             return '<div class="info-center-empty">Keine Datensätze gefunden</div>';
         }
 
-        $content = '<div class="info-center-custom-list">';
+        // Darstellung wie beim Article Widget mit "Recent Articles"
+        $content = '<div class="info-center-recent-articles">';
+        $content .= '<h4>Datensätze</h4>';
         
         foreach ($data as $row) {
             $content .= $this->renderListItem($row);
@@ -113,8 +122,16 @@ class CustomListWidget extends AbstractWidget
 
         // Link zur Tabellenverwaltung (nur Backend)
         if (rex::isBackend() && rex::getUser() && rex_addon::get('yform')->isAvailable()) {
+            $params = ['table_name' => $this->customConfig['table_name']];
+            
+            // CSRF-Token auch für Tabellenverwaltung hinzufügen
+            $csrf_token = $this->getCSRFToken($this->customConfig['table_name']);
+            if ($csrf_token) {
+                $params['_csrf_token'] = $csrf_token;
+            }
+            
             $content .= '<div class="info-center-widget-actions">';
-            $content .= '<a href="' . rex_url::backendPage('yform/manager/data_edit', ['table_name' => $this->customConfig['table_name']]) . '" class="info-center-btn-secondary">';
+            $content .= '<a href="' . rex_url::backendPage('yform/manager/data_edit', $params) . '" class="info-center-btn-secondary">';
             $content .= '<i class="rex-icon fa-table"></i> Tabelle verwalten';
             $content .= '</a>';
             $content .= '</div>';
@@ -128,45 +145,73 @@ class CustomListWidget extends AbstractWidget
         $linkType = $this->customConfig['link_type'] ?? 'yform';
         $linkUrl = $this->generateLinkUrl($row, $linkType);
         
-        $content = '<div class="info-center-list-item' . ($linkUrl ? ' info-center-list-item-clickable' : '') . '">';
-        
-        if ($linkUrl) {
-            $content .= '<a href="' . rex_escape($linkUrl) . '" class="info-center-item-link">';
-        }
-        
-        // Hauptinhalt - ausgewählte oder alle Felder anzeigen
+        // Darstellung wie beim "Zuletzt bearbeitet" Widget
         $displayFields = $this->getDisplayFields($row);
         
-        if (!empty($displayFields)) {
-            $primaryField = reset($displayFields);
-            
-            $content .= '<div class="info-center-list-item-main">';
-            $content .= '<strong>' . rex_escape($primaryField['value']) . '</strong>';
-            $content .= '</div>';
-            
-            // Zusätzliche Felder
-            if (count($displayFields) > 1) {
-                $content .= '<div class="info-center-list-item-meta">';
-                $metaFields = array_slice($displayFields, 1, 2); // Max 2 zusätzliche Felder
-                foreach ($metaFields as $field) {
-                    $content .= '<span class="info-center-meta-item">' . rex_escape($field['label']) . ': ' . rex_escape($field['value']) . '</span>';
+        if (empty($displayFields)) {
+            return '';
+        }
+        
+        $primaryField = reset($displayFields);
+        
+        // Datum ermitteln (createdate, updatedate oder date)
+        $dateField = $row['createdate'] ?? $row['updatedate'] ?? $row['date'] ?? '';
+        $formattedDate = '';
+        if ($dateField) {
+            try {
+                // Try different date formats
+                if (is_numeric($dateField)) {
+                    $formattedDate = date('d.m. H:i', (int)$dateField);
+                } else {
+                    $timestamp = strtotime($dateField);
+                    if ($timestamp !== false) {
+                        $formattedDate = date('d.m. H:i', $timestamp);
+                    }
                 }
-                $content .= '</div>';
+            } catch (\Exception $e) {
+                $formattedDate = '';
             }
         }
         
-        // Datum falls vorhanden
-        if (isset($row['createdate']) || isset($row['updatedate']) || isset($row['date'])) {
-            $dateField = $row['createdate'] ?? $row['updatedate'] ?? $row['date'] ?? '';
-            if ($dateField) {
-                $content .= '<div class="info-center-list-item-date">';
-                $content .= rex_formatter::format($dateField, 'date', 'd.m.Y H:i');
-                $content .= '</div>';
+        // Zusätzliche Meta-Informationen aus allen Feldern
+        $metaInfo = '';
+        $additionalFields = [];
+        
+        if (count($displayFields) > 1) {
+            // Alle Felder außer dem ersten sammeln
+            for ($i = 1; $i < count($displayFields); $i++) {
+                $field = $displayFields[$i];
+                $additionalFields[] = rex_escape($field['value']);
             }
+            $metaInfo = implode(' • ', $additionalFields);
         }
+        
+        $content = '<div class="info-center-recent-article">';
         
         if ($linkUrl) {
-            $content .= '</a>';
+            $content .= sprintf(
+                '<a href="%s" title="%s">
+                    <span class="article-name">%s</span>
+                    %s
+                    <span class="article-date">%s</span>
+                </a>',
+                $linkUrl, // URL NICHT escapen
+                rex_escape($primaryField['value']),
+                rex_escape($this->truncateString($primaryField['value'], 30)),
+                $metaInfo ? '<span class="article-meta" style="display: block; font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px;">' . $this->truncateString($metaInfo, 50) . '</span>' : '',
+                $formattedDate
+            );
+        } else {
+            $content .= sprintf(
+                '<div style="padding: 6px 8px; border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 4px; background: rgba(255, 255, 255, 0.02);">
+                    <span class="article-name">%s</span>
+                    %s
+                    <span class="article-date" style="float: right;">%s</span>
+                </div>',
+                rex_escape($this->truncateString($primaryField['value'], 30)),
+                $metaInfo ? '<div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 2px;">' . $this->truncateString($metaInfo, 50) . '</div>' : '',
+                $formattedDate
+            );
         }
         
         $content .= '</div>';
@@ -181,15 +226,49 @@ class CustomListWidget extends AbstractWidget
                 return '';
                 
             case 'yform':
-                if (rex::isBackend() && rex::getUser() && rex_addon::get('yform')->isAvailable()) {
+                // Check permissions first
+                $user = null;
+                if (rex::isFrontend()) {
+                    // Im Frontend: Backend-User-Session erstellen falls noch nicht vorhanden
+                    $user = rex_backend_login::createUser();
+                } else {
+                    // Im Backend: Direkt aktuellen User verwenden
+                    $user = rex::getUser();
+                }
+                
+                if (!$user) {
+                    return '';
+                }
+                
+                // Check permissions for YForm access
+                $hasPermissions = false;
+                if (rex::isBackend()) {
+                    $hasPermissions = $user->isAdmin() || $user->hasPerm('yform');
+                } else {
+                    // Frontend: Extended permission check for backend users
+                    $hasPermissions = $user->isAdmin() || 
+                                    $user->hasPerm('yform') || 
+                                    $user->hasPerm('structure') || 
+                                    $user->hasPerm('content');
+                }
+                
+                if ($hasPermissions && rex_addon::get('yform')->isAvailable()) {
                     $tableName = $this->customConfig['table_name'];
                     $recordId = $row['id'] ?? null;
                     if ($recordId) {
-                        return rex_url::backendPage('yform/manager/data_edit', [
+                        $params = [
                             'table_name' => $tableName,
                             'data_id' => $recordId,
                             'func' => 'edit'
-                        ]);
+                        ];
+                        
+                        // CSRF-Token für YForm hinzufügen (besonders wichtig im Frontend)
+                        $csrf_token = $this->getCSRFToken($tableName);
+                        if ($csrf_token) {
+                            $params['_csrf_token'] = $csrf_token;
+                        }
+                        
+                        return rex_url::backendPage('yform/manager/data_edit', $params);
                     }
                 }
                 return '';
@@ -291,6 +370,44 @@ class CustomListWidget extends AbstractWidget
         }
         
         return $value;
+    }
+
+    private function getCSRFToken(string $tableName): ?string
+    {
+        $csrf_token = null;
+        
+        try {
+            $table = rex_yform_manager_table::get($tableName);
+            if ($table) {
+                if (rex::isBackend()) {
+                    // Im Backend: Verwende standard REDAXO CSRF-Token
+                    $_csrf_key = $table->getCSRFKey();
+                    $_csrf_params = rex_csrf_token::factory($_csrf_key)->getUrlParams();
+                    $csrf_token = $_csrf_params['_csrf_token'];
+                } elseif (rex::isFrontend() && rex_backend_login::hasSession()) {
+                    // Im Frontend: Nur mit Backend-Session
+                    rex::setProperty('redaxo', true);
+                    $_csrf_key = $table->getCSRFKey();
+                    $_csrf_params = rex_csrf_token::factory($_csrf_key)->getUrlParams();
+                    $csrf_token = $_csrf_params['_csrf_token'];
+                    rex::setProperty('redaxo', false);
+                }
+            }
+        } catch (\Exception $e) {
+            // CSRF token generation failed, continue without token
+            $csrf_token = null;
+        }
+        
+        return $csrf_token;
+    }
+
+    private function truncateString(string $string, int $length): string
+    {
+        if (strlen($string) <= $length) {
+            return $string;
+        }
+        
+        return substr($string, 0, $length - 3) . '...';
     }
 
     public function getPriority(): int
