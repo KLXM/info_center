@@ -123,8 +123,8 @@ class ArticleWidget extends AbstractWidget
 
         $html = '<div class="info-center-quick-links">';
         
-        // Struktur-Hauptseite
-        if ($user->hasPerm('structure')) {
+        // Struktur-Hauptseite - nur für Admins oder User mit quick_navigation Berechtigung
+        if ($user->isAdmin() || $user->hasPerm('quick_navigation[]')) {
             $html .= sprintf(
                 '<div class="info-center-quick-link">
                     <a href="%s">%s</a>
@@ -141,7 +141,8 @@ class ArticleWidget extends AbstractWidget
     private function renderRecentArticles(): string
     {
         $user = rex_backend_login::createUser();
-        if (!$user || (!$user->hasPerm('structure') && !$user->hasPerm('content'))) {
+        // Nur Admins oder User mit quick_navigation[history] Berechtigung
+        if (!$user || (!$user->isAdmin() && !$user->hasPerm('quick_navigation[history]'))) {
             return '';
         }
 
@@ -206,12 +207,15 @@ class ArticleWidget extends AbstractWidget
                 return [];
             }
 
-            // Prüfe Berechtigung für alle Änderungen oder nur eigene
-            if (!$user->isAdmin() && !$user->hasPerm('quick_navigation[all_changes]')) {
+            // Vereinfachte Berechtigungsprüfung: Nur quick_navigation Berechtigungen verwenden
+            // 1. Admins sehen alle Änderungen
+            // 2. User mit quick_navigation[all_changes] sehen alle Änderungen  
+            // 3. Andere sehen nur ihre eigenen Änderungen
+            if ($user->isAdmin() || $user->hasPerm('quick_navigation[all_changes]')) {
+                $where = 'WHERE updatedate > 0';
+            } else {
                 $where = 'WHERE updateuser = :user';
                 $whereParams['user'] = $user->getValue('login');
-            } else {
-                $where = 'WHERE updatedate > 0';
             }
 
             $sql = rex_sql::factory();
@@ -305,11 +309,8 @@ class ArticleWidget extends AbstractWidget
                     // Im Backend: Normale Berechtigungsprüfung
                     $canLinkToStructure = $user->getComplexPerm('structure')?->hasCategoryPerm($parent->getId()) ?? false;
                 } else {
-                    // Im Frontend: Erweiterte Prüfung für Backend-Benutzer
-                    $canLinkToStructure = $user->isAdmin() || 
-                                          $user->hasPerm('structure') || 
-                                          $user->hasPerm('content') ||
-                                          $user->hasPerm('article');
+                    // Im Frontend: Nur für Admins oder User mit quick_navigation Berechtigung
+                    $canLinkToStructure = $user->isAdmin() || $user->hasPerm('quick_navigation[]');
                 }
             }
             
@@ -344,11 +345,8 @@ class ArticleWidget extends AbstractWidget
                 // Im Backend: Normale Berechtigungsprüfung
                 $hasStructurePerm = $user->getComplexPerm('structure')?->hasCategoryPerm($this->article->getCategoryId()) ?? false;
             } else {
-                // Im Frontend: Erweiterte Prüfung für Backend-Benutzer
-                $hasStructurePerm = $user->isAdmin() || 
-                                    $user->hasPerm('structure') || 
-                                    $user->hasPerm('content') ||
-                                    $user->hasPerm('article');
+                // Im Frontend: Nur für Admins oder User mit quick_navigation Berechtigung
+                $hasStructurePerm = $user->isAdmin() || $user->hasPerm('quick_navigation[]');
             }
         }
         
