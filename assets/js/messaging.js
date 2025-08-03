@@ -53,6 +53,8 @@
             messagingUrl += '&current_url=' + encodeURIComponent(currentUrl);
             messagingUrl += '&current_context=' + encodeURIComponent(currentContext);
             
+            console.log('Navigating to messaging URL:', messagingUrl);
+            
             // Navigiere direkt zur Backend-Seite
             window.location.href = messagingUrl;
         },
