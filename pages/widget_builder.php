@@ -282,8 +282,7 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     <div class="radio">
         <label><input type="radio" name="widget_config[link_type]" value="yform"' . ($linkType === 'yform' ? ' checked' : '') . '> ' . $package->i18n('info_center_widget_link_yform') . ' (empfohlen)</label>
         <small class="text-muted" style="margin-left: 20px; display: block;">
-            Links zur YForm-Datensatz-Bearbeitung. Im Frontend wird automatisch eine Backend-Session erstellt.<br>
-            <strong>Sicherheit:</strong> CSRF-Token werden automatisch hinzugefügt für sichere YForm-Operationen.
+            ' . $package->i18n('info_center_widget_yform_help') . '
         </small>
     </div>';
     
@@ -293,7 +292,7 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
         <div class="radio">
             <label><input type="radio" name="widget_config[link_type]" value="url_addon"' . ($linkType === 'url_addon' ? ' checked' : '') . '> ' . $package->i18n('info_center_widget_link_url_addon') . '</label>
             <small class="text-muted" style="margin-left: 20px; display: block;">
-                Verwendet URL Addon Schemas für saubere URLs (z.B. /artikel/{id}/)
+                ' . $package->i18n('info_center_widget_url_addon_help') . '
             </small>
         </div>';
     }
@@ -304,7 +303,7 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
         <div class="radio">
             <label><input type="radio" name="widget_config[link_type]" value="yrewrite"' . ($linkType === 'yrewrite' ? ' checked' : '') . '> ' . $package->i18n('info_center_widget_link_yrewrite') . '</label>
             <small class="text-muted" style="margin-left: 20px; display: block;">
-                Verwendet YRewrite für strukturierte URLs
+                ' . $package->i18n('info_center_widget_yrewrite_help') . '
             </small>
         </div>';
     }
@@ -334,15 +333,15 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     <div class="checkbox-group">
         <div class="radio">
             <label><input type="radio" name="widget_config[visibility]" value="both"' . ($visibility === 'both' ? ' checked' : '') . '> ' . $package->i18n('info_center_widget_visibility_both') . '</label>
-            <small class="text-muted" style="margin-left: 20px; display: block;">Widget wird in beiden Bereichen angezeigt</small>
+            <small class="text-muted" style="margin-left: 20px; display: block;">' . $package->i18n('info_center_widget_visibility_both_help') . '</small>
         </div>
         <div class="radio">
             <label><input type="radio" name="widget_config[visibility]" value="backend"' . ($visibility === 'backend' ? ' checked' : '') . '> ' . $package->i18n('info_center_widget_visibility_backend') . '</label>
-            <small class="text-muted" style="margin-left: 20px; display: block;">Widget wird nur im REDAXO Backend angezeigt</small>
+            <small class="text-muted" style="margin-left: 20px; display: block;">' . $package->i18n('info_center_widget_visibility_backend_help') . '</small>
         </div>
         <div class="radio">
             <label><input type="radio" name="widget_config[visibility]" value="frontend"' . ($visibility === 'frontend' ? ' checked' : '') . '> ' . $package->i18n('info_center_widget_visibility_frontend') . '</label>
-            <small class="text-muted" style="margin-left: 20px; display: block;">Widget wird nur im Frontend für eingeloggte Backend-Benutzer angezeigt</small>
+            <small class="text-muted" style="margin-left: 20px; display: block;">' . $package->i18n('info_center_widget_visibility_frontend_help') . '</small>
         </div>
     </div>';
     
