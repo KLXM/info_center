@@ -29,6 +29,9 @@ default_config:
         upkeep:
             enabled: true
             prio: 2
+        messaging:
+            enabled: true
+            prio: 3
         stats:
             enabled: true
             prio: 5

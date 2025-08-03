@@ -87,3 +87,24 @@ info_center_perm_settings = Configure Info Center
 # System Messages
 info_center_saved = Settings have been saved
 info_center_error_saving = Error saving settings
+info_center_config_saved = Settings saved successfully
+info_center_widget_settings = Widget Settings
+info_center_widget_configuration = Widget Configuration
+info_center_config_save = Save Settings
+info_center_widget_disabled_globally = This widget is disabled globally
+
+# Messaging Widget
+messaging_widget_title = Messaging
+messaging_send_message = Send Message
+messaging_take_screenshot = Take Screenshot
+messaging_title = Send Message to Agency
+messaging_current_url = Current URL
+messaging_current_context = Context Information
+messaging_subject = Subject
+messaging_subject_placeholder = Brief description of your message
+messaging_message = Message
+messaging_message_placeholder = Describe your issue, question or feedback in detail...
+messaging_include_screenshot = Include Screenshot
+messaging_screenshot_note = A screenshot will be automatically captured and attached
+messaging_send = Send Message
+messaging_cancel = Cancel
