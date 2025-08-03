@@ -8,16 +8,22 @@ use rex_fragment;
 use rex_url;
 use rex_view;
 use rex_request;
+use rex_escape;
 
-$package = rex_addon::get('info_center');
-$content = '';
-$buttons = '';
-$formElements = [];
-$n = [];
+try {
+    $package = rex_addon::get('info_center');
+    if (!$package->isAvailable()) {
+        throw new \Exception('Info Center addon not available');
+    }
+    
+    $content = '';
+    $buttons = '';
+    $formElements = [];
+    $n = [];
 
-// Aktuelle URL und Kontext ermitteln
-$currentUrl = rex_request('current_url', 'string', '');
-$currentContext = rex_request('current_context', 'string', '');
+    // Aktuelle URL und Kontext ermitteln
+    $currentUrl = rex_request('current_url', 'string', '');
+    $currentContext = rex_request('current_context', 'string', '');
 
 $content .= '<fieldset><legend>' . $package->i18n('messaging_send_message') . '</legend>';
 
@@ -100,8 +106,16 @@ $fragment->setVar('body', $content, false);
 $fragment->setVar('buttons', $buttons, false);
 $output = $fragment->parse('core/page/section.php');
 
-echo $output;
+    echo $output;
 
-// CSS und JS für Messaging
-rex_view::addCssFile($package->getAssetsUrl('css/messaging.css'));
-rex_view::addJsFile($package->getAssetsUrl('js/messaging.js'));
+    // CSS und JS für Messaging
+    rex_view::addCssFile($package->getAssetsUrl('css/messaging.css'));
+    rex_view::addJsFile($package->getAssetsUrl('js/messaging.js'));
+
+} catch (\Exception $e) {
+    echo '<div class="alert alert-danger">';
+    echo '<h4>Error loading messaging form</h4>';
+    echo '<p>' . rex_escape($e->getMessage()) . '</p>';
+    echo '<p><small>File: ' . rex_escape($e->getFile()) . ' Line: ' . $e->getLine() . '</small></p>';
+    echo '</div>';
+}

@@ -8,6 +8,7 @@
     
     var MessagingWidget = {
         screenshotData: null,
+        backendPath: (typeof rex !== 'undefined' && rex.backend_path) ? rex.backend_path : '/redaxo/',
         
         init: function() {
             this.bindEvents();
@@ -67,18 +68,21 @@
         
         openMessageModal: function(currentUrl, currentContext) {
             var self = this;
-            var modalUrl = rex.backend_path + 'index.php?page=info_center/messaging';
+            var modalUrl = this.backendPath + 'index.php?page=info_center/messaging';
             modalUrl += '&current_url=' + encodeURIComponent(currentUrl);
             modalUrl += '&current_context=' + encodeURIComponent(currentContext);
             
             $('#info-center-modal .modal-title').text('Send Message to Agency');
             $('#info-center-modal .modal-body').html('<div class="text-center"><i class="rex-icon rex-icon-spinner fa-spin"></i> Loading...</div>');
             
+            console.log('Loading messaging form from:', modalUrl);
+            
             $.get(modalUrl, function(data) {
                 $('#info-center-modal .modal-body').html(data);
                 $('#info-center-modal').modal('show');
-            }).fail(function() {
-                self.showStatus('Error loading messaging form', 'error');
+            }).fail(function(xhr, status, error) {
+                console.error('Failed to load messaging form:', status, error, xhr.responseText);
+                self.showStatus('Error loading messaging form: ' + (xhr.status || 'Unknown error'), 'error');
             });
         },
         
@@ -180,7 +184,7 @@
             };
             
             $.ajax({
-                url: rex.backend_path + 'index.php',
+                url: self.backendPath + 'index.php',
                 type: 'POST',
                 data: formData,
                 dataType: 'json'
