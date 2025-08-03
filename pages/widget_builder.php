@@ -182,11 +182,66 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     $fragment->setVar('elements', $formElements, false);
     $content .= $fragment->parse('core/form/form.php');
     
+    // Feldauswahl Container (dynamisch geladen)
+    $formElements = [];
+    $n = [];
+    $n['label'] = '<label>Anzuzeigende Felder</label>';
+    $fieldsHtml = '<div id="table-fields-container">';
+    if (!empty($widget['table_name'])) {
+        $fieldsHtml .= renderFieldSelection($widget['table_name'], $widget['fields'] ?? []);
+    }
+    $fieldsHtml .= '</div>';
+    $n['field'] = $fieldsHtml;
+    $formElements[] = $n;
+    $fragment = new rex_fragment();
+    $fragment->setVar('elements', $formElements, false);
+    $content .= $fragment->parse('core/form/form.php');
+    
     // Anzahl Datensätze
     $formElements = [];
     $n = [];
     $n['label'] = '<label for="widget-limit">' . $package->i18n('info_center_widget_limit') . '</label>';
     $n['field'] = '<input type="number" id="widget-limit" name="widget_config[limit]" class="form-control" value="' . (int)($widget['limit'] ?? 5) . '" min="1" max="50" />';
+    $formElements[] = $n;
+    $fragment = new rex_fragment();
+    $fragment->setVar('elements', $formElements, false);
+    $content .= $fragment->parse('core/form/form.php');
+    
+    // Filter-Bedingungen
+    $formElements = [];
+    $n = [];
+    $n['label'] = '<label for="widget-filter">Filter-Bedingungen <small class="text-muted">(Optional)</small></label>';
+    $filterValue = $widget['filter'] ?? '';
+    $n['field'] = '<textarea id="widget-filter" name="widget_config[filter]" class="form-control" rows="3" placeholder="z.B. status = 1 AND created > \'2024-01-01\'">' . rex_escape($filterValue) . '</textarea>';
+    $n['note'] = '<small class="text-muted">SQL WHERE-Bedingung ohne "WHERE". Beispiele:<br>• <code>status = 1</code><br>• <code>createdate >= CURDATE() - INTERVAL 30 DAY</code><br>• <code>status = 1 AND email LIKE \'%@example.com\'</code></small>';
+    $formElements[] = $n;
+    $fragment = new rex_fragment();
+    $fragment->setVar('elements', $formElements, false);
+    $content .= $fragment->parse('core/form/form.php');
+    
+    // Verlinkung/Action
+    $formElements = [];
+    $n = [];
+    $n['label'] = '<label>Verlinkung der Datensätze</label>';
+    $linkType = $widget['link_type'] ?? 'yform';
+    $linkTarget = $widget['link_target'] ?? '';
+    
+    $linkOptions = '
+    <div class="radio">
+        <label><input type="radio" name="widget_config[link_type]" value="none"' . ($linkType === 'none' ? ' checked' : '') . '> Keine Verlinkung</label>
+    </div>
+    <div class="radio">
+        <label><input type="radio" name="widget_config[link_type]" value="yform"' . ($linkType === 'yform' ? ' checked' : '') . '> YForm Tabelle bearbeiten (Standard)</label>
+    </div>
+    <div class="radio">
+        <label><input type="radio" name="widget_config[link_type]" value="custom"' . ($linkType === 'custom' ? ' checked' : '') . '> Benutzerdefinierte URL</label>
+        <div class="form-group" id="custom-link-container" style="margin-top: 10px; margin-left: 20px; ' . ($linkType !== 'custom' ? 'display: none;' : '') . '">
+            <input type="text" name="widget_config[link_target]" class="form-control" placeholder="z.B. index.php?page=mypage&id={id}" value="' . rex_escape($linkTarget) . '">
+            <small class="text-muted">Verwenden Sie {feldname} als Platzhalter, z.B. {id}, {name}</small>
+        </div>
+    </div>';
+    
+    $n['field'] = $linkOptions;
     $formElements[] = $n;
     $fragment = new rex_fragment();
     $fragment->setVar('elements', $formElements, false);
@@ -228,7 +283,60 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     <form action="' . rex_url::currentBackendPage(['func' => 'save']) . '" method="post">
     <input type="hidden" name="widget_id" value="' . rex_escape($widgetId) . '" />
     ' . $output . '
-    </form>';
+    </form>
+    
+    <script>
+    // JavaScript für dynamische Feldauswahl und Link-Optionen
+    document.addEventListener("DOMContentLoaded", function() {
+        // Tabellen-Auswahl Handler
+        const tableSelect = document.getElementById("widget-table");
+        if (tableSelect) {
+            tableSelect.addEventListener("change", function() {
+                loadTableFields(this.value);
+            });
+        }
+        
+        // Link-Type Radio Handler
+        const linkRadios = document.querySelectorAll("input[name=\'widget_config[link_type]\']");
+        linkRadios.forEach(function(radio) {
+            radio.addEventListener("change", function() {
+                const customContainer = document.getElementById("custom-link-container");
+                if (customContainer) {
+                    customContainer.style.display = (this.value === "custom") ? "block" : "none";
+                }
+            });
+        });
+    });
+    
+    function loadTableFields(tableName) {
+        const container = document.getElementById("table-fields-container");
+        if (!container) return;
+        
+        if (!tableName) {
+            container.innerHTML = "";
+            return;
+        }
+        
+        container.innerHTML = "<p>Lade Felder...</p>";
+        
+        // AJAX Request für Feldliste
+        fetch("' . rex_url::currentBackendPage() . '", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: "func=get_table_fields&table_name=" + encodeURIComponent(tableName)
+        })
+        .then(response => response.text())
+        .then(html => {
+            container.innerHTML = html;
+        })
+        .catch(error => {
+            console.error("Error loading fields:", error);
+            container.innerHTML = "<div class=\"alert alert-danger\">Fehler beim Laden der Felder</div>";
+        });
+    }
+    </script>';
     
     return $output;
 }
@@ -266,6 +374,10 @@ function saveWidget($package, $customWidgets)
         'table_name' => $config['table_name'],
         'limit' => max(1, min(50, (int)($config['limit'] ?? 5))),
         'enabled' => isset($config['enabled']),
+        'fields' => $config['fields'] ?? [],
+        'filter' => trim($config['filter'] ?? ''),
+        'link_type' => $config['link_type'] ?? 'yform',
+        'link_target' => trim($config['link_target'] ?? ''),
         'created' => $customWidgets[$widgetId]['created'] ?? date('Y-m-d H:i:s'),
         'updated' => date('Y-m-d H:i:s')
     ];

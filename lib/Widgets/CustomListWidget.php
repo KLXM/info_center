@@ -44,6 +44,7 @@ class CustomListWidget extends AbstractWidget
     {
         $tableName = $this->customConfig['table_name'];
         $limit = min(50, max(1, (int)($this->customConfig['limit'] ?? 5)));
+        $filter = trim($this->customConfig['filter'] ?? '');
 
         // Prüfe ob Tabelle existiert
         $sql = rex_sql::factory();
@@ -59,10 +60,41 @@ class CustomListWidget extends AbstractWidget
             $yformTable = rex_yform_manager_table::get($tableName);
         }
 
-        // Basis-Query
-        $query = "SELECT * FROM `{$tableName}` ORDER BY id DESC LIMIT {$limit}";
+        // Felder auswählen
+        $selectedFields = $this->customConfig['fields'] ?? [];
+        $fieldList = '*';
+        if (!empty($selectedFields)) {
+            $fieldList = '`' . implode('`, `', array_map('rex_sql::escape', $selectedFields)) . '`';
+        }
+
+        // Basis-Query mit optionalem Filter
+        $whereClause = '';
+        if (!empty($filter)) {
+            // Validiere Filter-SQL (einfache Prüfung)
+            if (!$this->isValidFilter($filter)) {
+                throw new \Exception("Ungültige Filter-Bedingung");
+            }
+            $whereClause = ' WHERE ' . $filter;
+        }
+        
+        $query = "SELECT {$fieldList} FROM `{$tableName}`{$whereClause} ORDER BY id DESC LIMIT {$limit}";
         
         return $sql->getArray($query);
+    }
+
+    private function isValidFilter(string $filter): bool
+    {
+        // Einfache Validierung - gefährliche Befehle blockieren
+        $dangerous = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'TRUNCATE'];
+        $upperFilter = strtoupper($filter);
+        
+        foreach ($dangerous as $cmd) {
+            if (strpos($upperFilter, $cmd) !== false) {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     private function renderList(array $data): string
@@ -93,24 +125,34 @@ class CustomListWidget extends AbstractWidget
 
     private function renderListItem(array $row): string
     {
-        $content = '<div class="info-center-list-item">';
+        $linkType = $this->customConfig['link_type'] ?? 'yform';
+        $linkUrl = $this->generateLinkUrl($row, $linkType);
         
-        // Hauptinhalt - erste paar Felder anzeigen
+        $content = '<div class="info-center-list-item' . ($linkUrl ? ' info-center-list-item-clickable' : '') . '">';
+        
+        if ($linkUrl) {
+            $content .= '<a href="' . rex_escape($linkUrl) . '" class="info-center-item-link">';
+        }
+        
+        // Hauptinhalt - ausgewählte oder alle Felder anzeigen
         $displayFields = $this->getDisplayFields($row);
-        $primaryField = reset($displayFields);
         
-        $content .= '<div class="info-center-list-item-main">';
-        $content .= '<strong>' . rex_escape($primaryField['value']) . '</strong>';
-        $content .= '</div>';
-        
-        // Zusätzliche Felder
-        if (count($displayFields) > 1) {
-            $content .= '<div class="info-center-list-item-meta">';
-            $metaFields = array_slice($displayFields, 1, 2); // Max 2 zusätzliche Felder
-            foreach ($metaFields as $field) {
-                $content .= '<span class="info-center-meta-item">' . rex_escape($field['label']) . ': ' . rex_escape($field['value']) . '</span>';
-            }
+        if (!empty($displayFields)) {
+            $primaryField = reset($displayFields);
+            
+            $content .= '<div class="info-center-list-item-main">';
+            $content .= '<strong>' . rex_escape($primaryField['value']) . '</strong>';
             $content .= '</div>';
+            
+            // Zusätzliche Felder
+            if (count($displayFields) > 1) {
+                $content .= '<div class="info-center-list-item-meta">';
+                $metaFields = array_slice($displayFields, 1, 2); // Max 2 zusätzliche Felder
+                foreach ($metaFields as $field) {
+                    $content .= '<span class="info-center-meta-item">' . rex_escape($field['label']) . ': ' . rex_escape($field['value']) . '</span>';
+                }
+                $content .= '</div>';
+            }
         }
         
         // Datum falls vorhanden
@@ -123,16 +165,71 @@ class CustomListWidget extends AbstractWidget
             }
         }
         
+        if ($linkUrl) {
+            $content .= '</a>';
+        }
+        
         $content .= '</div>';
         
         return $content;
     }
 
+    private function generateLinkUrl(array $row, string $linkType): string
+    {
+        switch ($linkType) {
+            case 'none':
+                return '';
+                
+            case 'yform':
+                if (rex::isBackend() && rex::getUser() && rex_addon::get('yform')->isAvailable()) {
+                    $tableName = $this->customConfig['table_name'];
+                    $recordId = $row['id'] ?? null;
+                    if ($recordId) {
+                        return rex_url::backendPage('yform/manager/data_edit', [
+                            'table_name' => $tableName,
+                            'data_id' => $recordId,
+                            'func' => 'edit'
+                        ]);
+                    }
+                }
+                return '';
+                
+            case 'custom':
+                $template = $this->customConfig['link_target'] ?? '';
+                if (!$template) return '';
+                
+                // Platzhalter ersetzen
+                $url = $template;
+                foreach ($row as $field => $value) {
+                    $url = str_replace('{' . $field . '}', urlencode($value), $url);
+                }
+                return $url;
+                
+            default:
+                return '';
+        }
+    }
+
     private function getDisplayFields(array $row): array
     {
         $fields = [];
+        $selectedFields = $this->customConfig['fields'] ?? [];
         
-        // Standard-Felder die oft vorkommen, in Prioritätsreihenfolge
+        // Wenn spezifische Felder ausgewählt wurden, diese verwenden
+        if (!empty($selectedFields)) {
+            foreach ($selectedFields as $fieldName) {
+                if (isset($row[$fieldName]) && !empty($row[$fieldName])) {
+                    $fields[] = [
+                        'name' => $fieldName,
+                        'label' => $this->getFieldLabel($fieldName),
+                        'value' => $this->formatFieldValue($fieldName, $row[$fieldName])
+                    ];
+                }
+            }
+            return $fields;
+        }
+        
+        // Fallback: Standard-Felder in Prioritätsreihenfolge
         $priorityFields = ['name', 'title', 'subject', 'email', 'status', 'id'];
         
         // Zuerst Priority-Felder
