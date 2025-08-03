@@ -18,13 +18,11 @@ page:
     perm: info_center[]
     pjax: true
     icon: rex-icon fa-info-circle
+    hidden: true
     subpages:
         config: 
             title: 'translate:info_center_settings'
             perm: info_center[config]
-        messaging: 
-            title: 'translate:messaging_title'
-            perm: info_center[]
 
 default_config:
     darkmode: auto

@@ -24,15 +24,29 @@ if (rex_post('formsubmit', 'string') == '1') {
     
     // Widget-Einstellungen pro User speichern
     $widgetConfig = [];
-    $widgets = ['url', 'timetracker', 'article', 'upkeep', 'stats', 'system', 'messaging'];
+    $widgets = ['url', 'timetracker', 'article', 'upkeep', 'stats', 'system'];
+    $globalConfig = $package->getConfig('widgets', []);
     
     foreach ($widgets as $widget) {
-        $widgetConfig[$widget] = [
-            'enabled' => isset($config['widget_' . $widget . '_' . $user]) ? 1 : 0
-        ];
+        // Prüfe ob Widget global aktiviert ist
+        $globalEnabled = $globalConfig[$widget]['enabled'] ?? true;
+        
+        // Nur speichern wenn Widget global aktiviert ist (sonst macht User-Setting keinen Sinn)
+        if ($globalEnabled) {
+            $widgetConfig[$widget] = [
+                'enabled' => isset($config['widget_' . $widget . '_' . $user]) ? 1 : 0
+            ];
+        }
     }
     
-    $package->setConfig('widgets_user_' . $user, $widgetConfig);
+    // Nur speichern wenn es User-spezifische Einstellungen gibt
+    if (!empty($widgetConfig)) {
+        $package->setConfig('widgets_user_' . $user, $widgetConfig);
+    } else {
+        // Wenn keine User-spezifischen Einstellungen existieren, lösche die Config
+        $package->removeConfig('widgets_user_' . $user);
+    }
+    
     echo rex_view::success($package->i18n('info_center_config_saved'));
 }
 
@@ -46,12 +60,20 @@ $content .= '<fieldset><legend>' . $package->i18n('info_center_widget_settings')
 $widgets = [
     'url' => 'URL Widget',
     'timetracker' => 'Time Tracker Widget',
-    'article' => 'Article Widget',
+    'article' => 'Article Widget'
+];
+
+// Admin-only Widgets
+$adminWidgets = [
     'upkeep' => 'Upkeep Widget',
     'stats' => 'Statistics Widget',
-    'system' => 'System Widget',
-    'messaging' => 'Messaging Widget'
+    'system' => 'System Widget'
 ];
+
+// Füge Admin-Widgets hinzu wenn User Admin ist
+if (rex::getUser()->isAdmin()) {
+    $widgets = array_merge($widgets, $adminWidgets);
+}
 
 foreach ($widgets as $widgetId => $widgetTitle) {
     $formElements = [];
@@ -59,7 +81,12 @@ foreach ($widgets as $widgetId => $widgetTitle) {
     
     // Prüfe ob Widget global aktiviert ist
     $globalEnabled = $globalConfig[$widgetId]['enabled'] ?? true;
-    $userEnabled = $currentConfig[$widgetId]['enabled'] ?? $globalEnabled;
+    
+    // User-Einstellung: Nur wenn global aktiviert UND User-spezifische Einstellung existiert
+    $userEnabled = $globalEnabled;  // Standard: folge globaler Einstellung
+    if ($globalEnabled && isset($currentConfig[$widgetId]['enabled'])) {
+        $userEnabled = (bool) $currentConfig[$widgetId]['enabled'];
+    }
     
     $n['label'] = '<label for="info-center-widget-' . $widgetId . '">' . $widgetTitle . '</label>';
     $n['field'] = '<input type="checkbox" id="info-center-widget-' . $widgetId . '" name="config[widget_' . $widgetId . '_' . $user . ']"' . 

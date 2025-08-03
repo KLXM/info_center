@@ -338,17 +338,6 @@ class ArticleWidget extends AbstractWidget
         $user = rex_backend_login::createUser();
         $hasStructurePerm = false;
         
-        // Debug-Info hinzufügen
-        if (rex::isFrontend()) {
-            $debugInfo = sprintf(
-                'Debug: Frontend-Modus, User: %s, Session: %s, Perms: %s',
-                $user ? 'Ja' : 'Nein',
-                rex_backend_login::hasSession() ? 'Ja' : 'Nein',
-                $user ? ($user->isAdmin() ? 'Admin' : ($user->hasPerm('structure') ? 'Structure' : ($user->hasPerm('content') ? 'Content' : 'Andere'))) : 'Keine'
-            );
-            $html .= '<div style="font-size:10px;color:#888;margin-bottom:8px;">' . $debugInfo . '</div>';
-        }
-        
         // Prüfe Berechtigung - Backend oder Frontend mit Backend-Session
         if ($user) {
             if (rex::isBackend()) {

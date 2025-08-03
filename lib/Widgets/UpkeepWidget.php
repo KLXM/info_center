@@ -92,17 +92,11 @@ class UpkeepWidget extends AbstractWidget
                         <i class="rex-icon rex-icon-security"></i>
                         <span>%s</span>
                     </a>
-                    <a href="%s">
-                        <i class="rex-icon rex-icon-system"></i>
-                        <span>%s</span>
-                    </a>
                 </div>',
                 rex_url::backendPage('upkeep'),
                 rex_i18n::msg('info_center_upkeep_dashboard'),
                 rex_url::backendPage('upkeep/ips'),
-                rex_i18n::msg('info_center_upkeep_security'),
-                rex_url::backendPage('upkeep/settings'),
-                rex_i18n::msg('info_center_upkeep_settings')
+                rex_i18n::msg('info_center_upkeep_security')
             );
         }
 

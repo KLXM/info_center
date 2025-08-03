@@ -89,9 +89,11 @@
     height: 100%;
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 20px;
+    padding: 56px 20px 20px 20px; /* Top padding für Header-Buttons */
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    display: flex;
+    flex-direction: column;
 }
 
 .info-center-content::-webkit-scrollbar {
@@ -793,6 +795,53 @@
     transform: translateY(-1px);
 }
 
+/* Header Buttons - Settings and Close at top right */
+.info-center-header-buttons {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 10;
+    display: flex;
+    gap: 8px;
+}
+
+.info-center-settings-btn,
+.info-center-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--button-bg);
+    border: 1px solid var(--button-border);
+    border-radius: 6px;
+    color: var(--text-color);
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.info-center-settings-btn:hover,
+.info-center-close-btn:hover {
+    background: var(--hover-bg);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text-color);
+    text-decoration: none;
+    transform: translateY(-1px);
+}
+
+.info-center-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+}
+
+/* Settings Button - Removed from bottom */
+.info-center-settings {
+    display: none;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .info-center-container {
@@ -800,10 +849,27 @@
     }
     
     .info-center-content {
-        padding: 16px;
+        padding: 48px 16px 16px 16px; /* Top padding für Header-Buttons auch mobil */
     }
     
     .info-center-widget-content {
         padding: 16px;
+    }
+    
+    .info-center-header-buttons {
+        top: 8px;
+        right: 8px;
+        gap: 6px;
+    }
+    
+    .info-center-settings-btn,
+    .info-center-close-btn {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .info-center-icon {
+        width: 14px;
+        height: 14px;
     }
 }

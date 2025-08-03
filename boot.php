@@ -9,7 +9,6 @@ use rex_view;
 use rex_url;
 use rex_addon;
 use rex_backend_login;
-use rex_api_function;
 
 // Frontend-Session starten, damit rex::getUser() funktioniert
 if (rex::isFrontend()) {
@@ -28,68 +27,74 @@ $userWidgetConfig = $addon->getConfig('widgets_user_' . $userId, []);
 
 // Funktion zur Prüfung ob Widget für den Benutzer aktiviert ist
 $isWidgetEnabled = function($widgetId) use ($addon, $userWidgetConfig) {
-    // Prüfe User-spezifische Einstellungen
+    // Prüfe zuerst globale Einstellungen
+    $globalConfig = $addon->getConfig('widgets', []);
+    $globalEnabled = $globalConfig[$widgetId]['enabled'] ?? true;
+    
+    // Wenn global deaktiviert, ist Widget immer deaktiviert
+    if (!$globalEnabled) {
+        return false;
+    }
+    
+    // Wenn global aktiviert, prüfe User-spezifische Einstellungen
     if (isset($userWidgetConfig[$widgetId]['enabled'])) {
         return (bool) $userWidgetConfig[$widgetId]['enabled'];
     }
     
-    // Fallback auf globale Einstellungen
-    $globalConfig = $addon->getConfig('widgets', []);
-    return $globalConfig[$widgetId]['enabled'] ?? true;
+    // Fallback: global aktiviert, keine User-Einstellung -> aktiviert
+    return true;
 };
 
-// Registriere Widgets in der Reihenfolge ihrer Prioritäten (niedrigste zuerst)
+// Registriere Widgets mit korrekten Prioritäten (niedrigste zuerst)
 // URL Widget (prio: -1)
 if ($isWidgetEnabled('url')) {
-    $infoCenter->registerWidget(new Widgets\UrlWidget());
+    $widget = new Widgets\UrlWidget();
+    $widget->setPriority(-1);
+    $infoCenter->registerWidget($widget);
 }
 
 // TimeTracker Widget (prio: 0)
 if ($isWidgetEnabled('timetracker')) {
-    $infoCenter->registerWidget(new Widgets\TimeTrackerWidget());
+    $widget = new Widgets\TimeTrackerWidget();
+    $widget->setPriority(0);
+    $infoCenter->registerWidget($widget);
 }
 
 // Article Widget (prio: 1)
 if ($isWidgetEnabled('article')) {
-    $infoCenter->registerWidget(new Widgets\ArticleWidget());
+    $widget = new Widgets\ArticleWidget();
+    $widget->setPriority(1);
+    $infoCenter->registerWidget($widget);
 }
 
-// Upkeep Widget (prio: 2)
-if ($isWidgetEnabled('upkeep')) {
-    $infoCenter->registerWidget(new Widgets\UpkeepWidget());
+// Upkeep Widget (prio: 2) - Nur für Admins
+if ($isWidgetEnabled('upkeep') && rex::getUser() && rex::getUser()->isAdmin()) {
+    $widget = new Widgets\UpkeepWidget();
+    $widget->setPriority(2);
+    $infoCenter->registerWidget($widget);
 }
 
-// Messaging Widget (prio: 3) - Neue Widget-Registrierung
-if ($isWidgetEnabled('messaging')) {
-    $infoCenter->registerWidget(new Widgets\MessagingWidget());
+// Stats Widget (prio: 5) - Nur für Admins
+if ($isWidgetEnabled('stats') && rex::getUser() && rex::getUser()->isAdmin()) {
+    $widget = new Widgets\StatsWidget();
+    $widget->setPriority(5);
+    $infoCenter->registerWidget($widget);
 }
 
-// Stats Widget (prio: 5)
-if ($isWidgetEnabled('stats')) {
-    $infoCenter->registerWidget(new Widgets\StatsWidget());
+// System Widget (prio: 10) - Nur für Admins
+if ($isWidgetEnabled('system') && rex::getUser() && rex::getUser()->isAdmin()) {
+    $widget = new Widgets\SystemWidget();
+    $widget->setPriority(10);
+    $infoCenter->registerWidget($widget);
 }
-
-// System Widget (prio: 10)
-if ($isWidgetEnabled('system')) {
-    $infoCenter->registerWidget(new Widgets\SystemWidget());
-}
-
-// REX API für Messaging registrieren
-rex_api_function::register('info_center_messaging', \KLXM\InfoCenter\Api\MessagingApi::class);
-
-
-
-
 
 // Assets einbinden - Backend und Frontend
 if (rex::isBackend() && rex::getUser()) {
     // Backend: Normale Asset-Einbindung
     rex_view::addCssFile($addon->getAssetsUrl('css/info-center.css'));
     rex_view::addCssFile($addon->getAssetsUrl('css/timetracker.css'));
-    rex_view::addCssFile($addon->getAssetsUrl('css/messaging.css'));
     rex_view::addJsFile($addon->getAssetsUrl('js/info-center.js'));
     rex_view::addJsFile($addon->getAssetsUrl('js/timetracker.js'));
-    rex_view::addJsFile($addon->getAssetsUrl('js/messaging.js'));
 }
 
 // Ausgabe für Backend und Frontend
@@ -118,12 +123,10 @@ if (rex::isFrontend() && rex_backend_login::createUser()) {
                 ['</head>', '</body>'],
                 [
                     '<link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/info-center.css') . '" />
-                    <link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/timetracker.css') . '" />
-                    <link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/messaging.css') . '" /></head>',
+                    <link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/timetracker.css') . '" /></head>',
                     $infoCenterOutput . '
                     <script src="' . $addon->getAssetsUrl('js/info-center.js') . '"></script>
                     <script src="' . $addon->getAssetsUrl('js/timetracker.js') . '"></script>
-                    <script src="' . $addon->getAssetsUrl('js/messaging.js') . '"></script>
                     </body>'
                 ],
                 $content
