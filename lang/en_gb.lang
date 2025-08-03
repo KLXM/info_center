@@ -53,6 +53,9 @@ info_center_add_article = New Page
 info_center_content_overview = Content Area
 info_center_recent_articles = Recently Edited
 
+# URL Widget (URL2)
+info_center_url_title = URL2 Record
+
 # Upkeep Widget
 info_center_upkeep_title = Upkeep
 info_center_upkeep_status = Status
@@ -110,3 +113,25 @@ info_center_widget_save = Save Widget
 info_center_widget_created = Widget created successfully
 info_center_widget_updated = Widget updated successfully
 info_center_widget_deleted = Widget deleted successfully
+info_center_widget_link_type = Record Linking
+info_center_widget_link_none = No Linking
+info_center_widget_link_yform = Edit YForm Table
+info_center_widget_link_url_addon = URL Addon Schema
+info_center_widget_link_yrewrite = YRewrite Schema
+info_center_widget_link_custom = Custom URL
+info_center_widget_visibility = Visibility
+info_center_widget_visibility_both = Backend and Frontend
+info_center_widget_visibility_backend = Backend Only
+info_center_widget_visibility_frontend = Frontend Only
+info_center_widget_filter_conditions = Filter Conditions
+info_center_widget_filter_optional = (Optional)
+info_center_widget_filter_help = SQL WHERE condition without "WHERE"
+info_center_widget_custom_url_placeholder = Use {fieldname} as placeholder, e.g. {id}, {name}
+info_center_widget_enabled = Widget enabled
+info_center_widget_select_table_first = Select a YForm table first to see available fields
+info_center_widget_loading_fields = Loading fields...
+info_center_widget_fields_loading_error = Error loading fields
+info_center_widget_yform_not_available = YForm addon is not available or no tables found
+info_center_widget_confirm_delete = Really delete widget?
+info_center_widget_no_widgets = No custom widgets created yet. Click "Create New Widget" to get started.
+info_center_widget_cancel = Cancel
