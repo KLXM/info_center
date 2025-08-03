@@ -77,22 +77,21 @@ $fragment = new rex_fragment();
 $fragment->setVar('elements', $formElements, false);
 $content .= $fragment->parse('core/form/checkbox.php');
 
-// Hidden Screenshot Data
-$content .= '<input type="hidden" id="messaging-screenshot-data" name="screenshot_data" />';
+    // Hidden Screenshot Data
+    $content .= '<input type="hidden" id="messaging-screenshot-data" name="screenshot_data" />';
+    
+    // Status-Element hinzufügen
+    $content .= '<div id="messaging-status" class="messaging-status"></div>';
 
-$content .= '</fieldset>';
-
-// Buttons
-$formElements = [];
-$n = [];
-$n['field'] = '<button class="btn btn-primary" type="button" id="messaging-send-btn">' . $package->i18n('messaging_send') . '</button>
-               <button class="btn btn-default" type="button" onclick="parent.jQuery(\'#info-center-modal\').modal(\'hide\')">' . $package->i18n('messaging_cancel') . '</button>';
-$formElements[] = $n;
-$fragment = new rex_fragment();
-$fragment->setVar('elements', $formElements, false);
-$buttons = $fragment->parse('core/form/submit.php');
-
-$buttons = '
+    $content .= '</fieldset>';    // Buttons
+    $formElements = [];
+    $n = [];
+    $n['field'] = '<button class="btn btn-primary" type="button" id="messaging-send-btn">' . $package->i18n('messaging_send') . '</button>
+                   <a href="' . rex_url::backendController() . '" class="btn btn-default">' . $package->i18n('messaging_cancel') . '</a>';
+    $formElements[] = $n;
+    $fragment = new rex_fragment();
+    $fragment->setVar('elements', $formElements, false);
+    $buttons = $fragment->parse('core/form/submit.php');$buttons = '
 <fieldset class="rex-form-action">
     ' . $buttons . '
 </fieldset>

@@ -24,7 +24,6 @@ pages:
             messaging:
                 title: 'translate:messaging_title'
                 perm: info_center[]
-                hidden: true
 
 default_config:
     darkmode: auto

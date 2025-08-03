@@ -12,7 +12,7 @@
         
         init: function() {
             this.bindEvents();
-            this.initModal();
+            // Modal-Initialisierung entfernt, da wir direkt zur Backend-Seite navigieren
         },
         
         bindEvents: function() {
@@ -32,7 +32,7 @@
                 self.takeScreenshot();
             });
             
-            // Send button in modal
+            // Send button in modal -> jetzt auf der Backend-Seite
             $(document).on('click', '#messaging-send-btn', function(e) {
                 e.preventDefault();
                 self.sendMessage();
@@ -46,44 +46,15 @@
             });
         },
         
-        initModal: function() {
-            // Create modal if it doesn't exist
-            if ($('#info-center-modal').length === 0) {
-                var modal = $('<div class="modal fade" id="info-center-modal" tabindex="-1" role="dialog">' +
-                    '<div class="modal-dialog" role="document">' +
-                        '<div class="modal-content">' +
-                            '<div class="modal-header">' +
-                                '<h4 class="modal-title">Info Center</h4>' +
-                                '<button type="button" class="close" data-dismiss="modal" aria-label="Close">' +
-                                    '<span aria-hidden="true">&times;</span>' +
-                                '</button>' +
-                            '</div>' +
-                            '<div class="modal-body"></div>' +
-                        '</div>' +
-                    '</div>' +
-                '</div>');
-                $('body').append(modal);
-            }
-        },
         
         openMessageModal: function(currentUrl, currentContext) {
-            var self = this;
-            var modalUrl = this.backendPath + 'index.php?page=info_center/messaging';
-            modalUrl += '&current_url=' + encodeURIComponent(currentUrl);
-            modalUrl += '&current_context=' + encodeURIComponent(currentContext);
+            // Direkter Aufruf der Backend-Seite anstatt Modal/AJAX
+            var messagingUrl = this.backendPath + 'index.php?page=info_center/messaging';
+            messagingUrl += '&current_url=' + encodeURIComponent(currentUrl);
+            messagingUrl += '&current_context=' + encodeURIComponent(currentContext);
             
-            $('#info-center-modal .modal-title').text('Send Message to Agency');
-            $('#info-center-modal .modal-body').html('<div class="text-center"><i class="rex-icon rex-icon-spinner fa-spin"></i> Loading...</div>');
-            
-            console.log('Loading messaging form from:', modalUrl);
-            
-            $.get(modalUrl, function(data) {
-                $('#info-center-modal .modal-body').html(data);
-                $('#info-center-modal').modal('show');
-            }).fail(function(xhr, status, error) {
-                console.error('Failed to load messaging form:', status, error, xhr.responseText);
-                self.showStatus('Error loading messaging form: ' + (xhr.status || 'Unknown error'), 'error');
-            });
+            // Navigiere direkt zur Backend-Seite
+            window.location.href = messagingUrl;
         },
         
         takeScreenshot: function() {
@@ -191,11 +162,11 @@
             }).done(function(response) {
                 if (response.success) {
                     self.showStatus('Message sent successfully!', 'success');
-                    $('#info-center-modal').modal('hide');
                     
-                    // Reset form
-                    $('#messaging-subject, #messaging-message').val('');
-                    self.removeScreenshot();
+                    // Nach erfolgreichem Senden zurück zur vorherigen Seite oder Dashboard
+                    setTimeout(function() {
+                        window.history.back();
+                    }, 2000);
                     
                 } else {
                     self.showStatus('Error: ' + (response.message || 'Unknown error'), 'error');
@@ -219,7 +190,10 @@
         showStatus: function(message, type) {
             var $status = $('#messaging-status');
             if ($status.length === 0) {
-                $status = $('.messaging-status');
+                // Falls kein Status-Element da ist, eins nach dem Send-Button erstellen
+                var statusHtml = '<div id="messaging-status" class="messaging-status"></div>';
+                $('#messaging-send-btn').closest('.rex-form-action').after(statusHtml);
+                $status = $('#messaging-status');
             }
             
             $status.removeClass('success error info').addClass(type).text(message);
@@ -228,7 +202,7 @@
             if (type === 'success') {
                 setTimeout(function() {
                     $status.text('');
-                }, 3000);
+                }, 5000); // Etwas länger, da wir zur vorherigen Seite navigieren
             }
         }
     };
