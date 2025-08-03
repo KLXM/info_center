@@ -10,6 +10,7 @@ use rex_url;
 use rex_addon;
 use rex_backend_login;
 
+
 // Frontend-Session starten, damit rex::getUser() funktioniert
 if (rex::isFrontend()) {
     rex_backend_login::startSession();
@@ -21,40 +22,75 @@ $addon = rex_addon::get('info_center');
 // Initialisiere das Info Center
 $infoCenter = InfoCenter::getInstance();
 
-// Registriere Widgets in der Reihenfolge ihrer Prioritäten (niedrigste zuerst)
+// Benutzer-ID für widget-spezifische Einstellungen
+$userId = rex::getUser() ? rex::getUser()->getId() : 0;
+$userWidgetConfig = $addon->getConfig('widgets_user_' . $userId, []);
+
+// Funktion zur Prüfung ob Widget für den Benutzer aktiviert ist
+$isWidgetEnabled = function($widgetId) use ($addon, $userWidgetConfig) {
+    // Prüfe zuerst globale Einstellungen
+    $globalConfig = $addon->getConfig('widgets', []);
+    $globalEnabled = $globalConfig[$widgetId]['enabled'] ?? true;
+    
+    // Wenn global deaktiviert, ist Widget immer deaktiviert
+    if (!$globalEnabled) {
+        return false;
+    }
+    
+    // Wenn global aktiviert, prüfe User-spezifische Einstellungen
+    if (isset($userWidgetConfig[$widgetId]['enabled'])) {
+        return (bool) $userWidgetConfig[$widgetId]['enabled'];
+    }
+    
+    // Fallback: global aktiviert, keine User-Einstellung -> aktiviert
+    return true;
+};
+
+// Registriere Widgets mit korrekten Prioritäten (niedrigste zuerst)
 // URL Widget (prio: -1)
-if ($addon->getConfig('widgets')['url']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\UrlWidget());
+if ($isWidgetEnabled('url')) {
+    $widget = new Widgets\UrlWidget();
+    $widget->setPriority(-1);
+    $infoCenter->registerWidget($widget);
 }
 
 // TimeTracker Widget (prio: 0)
-if ($addon->getConfig('widgets')['timetracker']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\TimeTrackerWidget());
+if ($isWidgetEnabled('timetracker')) {
+    $widget = new Widgets\TimeTrackerWidget();
+    $widget->setPriority(0);
+    $infoCenter->registerWidget($widget);
 }
 
 // Article Widget (prio: 1)
-if ($addon->getConfig('widgets')['article']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\ArticleWidget());
+if ($isWidgetEnabled('article')) {
+    $widget = new Widgets\ArticleWidget();
+    $widget->setPriority(1);
+    $infoCenter->registerWidget($widget);
 }
 
-// Upkeep Widget (prio: 2)
-if ($addon->getConfig('widgets')['upkeep']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\UpkeepWidget());
+// Upkeep Widget (prio: 2) - Nur für Admins
+if ($isWidgetEnabled('upkeep') && rex::getUser() && rex::getUser()->isAdmin()) {
+    $widget = new Widgets\UpkeepWidget();
+    $widget->setPriority(2);
+    $infoCenter->registerWidget($widget);
 }
 
-// Stats Widget (prio: 5)
-if ($addon->getConfig('widgets')['stats']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\StatsWidget());
+// Stats Widget (prio: 5) - Nur für Admins
+if ($isWidgetEnabled('stats') && rex::getUser() && rex::getUser()->isAdmin()) {
+    $widget = new Widgets\StatsWidget();
+    $widget->setPriority(5);
+    $infoCenter->registerWidget($widget);
 }
 
-// System Widget (prio: 10)
-if ($addon->getConfig('widgets')['system']['enabled'] ?? true) {
-    $infoCenter->registerWidget(new Widgets\SystemWidget());
+// System Widget (prio: 10) - Nur für Admins
+if ($isWidgetEnabled('system') && rex::getUser() && rex::getUser()->isAdmin()) {
+    $widget = new Widgets\SystemWidget();
+    $widget->setPriority(10);
+    $infoCenter->registerWidget($widget);
 }
 
-
-
-
+// Registriere Custom Widgets (prio: 20+)
+$infoCenter->registerCustomWidgets();
 
 // Assets einbinden - Backend und Frontend
 if (rex::isBackend() && rex::getUser()) {

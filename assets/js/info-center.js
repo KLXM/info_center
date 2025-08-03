@@ -48,13 +48,20 @@
     function initInfoCenterToggle() {
         console.log('InfoCenter: Initializing toggle functionality');
         const toggleBtns = document.querySelectorAll('.info-center-toggle');
+        const closeBtns = document.querySelectorAll('.info-center-close-btn');
         
-        console.log('InfoCenter: Found', toggleBtns.length, 'toggle buttons');
+        console.log('InfoCenter: Found', toggleBtns.length, 'toggle buttons and', closeBtns.length, 'close buttons');
         
         toggleBtns.forEach(btn => {
             // Entferne alte Event Listener um Duplikate zu vermeiden
             btn.removeEventListener('click', handleToggleClick);
             btn.addEventListener('click', handleToggleClick);
+        });
+        
+        closeBtns.forEach(btn => {
+            // Entferne alte Event Listener um Duplikate zu vermeiden
+            btn.removeEventListener('click', handleCloseClick);
+            btn.addEventListener('click', handleCloseClick);
         });
         
         // Restore previous state
@@ -104,11 +111,38 @@
         }
     }
     
+    function handleCloseClick(e) {
+        console.log('InfoCenter: Close button clicked');
+        e.preventDefault();
+        e.stopPropagation();
+        
+        const sidebar = document.querySelector('.info-center-sidebar');
+        const toggleBtn = document.querySelector('.info-center-toggle');
+        
+        if (sidebar) {
+            sidebar.classList.remove('active');
+            if (toggleBtn) toggleBtn.classList.remove('active');
+            
+            // Store closed state in localStorage
+            localStorage.setItem('infoCenterOpen', '0');
+            
+            console.log('InfoCenter: Closed sidebar via close button');
+            
+            // Notify TimeTracker about visibility change
+            if (window.InfoCenterTimeTracker && window.InfoCenterTimeTracker.updateMiniVisibility) {
+                window.InfoCenterTimeTracker.updateMiniVisibility();
+            }
+        } else {
+            console.warn('InfoCenter: Sidebar element not found');
+        }
+    }
+    
     function handleOutsideClick(e) {
         const sidebar = document.querySelector('.info-center-sidebar');
         const toggleBtn = e.target.closest('.info-center-toggle');
+        const closeBtn = e.target.closest('.info-center-close-btn');
         
-        if (sidebar && !sidebar.contains(e.target) && !toggleBtn) {
+        if (sidebar && !sidebar.contains(e.target) && !toggleBtn && !closeBtn) {
             sidebar.classList.remove('active');
             const btn = document.querySelector('.info-center-toggle');
             if (btn) btn.classList.remove('active');

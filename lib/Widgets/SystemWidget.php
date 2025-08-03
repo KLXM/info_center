@@ -85,17 +85,17 @@ class SystemWidget extends AbstractWidget
         // Add admin links if in backend and user is admin
         if (rex::isBackend() && rex::getUser()?->isAdmin()) {
             $content .= sprintf(
-                '<div class="info-center-system-admin-links">
+                '<div class="info-center-system-actions">
                     <a href="%s">
                         <i class="rex-icon rex-icon-system"></i>
                         <span>%s</span>
                     </a>
                     <a href="%s">
-                        <i class="rex-icon rex-icon-file-text"></i>
+                        <i class="rex-icon rex-icon-info"></i>
                         <span>%s</span>
                     </a>
                     <a href="%s">
-                        <i class="rex-icon rex-icon-info"></i>
+                        <i class="rex-icon rex-icon-phpinfo"></i>
                         <span>%s</span>
                     </a>
                 </div>',

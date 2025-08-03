@@ -13,6 +13,21 @@ requires:
         structure: '^2.0.0'
         quick_navigation: '*'
 
+page:
+    title: 'translate:info_center_title'
+    perm: info_center[]
+    pjax: false
+    icon: rex-icon fa-info-circle
+    hidden: true
+    subpages:
+        config: 
+            title: 'translate:info_center_settings'
+            perm: info_center[config]
+        widget_builder: 
+            title: 'translate:info_center_widget_builder'
+            perm: info_center[admin]
+            pjax: false
+
 default_config:
     darkmode: auto
     position: right
@@ -29,12 +44,19 @@ default_config:
         upkeep:
             enabled: true
             prio: 2
+        messaging:
+            enabled: true
+            prio: 3
         stats:
             enabled: true
             prio: 5
         system:
             enabled: true
             prio: 10
+
+default_permissions:
+    info_center: 'Info Center'
+    info_center[config]: 'Info Center Settings'
 
 conflicts:
     packages:
