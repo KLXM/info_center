@@ -154,17 +154,22 @@ class UrlWidget extends AbstractWidget
             return $html;
         }
 
-        // Check if user has permissions for YForm/Backend access
+        // Check permissions using correct YForm table permissions (like quick_navigation)
         $hasPermissions = false;
-        if (rex::isBackend()) {
-            $hasPermissions = $user->isAdmin() || $user->hasPerm('yform');
-        } else {
-            // Frontend: Extended permission check for backend users
-            $hasPermissions = $user->isAdmin() || 
-                            $user->hasPerm('yform') || 
-                            $user->hasPerm('structure') || 
-                            $user->hasPerm('content');
-        }
+        
+        if ($user->isAdmin()) {
+            $hasPermissions = true;
+        } elseif ($url2Info['is_yform_table']) {
+            // For YForm tables: Check specific table permissions (exactly like quick_navigation)
+            $yform = rex_addon::get('yform');
+            $yperm_suffix = '';
+            if (version_compare($yform->getVersion(), '4.0.0-dev', '>=')) {
+                $yperm_suffix = '_edit';
+            }
+            
+            $complexPerm = $user->getComplexPerm('yform_manager_table' . $yperm_suffix);
+            $hasPermissions = $complexPerm && $complexPerm->hasPerm($url2Info['table']);
+        } 
 
         if (!$hasPermissions) {
             $html .= '<div class="info-center-url-note">Keine Berechtigungen für Datensatz-Bearbeitung.</div>';
