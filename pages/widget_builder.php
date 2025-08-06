@@ -343,7 +343,7 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     // Filter-Bedingungen
     $formElements = [];
     $n = [];
-    $n['label'] = '<label for="widget-filter">' . $package->i18n('info_center_widget_filter_conditions') . ' <small class="text-muted">' . $package->i18n('info_center_widget_filter_optional') . '</small> <a href="#" id="filter-help-btn" class="btn btn-xs btn-info" style="margin-left: 10px;"><i class="rex-icon fa-question-circle"></i> Hilfe</a></label>';
+    $n['label'] = '<label for="widget-filter">' . $package->i18n('info_center_widget_filter_conditions') . ' <small class="text-muted">' . $package->i18n('info_center_widget_filter_optional') . '</small> <a href="#" id="filter-help-btn" class="btn btn-xs btn-info" style="margin-left: 10px;">?</a></label>';
     $filterValue = $widget['filter'] ?? '';
     $n['field'] = '<textarea id="widget-filter" name="widget_config[filter]" class="form-control" rows="3" placeholder="z.B. status = 1 AND created > \'{30_DAYS_AGO}\'">' . rex_escape($filterValue) . '</textarea>';
     $n['note'] = '<small class="text-muted">' . $package->i18n('info_center_widget_filter_help') . '. Grundlegende Beispiele:<br>• <code>status = 1</code><br>• <code>createdate >= \'{30_DAYS_AGO}\'</code><br>• <code>status = 1 AND email LIKE \'%@example.com\'</code></small>';
@@ -489,66 +489,92 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     ' . $output . '
     </form>
     
-    <!-- Filter Hilfe Modal -->
+    <!-- Filter Help Modal -->
     <div class="modal fade" id="filter-help-modal" tabindex="-1" role="dialog">
         <div class="modal-dialog modal-lg" role="document">
             <div class="modal-content">
                 <div class="modal-header">
                     <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
-                    <h4 class="modal-title">PHP-Zeitplatzhalter für Filter-Bedingungen</h4>
+                    <h4 class="modal-title">PHP Time Placeholders for Filter Conditions</h4>
                 </div>
                 <div class="modal-body">
-                    <h5>Aktuelle Zeit/Datum:</h5>
+                    <h5>Current Date/Time:</h5>
                     <ul>
-                        <li><code>{NOW}</code> - Aktuelles Datum und Zeit (' . date('Y-m-d H:i:s') . ')</li>
-                        <li><code>{TODAY}</code> - Heutiges Datum (' . date('Y-m-d') . ')</li>
-                        <li><code>{YESTERDAY}</code> - Gestern (' . date('Y-m-d', strtotime('-1 day')) . ')</li>
-                        <li><code>{TOMORROW}</code> - Morgen (' . date('Y-m-d', strtotime('+1 day')) . ')</li>
-                        <li><code>{CURRENT_TIME}</code> - Aktuelle Zeit (' . date('H:i:s') . ')</li>
+                        <li><code>{NOW}</code> - Current date and time (' . date('Y-m-d H:i:s') . ')</li>
+                        <li><code>{TODAY}</code> - Today\'s date (' . date('Y-m-d') . ')</li>
+                        <li><code>{YESTERDAY}</code> - Yesterday (' . date('Y-m-d', strtotime('-1 day')) . ')</li>
+                        <li><code>{TOMORROW}</code> - Tomorrow (' . date('Y-m-d', strtotime('+1 day')) . ')</li>
+                        <li><code>{CURRENT_TIME}</code> - Current time (' . date('H:i:s') . ')</li>
                     </ul>
                     
-                    <h5>Zeiträume:</h5>
+                    <h5>Time Periods:</h5>
                     <ul>
-                        <li><code>{WEEK_START}</code> - Wochenanfang/Montag (' . date('Y-m-d', strtotime('monday this week')) . ')</li>
-                        <li><code>{WEEK_END}</code> - Wochenende/Sonntag (' . date('Y-m-d', strtotime('sunday this week')) . ')</li>
-                        <li><code>{MONTH_START}</code> - Monatsanfang (' . date('Y-m-01') . ')</li>
-                        <li><code>{MONTH_END}</code> - Monatsende (' . date('Y-m-t') . ')</li>
-                        <li><code>{YEAR_START}</code> - Jahresanfang (' . date('Y-01-01') . ')</li>
-                        <li><code>{YEAR_END}</code> - Jahresende (' . date('Y-12-31') . ')</li>
+                        <li><code>{WEEK_START}</code> - Start of week (Monday) (' . date('Y-m-d', strtotime('monday this week')) . ')</li>
+                        <li><code>{WEEK_END}</code> - End of week (Sunday) (' . date('Y-m-d', strtotime('sunday this week')) . ')</li>
+                        <li><code>{MONTH_START}</code> - Start of month (' . date('Y-m-01') . ')</li>
+                        <li><code>{MONTH_END}</code> - End of month (' . date('Y-m-t') . ')</li>
+                        <li><code>{YEAR_START}</code> - Start of year (' . date('Y-01-01') . ')</li>
+                        <li><code>{YEAR_END}</code> - End of year (' . date('Y-12-31') . ')</li>
                     </ul>
                     
-                    <h5>Relative Zeiträume:</h5>
+                    <h5>Relative Time Periods:</h5>
                     <ul>
-                        <li><code>{7_DAYS_AGO}</code> - Vor 7 Tagen (' . date('Y-m-d', strtotime('-7 days')) . ')</li>
-                        <li><code>{30_DAYS_AGO}</code> - Vor 30 Tagen (' . date('Y-m-d', strtotime('-30 days')) . ')</li>
-                        <li><code>{1_YEAR_AGO}</code> - Vor 1 Jahr (' . date('Y-m-d', strtotime('-1 year')) . ')</li>
+                        <li><code>{7_DAYS_AGO}</code> - 7 days ago (' . date('Y-m-d', strtotime('-7 days')) . ')</li>
+                        <li><code>{30_DAYS_AGO}</code> - 30 days ago (' . date('Y-m-d', strtotime('-30 days')) . ')</li>
+                        <li><code>{90_DAYS_AGO}</code> - 90 days ago (' . date('Y-m-d', strtotime('-90 days')) . ')</li>
+                        <li><code>{1_YEAR_AGO}</code> - 1 year ago (' . date('Y-m-d', strtotime('-1 year')) . ')</li>
+                        <li><code>{1_WEEK_FROM_NOW}</code> - 1 week from now (' . date('Y-m-d', strtotime('+1 week')) . ')</li>
+                        <li><code>{1_MONTH_FROM_NOW}</code> - 1 month from now (' . date('Y-m-d', strtotime('+1 month')) . ')</li>
                     </ul>
                     
                     <h5>Unix Timestamps:</h5>
                     <ul>
-                        <li><code>{NOW_TIMESTAMP}</code> - Aktueller Timestamp (' . time() . ')</li>
-                        <li><code>{TODAY_TIMESTAMP}</code> - Heute 00:00 Timestamp (' . strtotime('today') . ')</li>
-                        <li><code>{YESTERDAY_TIMESTAMP}</code> - Gestern 00:00 Timestamp (' . strtotime('yesterday') . ')</li>
+                        <li><code>{NOW_TIMESTAMP}</code> - Current timestamp (' . time() . ')</li>
+                        <li><code>{TODAY_TIMESTAMP}</code> - Today 00:00 timestamp (' . strtotime('today') . ')</li>
+                        <li><code>{YESTERDAY_TIMESTAMP}</code> - Yesterday 00:00 timestamp (' . strtotime('yesterday') . ')</li>
+                        <li><code>{WEEK_START_TIMESTAMP}</code> - Start of week timestamp (' . strtotime('monday this week') . ')</li>
                     </ul>
                     
-                    <h5>Beispiele für Filter-Bedingungen:</h5>
-                    <pre><code>-- Einträge der letzten 30 Tage
+                    <h5>Advanced Time Calculations:</h5>
+                    <ul>
+                        <li><code>{LAST_MONDAY}</code> - Last Monday (' . date('Y-m-d', strtotime('last monday')) . ')</li>
+                        <li><code>{NEXT_FRIDAY}</code> - Next Friday (' . date('Y-m-d', strtotime('next friday')) . ')</li>
+                        <li><code>{FIRST_DAY_OF_MONTH}</code> - First day of current month (' . date('Y-m-01') . ')</li>
+                        <li><code>{LAST_DAY_OF_MONTH}</code> - Last day of current month (' . date('Y-m-t') . ')</li>
+                    </ul>
+                    
+                    <h5>Filter Examples:</h5>
+                    <pre><code>-- Records from last 30 days
 createdate >= \'{30_DAYS_AGO}\'
 
--- Einträge von heute
+-- Records from today
 DATE(createdate) = \'{TODAY}\'
 
--- Einträge dieser Woche
+-- Records from this week
 createdate >= \'{WEEK_START}\' AND createdate <= \'{WEEK_END}\'
 
--- Aktive Einträge von heute
+-- Active records created today
 status = 1 AND DATE(createdate) = \'{TODAY}\'
 
--- Timestamp-basierte Abfrage
-timestamp_field >= {TODAY_TIMESTAMP}</code></pre>
+-- Timestamp-based query
+timestamp_field >= {TODAY_TIMESTAMP}
+
+-- Records modified this month
+updatedate >= \'{MONTH_START}\'
+
+-- Complex condition with multiple placeholders
+status = 1 AND createdate >= \'{30_DAYS_AGO}\' AND updatedate <= \'{NOW}\'
+
+-- Business hours filter (9 AM to 5 PM today)
+createdate >= \'{TODAY} 09:00:00\' AND createdate <= \'{TODAY} 17:00:00\'</code></pre>
+                    
+                    <div class="alert alert-info">
+                        <strong>Pro Tip:</strong> These placeholders are processed server-side using PHP\'s date functions, 
+                        ensuring consistent timezone handling and performance optimization.
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-default" data-dismiss="modal">Schließen</button>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
             </div>
         </div>
