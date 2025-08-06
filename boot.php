@@ -68,21 +68,22 @@ if ($isWidgetEnabled('article')) {
     $infoCenter->registerWidget($widget);
 }
 
-// Upkeep Widget (prio: 2) - Nur für Admins
+// Upkeep Widget (prio: 2) - Nur für Admins (nur Backend)
 if ($isWidgetEnabled('upkeep') && rex::getUser() && rex::getUser()->isAdmin()) {
     $widget = new Widgets\UpkeepWidget();
     $widget->setPriority(2);
     $infoCenter->registerWidget($widget);
 }
 
-// Stats Widget (prio: 5) - Nur für Admins
-if ($isWidgetEnabled('stats') && rex::getUser() && rex::getUser()->isAdmin()) {
+// Stats Widget (prio: 5) - Nur für Admins (Backend und Frontend)
+$user = rex_backend_login::createUser();
+if ($isWidgetEnabled('stats') && $user && $user->isAdmin()) {
     $widget = new Widgets\StatsWidget();
     $widget->setPriority(5);
     $infoCenter->registerWidget($widget);
 }
 
-// System Widget (prio: 10) - Nur für Admins
+// System Widget (prio: 10) - Nur für Admins (nur Backend)
 if ($isWidgetEnabled('system') && rex::getUser() && rex::getUser()->isAdmin()) {
     $widget = new Widgets\SystemWidget();
     $widget->setPriority(10);

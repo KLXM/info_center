@@ -2,6 +2,31 @@
 (function() {
     'use strict';
     
+    // Initialize InfoCenter namespace early
+    window.InfoCenter = window.InfoCenter || {};
+    
+    // Define settings functions early
+    window.InfoCenter.setFontSize = function(size) {
+        localStorage.setItem('infoCenterFontSize', size);
+        applySavedSettings();
+        console.log('InfoCenter: Font size changed to:', size);
+    };
+    
+    // Save and apply position
+    window.InfoCenter.setPosition = function(position) {
+        localStorage.setItem('infoCenterPosition', position);
+        applySavedSettings();
+        console.log('InfoCenter: Position changed to:', position);
+    };
+    
+    // Get current settings
+    window.InfoCenter.getSettings = function() {
+        return {
+            fontSize: localStorage.getItem('infoCenterFontSize') || 'medium',
+            position: localStorage.getItem('infoCenterPosition') || 'center'
+        };
+    };
+    
     // Globale Initialisierung für Frontend und Backend
     function initInfoCenter() {
         console.log('InfoCenter: Initializing...');
@@ -195,27 +220,5 @@
         
         console.log('InfoCenter: Applied settings - Font:', fontSize, 'Position:', position);
     }
-    
-    // Save and apply font size
-    window.InfoCenter = window.InfoCenter || {};
-    window.InfoCenter.setFontSize = function(size) {
-        localStorage.setItem('infoCenterFontSize', size);
-        applySavedSettings();
-        console.log('InfoCenter: Font size changed to:', size);
-    };
-    
-    // Save and apply position
-    window.InfoCenter.setPosition = function(position) {
-        localStorage.setItem('infoCenterPosition', position);
-        applySavedSettings();
-        console.log('InfoCenter: Position changed to:', position);
-    };
-    
-    // Get current settings
-    window.InfoCenter.getSettings = function() {
-        return {
-            fontSize: localStorage.getItem('infoCenterFontSize') || 'medium',
-            position: localStorage.getItem('infoCenterPosition') || 'center'
-        };
-    };
+
 })(); // Self-executing anonymous function without jQuery dependency

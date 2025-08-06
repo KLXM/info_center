@@ -8,6 +8,7 @@ use rex_sql;
 use rex_addon;
 use rex_url;
 use rex_i18n;
+use rex_backend_login;
 
 class SystemWidget extends AbstractWidget
 {
@@ -21,6 +22,11 @@ class SystemWidget extends AbstractWidget
 
     public function getInitialContent(): string
     {
+        // System Widget nur im Backend anzeigen
+        if (!rex::isBackend()) {
+            return '';
+        }
+
         // Light initial content showing only REDAXO version
         $content = sprintf(
             '<div class="info-center-system-basic">
@@ -37,6 +43,11 @@ class SystemWidget extends AbstractWidget
 
     public function render(): string
     {
+        // System Widget nur im Backend anzeigen
+        if (!rex::isBackend()) {
+            return '';
+        }
+
         $database = rex::getProperty('db')[1];
 
         $items = [
@@ -48,7 +59,7 @@ class SystemWidget extends AbstractWidget
             [
                 'label' => 'PHP',
                 'value' => PHP_VERSION,
-                'link' => rex::isBackend() && rex::getUser()?->isAdmin() ? rex_url::backendPage('system/phpinfo') : null
+                'link' => rex::isBackend() && rex_backend_login::createUser()?->isAdmin() ? rex_url::backendPage('system/phpinfo') : null
             ],
             [
                 'label' => 'MySQL',
@@ -83,7 +94,8 @@ class SystemWidget extends AbstractWidget
         }
 
         // Add admin links if in backend and user is admin
-        if (rex::isBackend() && rex::getUser()?->isAdmin()) {
+        $user = rex_backend_login::createUser();
+        if (rex::isBackend() && $user && $user->isAdmin()) {
             $content .= sprintf(
                 '<div class="info-center-system-admin-links">
                     <a href="%s">%s</a>

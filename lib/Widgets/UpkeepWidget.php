@@ -7,6 +7,7 @@ use rex;
 use rex_addon;
 use rex_url;
 use rex_i18n;
+use rex_backend_login;
 
 class UpkeepWidget extends AbstractWidget
 {
@@ -81,7 +82,8 @@ class UpkeepWidget extends AbstractWidget
         }
 
         // Add admin links if in backend and user is admin
-        if (rex::isBackend() && rex::getUser()?->isAdmin()) {
+        $user = rex_backend_login::createUser();
+        if (rex::isBackend() && $user && $user->isAdmin()) {
             $content .= sprintf(
                 '<div class="info-center-upkeep-actions">
                     <a href="%s">%s</a>

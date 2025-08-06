@@ -174,18 +174,14 @@ $fragment = new rex_fragment();
 $fragment->setVar('elements', $formElements, false);
 $content .= $fragment->parse('core/form/container.php');
 
-$fragment = new rex_fragment();
-$fragment->setVar('elements', $formElements, false);
-$content .= $fragment->parse('core/form/container.php');
-
 $content .= '</fieldset>';
 
 // JavaScript for live preview
 $content .= '
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const fontSizeSelect = document.querySelector("select[name='config[font_size]']");
-    const positionSelect = document.querySelector("select[name='config[toggle_position]']");
+    const fontSizeSelect = document.querySelector("select[name=\'config[font_size]\']");
+    const positionSelect = document.querySelector("select[name=\'config[toggle_position]\']");
     
     if (fontSizeSelect) {
         fontSizeSelect.addEventListener("change", function() {
@@ -204,41 +200,6 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 </script>';
-
-// JavaScript for live preview
-$content .= '
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    const fontSizeSelect = document.querySelector("select[name=\'config[font_size]\']");
-    const positionSelect = document.querySelector("select[name=\'config[toggle_position]\']");
-    const themeSelect = document.querySelector("select[name=\'config[theme]\']");
-    
-    if (fontSizeSelect) {
-        fontSizeSelect.addEventListener("change", function() {
-            if (window.InfoCenter) {
-                window.InfoCenter.setFontSize(this.value);
-            }
-        });
-    }
-    
-    if (positionSelect) {
-        positionSelect.addEventListener("change", function() {
-            if (window.InfoCenter) {
-                window.InfoCenter.setPosition(this.value);
-            }
-        });
-    }
-    
-    if (themeSelect) {
-        themeSelect.addEventListener("change", function() {
-            if (window.InfoCenter) {
-                window.InfoCenter.setTheme(this.value);
-            }
-        });
-    }
-});
-</script>
-';
 
 // Save-Button
 $formElements = [];
