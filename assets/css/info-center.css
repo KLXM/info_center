@@ -1,4 +1,4 @@
-/* Base Styles - Dark Milchglas Design */
+/* Base Styles - Dark Theme (Default) */
 .info-center-container {
     --panel-width: 360px;
     --panel-bg: rgba(0, 0, 0, 0.77);
@@ -20,7 +20,54 @@
     --font-size-tiny: 10px;
     
     /* Toggle Position */
-    --toggle-position: 50%; /* center, top: 40px, bottom: calc(100% - 40px) */
+    --toggle-position: 50%; /* center, top: 70px, bottom: calc(100% - 70px) */
+}
+
+/* System Light Theme - nur als Fallback wenn keine REDAXO Theme Class */
+@media (prefers-color-scheme: light) {
+    body:not(.rex-theme-dark) .info-center-container {
+        --panel-bg: rgba(50, 64, 80, 0.15);
+        --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.25);
+        --border-color: rgba(50, 64, 80, 0.2);
+        --text-color: #1f2937;
+        --text-color-muted: #6b7280;
+        --header-bg: rgba(50, 64, 80, 0.08);
+        --widget-bg: rgba(255, 255, 255, 0.6);
+        --widget-border: rgba(50, 64, 80, 0.12);
+        --button-bg: rgba(248, 250, 252, 0.8);
+        --button-border: rgba(50, 64, 80, 0.15);
+        --hover-bg: rgba(50, 64, 80, 0.06);
+    }
+}
+
+/* REDAXO Light Theme - höchste Priorität */
+body.rex-theme-light .info-center-container {
+    --panel-bg: rgba(50, 64, 80, 0.15) !important;
+    --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.25) !important;
+    --border-color: rgba(50, 64, 80, 0.2) !important;
+    --text-color: #1f2937 !important;
+    --text-color-muted: #6b7280 !important;
+    --header-bg: rgba(50, 64, 80, 0.08) !important;
+    --widget-bg: rgba(255, 255, 255, 0.6) !important;
+    --widget-border: rgba(50, 64, 80, 0.12) !important;
+    --button-bg: rgba(248, 250, 252, 0.8) !important;
+    --button-border: rgba(50, 64, 80, 0.15) !important;
+    --hover-bg: rgba(50, 64, 80, 0.06) !important;
+}
+
+/* REDAXO Dark Theme - höchste Priorität */
+body.rex-theme-dark .info-center-container {
+    --panel-bg: rgba(0, 0, 0, 0.77) !important;
+    --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.6) !important;
+    --border-color: rgba(255, 255, 255, 0.08) !important;
+    --text-color: #e2e8f0 !important;
+    --text-color-muted: #94a3b8 !important;
+    --header-bg: rgba(50, 64, 80, 0.95) !important;
+    --widget-bg: rgba(50, 64, 80, 0.4) !important;
+    --widget-border: rgba(255, 255, 255, 0.1) !important;
+    --button-bg: rgba(50, 64, 80, 0.5) !important;
+    --button-border: rgba(255, 255, 255, 0.15) !important;
+    --hover-bg: rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Font Size Variants - settable via JavaScript */
@@ -52,7 +99,7 @@
     --font-size-tiny: 13px;
 }
 
-/* Toggle Button - Dark Glass */
+/* Toggle Button - IMMER DUNKEL (unabhängig vom Theme) */
 .info-center-toggle {
     position: fixed;
     top: var(--toggle-position);
@@ -61,10 +108,11 @@
     z-index: 100001;
     width: 44px;
     height: 44px;
-    background: var(--panel-bg);
+    /* Fixe dunkle Farben - kein CSS Variables */
+    background: rgba(0, 0, 0, 0.77);
     -webkit-backdrop-filter: blur(25px) saturate(200%);
     backdrop-filter: blur(25px) saturate(200%);
-    border: 1px solid var(--border-color);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-right: none;
     border-radius: 8px 0 0 8px;
     cursor: pointer;
@@ -72,7 +120,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--text-color);
+    /* Fixe helle Textfarbe */
+    color: #e2e8f0;
     font-size: 16px;
 }
 
@@ -82,6 +131,7 @@
     user-select: none;
 }
 
+/* Toggle Hover - IMMER DUNKEL */
 .info-center-toggle:hover {
     background: rgba(50, 64, 80, 0.9);
     border-color: rgba(255, 255, 255, 0.15);
@@ -96,9 +146,8 @@
 .info-center-toggle.active {
     right: var(--panel-width);
     background: rgba(50, 64, 80, 0.9);
-  
     border-left: none;
-    border-right: 1px solid var(--border-color);
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
     transform: translateY(-50%);
     width: 44px;
     height: 44px;
@@ -212,6 +261,35 @@
         0 6px 20px rgba(50, 64, 80, 0.2);
 }
 
+/* Widget Hover - System Light Theme als Fallback */
+@media (prefers-color-scheme: light) {
+    body:not(.rex-theme-dark) .info-center-widget:hover {
+        background: rgba(255, 255, 255, 0.8);
+        border-color: rgba(0, 0, 0, 0.15);
+        box-shadow: 
+            inset 0 1px 0 rgba(255,255,255,0.8),
+            0 6px 20px rgba(0, 0, 0, 0.1);
+    }
+}
+
+/* REDAXO Light Theme Widget Hover */
+body.rex-theme-light .info-center-widget:hover {
+    background: rgba(255, 255, 255, 0.8) !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.8),
+        0 6px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* REDAXO Dark Theme Widget Hover */
+body.rex-theme-dark .info-center-widget:hover {
+    background: rgba(50, 64, 80, 0.4) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 
+        inset 0 1px 0 rgba(255,255,255,0.15),
+        0 6px 20px rgba(50, 64, 80, 0.2) !important;
+}
+
 .info-center-widget:last-child {
     margin-bottom: 0;
 }
@@ -290,8 +368,8 @@
 .info-center-article-actions,
 .info-center-system-admin-links,
 .info-center-upkeep-actions {
-    margin-top: 16px;
-    padding-top: 16px;
+    margin-top: 20px;
+    padding-top: 20px;
     border-top: 1px solid var(--widget-border);
     display: flex;
     flex-wrap: wrap;
@@ -304,92 +382,36 @@
 .info-center-upkeep-actions a {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    padding: 6px 10px;
+    padding: 5px 10px;
     background: var(--button-bg);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border: 1px solid var(--button-border);
-    border-radius: 5px;
+    border-radius: 6px;
     color: var(--text-color);
     text-decoration: none;
-    font-size: var(--font-size-small);
+    font-size: 11px;
     font-weight: 500;
     transition: all 0.2s ease;
     box-shadow: 
-        inset 0 1px 0 rgba(255,255,255,0.1),
-        0 1px 3px rgba(50, 64, 80, 0.1);
+        inset 0 1px 0 rgba(255,255,255,0.05),
+        0 1px 2px rgba(50, 64, 80, 0.08);
     white-space: nowrap;
     flex-shrink: 0;
+    line-height: 1.4;
+    margin: 0 3px 3px 0;
 }
 
 .info-center-article-actions a:hover,
 .info-center-system-admin-links a:hover,
 .info-center-upkeep-actions a:hover {
-    background: rgba(59, 130, 246, 0.25);
-    border-color: rgba(59, 130, 246, 0.4);
-    color: #60a5fa;
-    transform: translateY(-1px);
-    box-shadow: 
-        inset 0 1px 0 rgba(255,255,255,0.15),
-        0 2px 6px rgba(50, 64, 80, 0.15);
-}
-
-/* Base Button Styles */
-.info-center-btn {
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    background: var(--button-bg);
-    border: 1px solid var(--button-border);
-    border-radius: 6px;
-    color: var(--text-color);
-    text-decoration: none;
-    font-size: var(--font-size-small);
-    font-weight: 500;
-    transition: all 0.2s ease;
-    gap: 8px;
-    margin-bottom: 8px;
-}
-
-.info-center-btn:last-child {
-    margin-bottom: 0;
-}
-
-.info-center-btn:hover {
     background: var(--hover-bg);
-    transform: translateY(-1px);
+    border-color: var(--text-color);
+    color: var(--text-color);
+    transform: translateY(-0.5px);
     box-shadow: 
-        inset 0 1px 0 rgba(255,255,255,0.15),
-        0 2px 6px rgba(50, 64, 80, 0.15);
-}
-
-/* Spezifische Button-Styles für verschiedene Aktionen */
-.info-center-btn-edit:hover {
-    background: rgba(34, 197, 94, 0.25) !important;
-    border-color: rgba(34, 197, 94, 0.4) !important;
-    color: #4ade80 !important;
-}
-
-.info-center-btn-structure:hover {
-    background: rgba(168, 85, 247, 0.25) !important;
-    border-color: rgba(168, 85, 247, 0.4) !important;
-    color: #a78bfa !important;
-}
-
-.info-center-btn-view:hover {
-    background: rgba(59, 130, 246, 0.25) !important;
-    border-color: rgba(59, 130, 246, 0.4) !important;
-    color: #60a5fa !important;
-}
-
-.info-center-article-actions a i,
-.info-center-system-admin-links a i,
-.info-center-upkeep-actions a i {
-    font-size: 10px;
-    opacity: 0.8;
-    width: 10px;
-    text-align: center;
+        inset 0 1px 0 rgba(255,255,255,0.1),
+        0 3px 8px rgba(0, 0, 0, 0.12);
 }
 
 /* Kompaktere Widget-Items */
@@ -499,13 +521,13 @@
 
 /* Article Widget - Backend Quick Links */
 .info-center-quick-links {
-    margin-bottom: 16px;
-    padding-bottom: 16px;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
     border-bottom: 1px solid var(--widget-border);
 }
 
 .info-center-quick-link {
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .info-center-quick-link:last-child {
@@ -515,23 +537,24 @@
 .info-center-quick-link a {
     display: flex;
     align-items: center;
-    padding: 8px 12px;
+    padding: 6px 10px;
     background: var(--button-bg);
     border: 1px solid var(--button-border);
-    border-radius: 6px;
+    border-radius: 4px;
     color: var(--text-color);
     text-decoration: none;
-    font-size: var(--font-size-small);
+    font-size: 11px;
     font-weight: 500;
     transition: all 0.2s ease;
-    gap: 8px;
+    gap: 6px;
+    line-height: 1.2;
 }
 
 .info-center-quick-link a:hover {
-    background: rgba(59, 130, 246, 0.25);
-    border-color: rgba(59, 130, 246, 0.4);
-    color: #60a5fa;
-    transform: translateY(-1px);
+    background: var(--hover-bg);
+    border-color: var(--text-color);
+    color: var(--text-color);
+    transform: translateY(-0.5px);
 }
 
 /* Recent Articles Styling */
@@ -549,7 +572,7 @@
 }
 
 .info-center-recent-article {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--hover-bg);
     border-radius: 6px;
     margin-bottom: 6px;
     padding: 8px;
@@ -558,8 +581,9 @@
 }
 
 .info-center-recent-article:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--hover-bg);
     transform: translateX(2px);
+    border-left-color: var(--text-color);
 }
 
 .info-center-recent-article.status-online {
@@ -578,7 +602,8 @@
 }
 
 .info-center-recent-article .article-main a:hover {
-    color: #64b5f6;
+    color: var(--text-color);
+    opacity: 0.8;
 }
 
 .info-center-recent-article .article-meta {
@@ -586,7 +611,7 @@
     justify-content: space-between;
     margin-top: 4px;
     font-size: var(--font-size-small);
-    color: rgba(255, 255, 255, 0.6);
+    color: var(--text-color-muted);
 }
 
 .info-center-recent-article .article-user,
@@ -617,8 +642,8 @@
     justify-content: space-between;
     align-items: center;
     padding: 6px 8px;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: var(--hover-bg);
+    border: 1px solid var(--widget-border);
     border-radius: 4px;
     color: var(--text-color);
     text-decoration: none;
@@ -627,9 +652,9 @@
 }
 
 .info-center-recent-article a:hover {
-    background: rgba(59, 130, 246, 0.15);
-    border-color: rgba(59, 130, 246, 0.3);
-    color: #60a5fa;
+    background: var(--hover-bg);
+    border-color: var(--text-color);
+    color: var(--text-color);
 }
 
 .info-center-recent-article .article-name {
@@ -736,7 +761,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--hover-bg);
     border-radius: 6px;
     padding: 10px 12px;
     border-left: 3px solid rgba(34, 197, 94, 0.5);
@@ -744,7 +769,7 @@
 }
 
 .info-center-url-item:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(34, 197, 94, 0.1);
     border-left-color: rgba(34, 197, 94, 0.7);
 }
 
@@ -846,27 +871,27 @@
 .info-center-btn-primary {
     background: rgba(34, 197, 94, 0.2) !important;
     border-color: rgba(34, 197, 94, 0.4) !important;
-    color: #ffffff !important;
+    color: var(--text-color) !important;
     font-weight: 600;
 }
 
 .info-center-btn-primary:hover {
     background: rgba(34, 197, 94, 0.3) !important;
     border-color: rgba(34, 197, 94, 0.6) !important;
-    color: #ffffff !important;
+    color: #22c55e !important;
     transform: translateY(-1px);
 }
 
 .info-center-btn-secondary {
     background: rgba(59, 130, 246, 0.2) !important;
     border-color: rgba(59, 130, 246, 0.4) !important;
-    color: #ffffff !important;
+    color: var(--text-color) !important;
 }
 
 .info-center-btn-secondary:hover {
     background: rgba(59, 130, 246, 0.3) !important;
     border-color: rgba(59, 130, 246, 0.6) !important;
-    color: #ffffff !important;
+    color: #3b82f6 !important;
     transform: translateY(-1px);
 }
 
@@ -899,7 +924,7 @@
 .info-center-settings-btn:hover,
 .info-center-close-btn:hover {
     background: var(--hover-bg);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: var(--button-border);
     color: var(--text-color);
     text-decoration: none;
     transform: translateY(-1px);

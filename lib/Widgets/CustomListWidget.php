@@ -213,9 +213,9 @@ class CustomListWidget extends AbstractWidget
                 $params['_csrf_token'] = $csrf_token;
             }
             
-            $content .= '<div class="info-center-widget-actions">';
-            $content .= '<a href="' . rex_url::backendPage('yform/manager/data_edit', $params) . '" class="info-center-btn-secondary">';
-            $content .= '<i class="rex-icon fa-table"></i> Tabelle verwalten';
+            $content .= '<div class="info-center-system-admin-links">';
+            $content .= '<a href="' . rex_url::backendPage('yform/manager/data_edit', $params) . '">';
+            $content .= 'Tabelle verwalten';
             $content .= '</a>';
             $content .= '</div>';
         }

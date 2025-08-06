@@ -107,6 +107,10 @@ info_center_toggle_position = Toggle-Position
 info_center_position_top = Oben (70px vom Rand)
 info_center_position_center = Mitte
 info_center_position_bottom = Unten (70px vom Rand)
+info_center_theme = Theme
+info_center_theme_auto = Automatisch (System)
+info_center_theme_light = Hell
+info_center_theme_dark = Dunkel
 
 # Widget Builder
 info_center_widget_builder = Widget Builder

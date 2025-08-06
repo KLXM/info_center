@@ -134,7 +134,7 @@ $fontSizeOptions = [
     'xlarge' => $package->i18n('info_center_font_size_xlarge')
 ];
 
-$fontSizeSelect = '<select name="config[font_size]" class="form-control">';
+$fontSizeSelect = '<select name="config[font_size]" class="form-control selectpicker">';
 foreach ($fontSizeOptions as $value => $label) {
     $selected = ($value === $currentFontSize) ? ' selected="selected"' : '';
     $fontSizeSelect .= '<option value="' . $value . '"' . $selected . '>' . $label . '</option>';
@@ -159,7 +159,7 @@ $positionOptions = [
     'bottom' => $package->i18n('info_center_position_bottom')
 ];
 
-$positionSelect = '<select name="config[toggle_position]" class="form-control">';
+$positionSelect = '<select name="config[toggle_position]" class="form-control selectpicker">';
 foreach ($positionOptions as $value => $label) {
     $selected = ($value === $currentPosition) ? ' selected="selected"' : '';
     $positionSelect .= '<option value="' . $value . '"' . $selected . '>' . $label . '</option>';
@@ -174,14 +174,18 @@ $fragment = new rex_fragment();
 $fragment->setVar('elements', $formElements, false);
 $content .= $fragment->parse('core/form/container.php');
 
+$fragment = new rex_fragment();
+$fragment->setVar('elements', $formElements, false);
+$content .= $fragment->parse('core/form/container.php');
+
 $content .= '</fieldset>';
 
 // JavaScript for live preview
 $content .= '
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-    const fontSizeSelect = document.querySelector("select[name=\'config[font_size]\']");
-    const positionSelect = document.querySelector("select[name=\'config[toggle_position]\']");
+    const fontSizeSelect = document.querySelector("select[name='config[font_size]']");
+    const positionSelect = document.querySelector("select[name='config[toggle_position]']");
     
     if (fontSizeSelect) {
         fontSizeSelect.addEventListener("change", function() {
@@ -195,6 +199,40 @@ document.addEventListener("DOMContentLoaded", function() {
         positionSelect.addEventListener("change", function() {
             if (window.InfoCenter) {
                 window.InfoCenter.setPosition(this.value);
+            }
+        });
+    }
+});
+</script>';
+
+// JavaScript for live preview
+$content .= '
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const fontSizeSelect = document.querySelector("select[name=\'config[font_size]\']");
+    const positionSelect = document.querySelector("select[name=\'config[toggle_position]\']");
+    const themeSelect = document.querySelector("select[name=\'config[theme]\']");
+    
+    if (fontSizeSelect) {
+        fontSizeSelect.addEventListener("change", function() {
+            if (window.InfoCenter) {
+                window.InfoCenter.setFontSize(this.value);
+            }
+        });
+    }
+    
+    if (positionSelect) {
+        positionSelect.addEventListener("change", function() {
+            if (window.InfoCenter) {
+                window.InfoCenter.setPosition(this.value);
+            }
+        });
+    }
+    
+    if (themeSelect) {
+        themeSelect.addEventListener("change", function() {
+            if (window.InfoCenter) {
+                window.InfoCenter.setTheme(this.value);
             }
         });
     }

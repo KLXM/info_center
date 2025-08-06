@@ -187,7 +187,7 @@
 .time-tracker-mini {
     position: fixed;
     bottom: 20px;
-    right: 20px;
+    right: 50px; /* 30px weiter nach links (war 20px) */
     background: rgba(15, 15, 25, 0.9);
     -webkit-backdrop-filter: blur(25px) saturate(200%);
     backdrop-filter: blur(25px) saturate(200%);

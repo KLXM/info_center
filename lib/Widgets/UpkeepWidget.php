@@ -84,14 +84,8 @@ class UpkeepWidget extends AbstractWidget
         if (rex::isBackend() && rex::getUser()?->isAdmin()) {
             $content .= sprintf(
                 '<div class="info-center-upkeep-actions">
-                    <a href="%s">
-                        <i class="rex-icon rex-icon-statistics"></i>
-                        <span>%s</span>
-                    </a>
-                    <a href="%s">
-                        <i class="rex-icon rex-icon-security"></i>
-                        <span>%s</span>
-                    </a>
+                    <a href="%s">%s</a>
+                    <a href="%s">%s</a>
                 </div>',
                 rex_url::backendPage('upkeep'),
                 rex_i18n::msg('info_center_upkeep_dashboard'),
