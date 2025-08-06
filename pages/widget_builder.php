@@ -211,7 +211,7 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     $formElements = [];
     $n = [];
     $n['label'] = '<label for="widget-table">' . $package->i18n('info_center_widget_table') . '</label>';
-    $tableSelect = '<select id="widget-table" name="widget_config[table_name]" class="form-control" required>';
+    $tableSelect = '<select id="widget-table" name="widget_config[table_name]" class="form-control selectpicker" required>';
     $tableSelect .= '<option value="">-- ' . $package->i18n('info_center_widget_table') . ' wählen --</option>';
     foreach ($yformTables as $tableName => $tableLabel) {
         $selected = ($widget['table_name'] ?? '') === $tableName ? ' selected' : '';
@@ -259,6 +259,18 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     $filterValue = $widget['filter'] ?? '';
     $n['field'] = '<textarea id="widget-filter" name="widget_config[filter]" class="form-control" rows="3" placeholder="z.B. status = 1 AND created > \'2024-01-01\'">' . rex_escape($filterValue) . '</textarea>';
     $n['note'] = '<small class="text-muted">' . $package->i18n('info_center_widget_filter_help') . '. Beispiele:<br>• <code>status = 1</code><br>• <code>createdate >= CURDATE() - INTERVAL 30 DAY</code><br>• <code>status = 1 AND email LIKE \'%@example.com\'</code></small>';
+    $formElements[] = $n;
+    $fragment = new rex_fragment();
+    $fragment->setVar('elements', $formElements, false);
+    $content .= $fragment->parse('core/form/form.php');
+    
+    // Sortierung (ORDER BY)
+    $formElements = [];
+    $n = [];
+    $n['label'] = '<label for="widget-orderby">' . $package->i18n('info_center_widget_orderby') . ' <small class="text-muted">' . $package->i18n('info_center_widget_orderby_optional') . '</small></label>';
+    $orderbyValue = $widget['orderby'] ?? 'id DESC';
+    $n['field'] = '<input type="text" id="widget-orderby" name="widget_config[orderby]" class="form-control" placeholder="z.B. id DESC, name ASC" value="' . rex_escape($orderbyValue) . '" />';
+    $n['note'] = '<small class="text-muted">' . $package->i18n('info_center_widget_orderby_help') . '. Beispiele:<br>• <code>id DESC</code> (neueste zuerst)<br>• <code>name ASC</code> (alphabetisch A-Z)<br>• <code>createdate DESC, name ASC</code> (mehrere Kriterien)</small>';
     $formElements[] = $n;
     $fragment = new rex_fragment();
     $fragment->setVar('elements', $formElements, false);
@@ -512,6 +524,7 @@ function saveWidget($package, $customWidgets)
         'enabled' => isset($config['enabled']),
         'fields' => $fieldsArray, // Verwende die separat abgerufenen Felder
         'filter' => trim($config['filter'] ?? ''),
+        'orderby' => trim($config['orderby'] ?? 'id DESC'),
         'link_type' => $config['link_type'] ?? 'yform',
         'link_target' => trim($config['link_target'] ?? ''),
         'visibility' => $config['visibility'] ?? 'both',

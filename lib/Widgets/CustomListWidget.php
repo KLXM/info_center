@@ -92,7 +92,21 @@ class CustomListWidget extends AbstractWidget
             $whereClause = ' WHERE ' . $filter;
         }
         
-        $query = "SELECT {$fieldList} FROM `{$tableName}`{$whereClause} ORDER BY id DESC LIMIT {$limit}";
+        // ORDER BY-Klausel
+        $orderByClause = '';
+        $orderBy = trim($this->customConfig['orderby'] ?? 'id DESC');
+        if (!empty($orderBy)) {
+            // Validiere ORDER BY-SQL (einfache Prüfung)
+            if (!$this->isValidOrderBy($orderBy)) {
+                throw new \Exception("Ungültige ORDER BY-Bedingung");
+            }
+            $orderByClause = ' ORDER BY ' . $orderBy;
+        } else {
+            // Fallback auf Standard-Sortierung
+            $orderByClause = ' ORDER BY id DESC';
+        }
+        
+        $query = "SELECT {$fieldList} FROM `{$tableName}`{$whereClause}{$orderByClause} LIMIT {$limit}";
         
         return $sql->getArray($query);
     }
@@ -107,6 +121,27 @@ class CustomListWidget extends AbstractWidget
             if (strpos($upperFilter, $cmd) !== false) {
                 return false;
             }
+        }
+        
+        return true;
+    }
+
+    private function isValidOrderBy(string $orderBy): bool
+    {
+        // Einfache Validierung - gefährliche Befehle blockieren
+        $dangerous = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'TRUNCATE'];
+        $upperOrderBy = strtoupper($orderBy);
+        
+        foreach ($dangerous as $cmd) {
+            if (strpos($upperOrderBy, $cmd) !== false) {
+                return false;
+            }
+        }
+        
+        // Zusätzliche Prüfung: Nur erlaubte ORDER BY Strukturen
+        // Erlaube Feldnamen (mit oder ohne Backticks), ASC/DESC, Kommas und Leerzeichen
+        if (!preg_match('/^[a-zA-Z0-9_`,\s]+(\s+(ASC|DESC))?(\s*,\s*[a-zA-Z0-9_`,\s]+(\s+(ASC|DESC))?)*$/i', $orderBy)) {
+            return false;
         }
         
         return true;
