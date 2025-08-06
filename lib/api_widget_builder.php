@@ -9,8 +9,6 @@ use Exception;
 
 class rex_api_widget_builder extends rex_api_function
 {
-    protected $published = true;
-
     public function execute()
     {
         // Output buffer leeren und headers saubermachen

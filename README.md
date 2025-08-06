@@ -174,57 +174,697 @@ permissions:
 ```
 src/addons/info_center/
 ├── lib/
-│   ├── InfoCenter.php          # Hauptklasse
-│   ├── AbstractWidget.php      # Widget-Basisklasse
-│   ├── api_widget_builder.php  # AJAX-API
+│   ├── InfoCenter.php          # Hauptklasse - Singleton für Widget-Management
+│   ├── AbstractWidget.php      # Basisklasse für alle Widgets
+│   ├── WidgetInterface.php     # Interface-Definition für Widgets
+│   ├── api_widget_builder.php  # AJAX-API für Widget Builder
 │   └── Widgets/
-│       ├── ArticleWidget.php
-│       ├── TimeTrackerWidget.php
-│       ├── CustomListWidget.php # Widget Builder Ausgabe
-│       └── ...
+│       ├── ArticleWidget.php      # Zuletzt bearbeitete Artikel
+│       ├── TimeTrackerWidget.php  # Arbeitszeit-Tracking
+│       ├── CustomListWidget.php   # Widget Builder Ausgabe
+│       ├── StatsWidget.php        # Performance-Statistiken
+│       ├── SystemWidget.php       # System-Informationen
+│       ├── UpkeepWidget.php       # Upkeep-Integration
+│       └── UrlWidget.php          # URL2/YRewrite-Management
 ├── pages/
-│   ├── config.php             # Einstellungen
+│   ├── config.php             # Konfigurationsseite
+│   ├── index.php             # Hauptübersicht
 │   └── widget_builder.php     # Widget Builder Interface
 ├── assets/
-│   ├── css/info-center.css    # Styling
-│   └── js/info-center.js      # JavaScript
+│   ├── css/
+│   │   ├── info-center.css    # Haupt-Styling
+│   │   └── timetracker.css    # TimeTracker-spezifische Styles
+│   └── js/
+│       ├── info-center.js     # Haupt-JavaScript
+│       └── timetracker.js     # TimeTracker-Funktionalität
 └── lang/
-    ├── de_de.lang            # Deutsche Übersetzung
-    └── en_gb.lang            # Englische Übersetzung
+    ├── de_de.lang            # Deutsche Übersetzungen
+    └── en_gb.lang            # Englische Übersetzungen
 ```
 
-### 🔌 **Eigene Widgets entwickeln**
+---
+
+## 🎯 Klassen-Referenz
+
+### 📋 **KLXM\InfoCenter\InfoCenter** (Hauptklasse)
+Die zentrale Singleton-Klasse für das Widget-Management.
+
+#### Wichtigste Methoden:
+```php
+// Singleton-Instanz erhalten
+InfoCenter::getInstance(): InfoCenter
+
+// Widget registrieren  
+registerWidget(WidgetInterface $widget): void
+
+// Alle registrierten Widgets abrufen
+getWidgets(): array
+
+// HTML-Output des kompletten Info Centers
+get(): string
+
+// Prüfen ob das Info Center gerendert werden soll
+shouldRender(): bool
+```
+
+### 🔧 **KLXM\InfoCenter\AbstractWidget** (Basisklasse)
+Abstrakte Basisklasse für alle Widgets mit Standard-Implementierungen.
+
+#### Geschützte Properties:
+```php
+protected string $id;           // Eindeutige Widget-ID
+protected string $title;        // Widget-Titel
+protected float $priority;      // Sortierung (niedrigere Zahl = höher)
+protected bool $enabled;        // Aktivierungs-Status
+protected array $config;        // Widget-Konfiguration
+protected bool $supportsLazyLoading; // Lazy Loading Support
+```
+
+#### Wichtigste Methoden:
+```php
+// Eindeutige Widget-ID (automatisch aus Klassenname)
+getId(): string
+
+// Widget-Titel (aus Sprachdatei oder direkt)
+getTitle(): string
+
+// Priorität für Sortierung
+getPriority(): float
+setPriority(float $priority): void
+
+// Aktivierungs-Status
+isEnabled(): bool
+setEnabled(bool $enabled): void
+
+// Konfiguration
+getConfig(string $key = null): mixed
+setConfig(array $config): void
+
+// Content in Widget-Container wrappen
+wrapContent(string $content, array $attributes = []): string
+
+// Lazy Loading Support
+supportsLazyLoading(): bool
+getInitialContent(): string  // Muss implementiert werden wenn Lazy Loading
+```
+
+### 🔌 **KLXM\InfoCenter\WidgetInterface** (Interface)
+Definiert die erforderlichen Methoden für alle Widgets.
+
+```php
+interface WidgetInterface
+{
+    public function getId(): string;
+    public function getTitle(): string;
+    public function getPriority(): float;
+    public function setPriority(float $priority): void;
+    public function isEnabled(): bool;
+    public function setEnabled(bool $enabled): void;
+    public function getConfig(string $key = null): mixed;
+    public function setConfig(array $config): void;
+    public function render(): string;            // Haupt-Render-Methode
+    public function supportsLazyLoading(): bool;
+    public function getInitialContent(): string; // Für Lazy Loading
+    public function wrapContent(string $content, array $attributes = []): string;
+}
+```
+
+---
+
+## 🚀 Eigene Widgets entwickeln
+
+### 1️⃣ **Einfaches Widget im Project-AddOn**
+
+#### Schritt 1: Widget-Klasse erstellen
 ```php
 <?php
-namespace KLXM\InfoCenter\Widgets;
+// Datei: src/addons/project/lib/InfoCenterWidgets/NewsWidget.php
+
+namespace Project\InfoCenterWidgets;
 
 use KLXM\InfoCenter\AbstractWidget;
+use rex_i18n;
+use rex_sql;
+use rex_escape;
+use rex_url;
 
-class MyCustomWidget extends AbstractWidget
+class NewsWidget extends AbstractWidget
 {
     public function __construct()
     {
-        parent::__construct(); 
-        $this->title = 'Mein Widget';
-        $this->priority = 10;
+        parent::__construct();
+        $this->title = rex_i18n::msg('project_news_widget_title', 'Aktuelle News');
+        $this->priority = 15; // Nach System-Widgets, vor Custom Widgets
     }
     
     public function render(): string
     {
-        $content = '<div>Mein Widget Content</div>';
+        // Daten aus der Datenbank holen
+        $sql = rex_sql::factory();
+        $sql->setQuery('
+            SELECT id, title, createdate, status 
+            FROM rex_news 
+            WHERE status = 1 
+            ORDER BY createdate DESC 
+            LIMIT 5
+        ');
+        
+        if (!$sql->getRows()) {
+            return $this->wrapContent(
+                '<p class="text-muted">' . rex_i18n::msg('project_no_news_found', 'Keine News gefunden') . '</p>'
+            );
+        }
+        
+        $content = '<div class="info-center-list">';
+        
+        foreach ($sql->getArray() as $row) {
+            $editUrl = rex_url::backendController([
+                'page' => 'content/articles',
+                'article_id' => $row['id'],
+                'clang' => 1
+            ]);
+            
+            $content .= sprintf(
+                '<div class="info-center-list-item">
+                    <div class="item-title">
+                        <a href="%s" title="%s">%s</a>
+                    </div>
+                    <div class="item-meta">
+                        <span class="date">%s</span>
+                        <span class="status status-%s">%s</span>
+                    </div>
+                </div>',
+                $editUrl,
+                rex_escape($row['title']),
+                rex_escape($row['title']),
+                strftime('%d.%m.%Y', $row['createdate']),
+                $row['status'],
+                $row['status'] ? 'Online' : 'Offline'
+            );
+        }
+        
+        $content .= '</div>';
+        
+        return $this->wrapContent($content, [
+            'data-widget' => 'news',
+            'class' => 'widget-news'
+        ]);
+    }
+}
+```
+
+#### Schritt 2: Widget in Project-AddOn registrieren
+```php
+<?php
+// Datei: src/addons/project/boot.php
+
+// Info Center Widget registrieren (nur wenn Info Center verfügbar ist)
+if (rex_addon::get('info_center')->isAvailable()) {
+    
+    // Widget nach Info Center Boot registrieren
+    rex_extension::register('PACKAGES_INCLUDED', function() {
+        $infoCenter = \KLXM\InfoCenter\InfoCenter::getInstance();
+        
+        // News Widget registrieren
+        $newsWidget = new \Project\InfoCenterWidgets\NewsWidget();
+        $infoCenter->registerWidget($newsWidget);
+        
+        // Weitere eigene Widgets...
+        
+    }, rex_extension::LATE);
+}
+```
+
+#### Schritt 3: Übersetzungen hinzufügen
+```php
+// Datei: src/addons/project/lang/de_de.lang
+project_news_widget_title = Aktuelle News
+project_no_news_found = Keine aktuellen News vorhanden
+
+// Datei: src/addons/project/lang/en_gb.lang  
+project_news_widget_title = Recent News
+project_no_news_found = No recent news available
+```
+
+### 2️⃣ **Erweiterte Widgets mit Lazy Loading**
+
+```php
+<?php
+namespace Project\InfoCenterWidgets;
+
+use KLXM\InfoCenter\AbstractWidget;
+
+class AdvancedStatsWidget extends AbstractWidget
+{
+    protected bool $supportsLazyLoading = true;
+    
+    public function __construct()
+    {
+        parent::__construct();
+        $this->title = 'Erweiterte Statistiken';
+        $this->priority = 8;
+    }
+    
+    /**
+     * Schnell ladender Initial-Content
+     */
+    public function getInitialContent(): string
+    {
+        return '<div class="loading-placeholder">Lade Statistiken...</div>';
+    }
+    
+    /**
+     * Vollständiger Content (wird via AJAX geladen)
+     */
+    public function render(): string
+    {
+        // Aufwändige Berechnungen hier
+        $stats = $this->calculateComplexStats();
+        
+        $content = '<div class="stats-grid">';
+        foreach ($stats as $key => $value) {
+            $content .= sprintf(
+                '<div class="stat-item">
+                    <span class="stat-label">%s</span>
+                    <span class="stat-value">%s</span>
+                </div>',
+                rex_escape($key),
+                rex_escape($value)
+            );
+        }
+        $content .= '</div>';
+        
         return $this->wrapContent($content);
     }
+    
+    private function calculateComplexStats(): array
+    {
+        // Komplexe Statistik-Berechnungen...
+        return [
+            'Besucher heute' => '1.234',
+            'Artikel gesamt' => '456',
+            // ...
+        ];
+    }
+}
+```
+
+### 3️⃣ **Widget-Konfiguration**
+
+```php
+<?php
+namespace Project\InfoCenterWidgets;
+
+use KLXM\InfoCenter\AbstractWidget;
+
+class ConfigurableWidget extends AbstractWidget
+{
+    public function __construct()
+    {
+        parent::__construct();
+        $this->title = 'Konfigurierbares Widget';
+        $this->priority = 20;
+        
+        // Standard-Konfiguration
+        $this->setConfig([
+            'limit' => 10,
+            'show_date' => true,
+            'category' => 'all'
+        ]);
+    }
+    
+    public function render(): string
+    {
+        $limit = $this->getConfig('limit');
+        $showDate = $this->getConfig('show_date');
+        $category = $this->getConfig('category');
+        
+        // Widget-Logik basierend auf Konfiguration...
+        
+        return $this->wrapContent($content);
+    }
+}
+
+// Konfiguration in boot.php setzen:
+$widget = new \Project\InfoCenterWidgets\ConfigurableWidget();
+$widget->setConfig([
+    'limit' => 20,
+    'show_date' => false,
+    'category' => 'news'
+]);
+$infoCenter->registerWidget($widget);
+```
+
+### 4️⃣ **Bedingte Widget-Registrierung**
+
+```php
+<?php
+// In boot.php - Widgets nur unter bestimmten Bedingungen registrieren
+
+rex_extension::register('PACKAGES_INCLUDED', function() {
+    $infoCenter = \KLXM\InfoCenter\InfoCenter::getInstance();
+    $user = rex::getUser();
+    
+    // Widget nur für Administratoren
+    if ($user && $user->isAdmin()) {
+        $adminWidget = new \Project\InfoCenterWidgets\AdminWidget();
+        $infoCenter->registerWidget($adminWidget);
+    }
+    
+    // Widget nur bei vorhandenem YForm
+    if (rex_addon::get('yform')->isAvailable()) {
+        $yformWidget = new \Project\InfoCenterWidgets\YFormWidget();
+        $infoCenter->registerWidget($yformWidget);
+    }
+    
+    // Widget nur für bestimmte Benutzerrollen
+    if ($user && $user->hasPerm('project[editor]')) {
+        $editorWidget = new \Project\InfoCenterWidgets\EditorWidget();
+        $infoCenter->registerWidget($editorWidget);
+    }
+    
+}, rex_extension::LATE);
+```
+
+### 💡 **Best Practices für Widget-Entwicklung**
+
+#### ✅ **Do's**
+- **Verwende Lazy Loading** für aufwändige Berechnungen
+- **Implementiere Caching** für häufig abgerufene Daten
+- **Nutze Sprachdateien** für alle Texte
+- **Prüfe Berechtigungen** vor der Datenanzeige
+- **Escape alle Ausgaben** für Sicherheit
+- **Verwende CSS-Klassen** für konsistentes Styling
+- **Registriere Widgets in `PACKAGES_INCLUDED`** mit `rex_extension::LATE`
+
+#### ❌ **Don'ts**
+- **Keine schweren DB-Queries** im Constructor
+- **Nicht ohne Berechtigung** sensible Daten anzeigen
+- **Keine direkten rex_sql** Ausgaben ohne Escaping
+- **Nicht ohne Fehlerbehandlung** externe APIs aufrufen
+- **Keine Widgets direkt in boot.php** registrieren (zu früh)
+
+---
+
+## 📝 Vollständiges Beispiel: Project-AddOn Integration
+
+### Dateistruktur für Project-AddOn:
+```
+src/addons/project/
+├── boot.php                           # Widget-Registrierung
+├── lib/
+│   └── InfoCenterWidgets/
+│       ├── NewsWidget.php             # News-Widget
+│       ├── UserStatsWidget.php        # Benutzer-Statistiken
+│       └── CustomDashboardWidget.php  # Benutzerdefiniertes Dashboard
+├── pages/
+│   └── info_center_config.php         # Konfigurationsseite
+├── assets/
+│   └── info-center-project.css        # Widget-spezifische Styles
+└── lang/
+    ├── de_de.lang                     # Deutsche Übersetzungen
+    └── en_gb.lang                     # Englische Übersetzungen
+```
+
+### Komplette boot.php für Project-AddOn:
+```php
+<?php
+// src/addons/project/boot.php
+
+// Info Center Integration (nur wenn verfügbar)
+if (rex_addon::get('info_center')->isAvailable()) {
+    
+    // CSS für eigene Widgets einbinden
+    if (rex::isBackend() && rex::getUser()) {
+        rex_view::addCssFile($this->getAssetsUrl('info-center-project.css'));
+    }
+    
+    // Widgets nach vollständiger Initialisierung registrieren
+    rex_extension::register('PACKAGES_INCLUDED', function() {
+        
+        $infoCenter = \KLXM\InfoCenter\InfoCenter::getInstance();
+        $user = rex::getUser();
+        
+        if (!$user) return; // Nur für eingeloggte User
+        
+        // 1. News Widget - für alle Benutzer
+        $newsWidget = new \Project\InfoCenterWidgets\NewsWidget();
+        $infoCenter->registerWidget($newsWidget);
+        
+        // 2. User Stats Widget - nur für Admins und Redakteure
+        if ($user->hasPerm('project[editor]') || $user->isAdmin()) {
+            $userStatsWidget = new \Project\InfoCenterWidgets\UserStatsWidget();
+            $infoCenter->registerWidget($userStatsWidget);
+        }
+        
+        // 3. Admin Dashboard - nur für Admins
+        if ($user->isAdmin()) {
+            $adminWidget = new \Project\InfoCenterWidgets\CustomDashboardWidget();
+            $infoCenter->registerWidget($adminWidget);
+        }
+        
+    }, rex_extension::LATE); // LATE ist wichtig!
 }
 ```
 
 ### 📡 **API Integration**
 ```javascript
-// Widget Builder AJAX
+// Widget Builder AJAX API
 fetch('/redaxo/index.php?rex-api-call=widget_builder&action=get_table_fields&table_name=my_table')
   .then(response => response.text())
   .then(html => {
     // Feldliste verarbeiten
   });
+
+// Lazy Loading für eigene Widgets
+fetch('/redaxo/index.php', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Requested-With': 'XMLHttpRequest'
+    },
+    body: 'rex-api-call=info_center_lazy&widget_id=my_widget'
+})
+.then(response => response.text())
+.then(html => {
+    document.querySelector('[data-widget="my_widget"] .widget-content').innerHTML = html;
+});
+```
+
+---
+
+## 🔌 Erweiterte Integration
+
+### 📊 **YForm Integration**
+```php
+<?php
+// YForm-Tabellen als Widget anzeigen
+namespace Project\InfoCenterWidgets;
+
+use KLXM\InfoCenter\AbstractWidget;
+use rex_yform_manager_dataset;
+
+class YFormDataWidget extends AbstractWidget
+{
+    private string $tableName;
+    
+    public function __construct(string $tableName)
+    {
+        parent::__construct();
+        $this->tableName = $tableName;
+        $this->title = 'YForm: ' . $tableName;
+    }
+    
+    public function render(): string
+    {
+        // Prüfen ob YForm verfügbar ist
+        if (!rex_addon::get('yform')->isAvailable()) {
+            return $this->wrapContent('<p>YForm nicht verfügbar</p>');
+        }
+        
+        // Daten über YForm Manager laden
+        $items = rex_yform_manager_dataset::query($this->tableName)
+            ->limit(10)
+            ->orderBy('id', 'DESC')
+            ->find();
+        
+        $content = '<div class="yform-widget-list">';
+        foreach ($items as $item) {
+            $content .= sprintf(
+                '<div class="yform-item">
+                    <a href="/redaxo/index.php?page=yform/manager/data_edit&table_name=%s&data_id=%s">
+                        %s
+                    </a>
+                </div>',
+                $this->tableName,
+                $item->getId(),
+                $item->getValue('name') ?: 'ID: ' . $item->getId()
+            );
+        }
+        $content .= '</div>';
+        
+        return $this->wrapContent($content);
+    }
+}
+```
+
+### 🌐 **Frontend-Backend Verknüpfung**
+```php
+<?php
+// Widget nur im Frontend für Backend-User anzeigen
+namespace Project\InfoCenterWidgets;
+
+use KLXM\InfoCenter\AbstractWidget;
+use rex;
+use rex_backend_login;
+
+class FrontendOnlyWidget extends AbstractWidget
+{
+    public function render(): string
+    {
+        // Nur im Frontend anzeigen, wenn Backend-User eingeloggt
+        if (!rex::isFrontend()) {
+            return '';
+        }
+        
+        // Backend-User im Frontend prüfen
+        $user = rex_backend_login::createUser();
+        if (!$user) {
+            return '';
+        }
+        
+        $content = '<div class="frontend-widget">';
+        $content .= '<h4>Frontend-Modus aktiv</h4>';
+        $content .= '<p>Du siehst diese Seite als: ' . $user->getLogin() . '</p>';
+        $content .= '</div>';
+        
+        return $this->wrapContent($content);
+    }
+}
+```
+
+### 🎨 **CSS-Integration für eigene Widgets**
+```css
+/* Eigene Widget-Styles in project/assets/info-center-custom.css */
+
+/* News Widget Styling */
+.widget-news .info-center-list-item {
+    border-left: 3px solid #007cba;
+    padding-left: 10px;
+    margin-bottom: 8px;
+}
+
+.widget-news .item-title a {
+    font-weight: bold;
+    color: #333;
+    text-decoration: none;
+}
+
+.widget-news .item-meta {
+    font-size: 0.85em;
+    color: #666;
+    margin-top: 2px;
+}
+
+.widget-news .status {
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8em;
+}
+
+.widget-news .status-1 {
+    background: #d4edda;
+    color: #155724;
+}
+
+.widget-news .status-0 {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* Loading Animation für Lazy Loading Widgets */
+.loading-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    color: #666;
+    font-style: italic;
+}
+
+.loading-placeholder::after {
+    content: '';
+    width: 16px;
+    height: 16px;
+    margin-left: 10px;
+    border: 2px solid #ddd;
+    border-top: 2px solid #007cba;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+```
+
+### 🔧 **Widget-Konfiguration über Backend**
+
+```php
+<?php
+// Eigene Widgets konfigurierbar machen
+// Datei: src/addons/project/pages/info_center_config.php
+
+$content = '';
+$addon = rex_addon::get('project');
+
+// Konfiguration verarbeiten
+if (rex_post('save', 'boolean')) {
+    $config = rex_post('config', 'array');
+    
+    // News Widget Konfiguration
+    $addon->setConfig('info_center_news', [
+        'limit' => (int) $config['news_limit'],
+        'show_date' => (bool) $config['news_show_date'],
+        'category_filter' => $config['news_category']
+    ]);
+    
+    echo rex_view::success('Konfiguration gespeichert');
+}
+
+// Aktuelle Konfiguration laden
+$newsConfig = $addon->getConfig('info_center_news', [
+    'limit' => 5,
+    'show_date' => true,
+    'category_filter' => ''
+]);
+
+// Formular
+$formElements = [];
+
+$n = [];
+$n['label'] = '<label for="news_limit">Anzahl News anzeigen:</label>';
+$n['field'] = '<input type="number" id="news_limit" name="config[news_limit]" value="' . $newsConfig['limit'] . '" min="1" max="20">';
+$formElements[] = $n;
+
+$n = [];
+$n['label'] = '<label for="news_show_date">Datum anzeigen:</label>';
+$n['field'] = '<input type="checkbox" id="news_show_date" name="config[news_show_date]" value="1"' . ($newsConfig['show_date'] ? ' checked' : '') . '>';
+$formElements[] = $n;
+
+$fragment = new rex_fragment();
+$fragment->setVar('elements', $formElements, false);
+$content .= $fragment->parse('core/form/form.php');
+
+$content .= '
+<fieldset>
+    <input type="submit" name="save" value="Speichern" class="btn btn-primary">
+</fieldset>';
+
+$content = '<form action="' . rex_url::currentBackendPage() . '" method="post">' . $content . '</form>';
+
+echo $content;
 ```
 
 ---
@@ -308,7 +948,9 @@ MIT License - Siehe [LICENSE.md](LICENSE.md) für Details.
 
 ## 👨‍💻 Autor
 
-**KLXM Crossmedia GmbH**  
+Thomas Skerbis 
+
+**[KLXM Crossmedia GmbH](https://klxm.de )**  
 Entwickelt für REDAXO CMS - Das intelligente Dashboard-System für moderne Webentwicklung.
 
 ---
