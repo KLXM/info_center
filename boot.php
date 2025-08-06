@@ -9,6 +9,7 @@ use rex_view;
 use rex_url;
 use rex_addon;
 use rex_backend_login;
+use rex_be_controller;
 
 
 // Frontend-Session starten, damit rex::getUser() funktioniert
@@ -102,10 +103,18 @@ if (rex::isBackend() && rex::getUser()) {
     rex_view::addJsFile($addon->getAssetsUrl('js/timetracker.js'));
 }
 
+
+
 // Ausgabe für Backend und Frontend
 if (rex::isBackend() && rex::getUser()) {
-    // Backend: Normale Ausgabe
+    // Backend: Normale Ausgabe - aber nicht in Popups
     rex_extension::register('OUTPUT_FILTER', function(rex_extension_point $ep) use ($infoCenter) {
+        // Prüfe ob wir uns in einem Popup befinden (z.B. Medienpool)
+        $currentPage = rex_be_controller::getCurrentPageObject();
+        if ($currentPage && $currentPage->isPopup()) {
+            return;
+        }
+        
         $content = $ep->getSubject();
         $infoCenterOutput = $infoCenter->get();
         

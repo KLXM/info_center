@@ -10,6 +10,12 @@ class InfoCenterTimeTracker {
         this.displayStartTime = null;
         this.initialized = false;
         
+        // Inaktivitäts-Tracking
+        this.inactivityTimeout = 10 * 60 * 1000; // 10 Minuten in Millisekunden
+        this.lastActivityTime = Date.now();
+        this.activityCheckInterval = null;
+        this.lastActivityKey = 'infocenter_last_activity';
+        
         // Globale Referenz für PJAX-Updates
         window.InfoCenterTimeTracker = this;
         
@@ -20,6 +26,7 @@ class InfoCenterTimeTracker {
         this.initializeElements();
         this.createMiniTracker();
         this.bindEvents();
+        this.setupInactivityTracking();
         this.updateDisplay();
         this.loadTodayStats();
         this.updateButtons();
@@ -44,8 +51,6 @@ class InfoCenterTimeTracker {
         // Nach PJAX-Update: Elemente neu initialisieren aber State beibehalten
         if (!this.initialized) return;
         
-        console.log('TimeTracker: Refreshing after PJAX');
-        
         // Timer stoppen für Reinitialisierung
         if (this.intervalId) {
             clearInterval(this.intervalId);
@@ -59,6 +64,9 @@ class InfoCenterTimeTracker {
         this.updateDisplay();
         this.updateButtons();
         this.loadTodayStats();
+        
+        // Inaktivitäts-Tracking wieder aufsetzen
+        this.setupInactivityTracking();
         
         // Timer wieder starten falls aktiv
         if (this.state.isRunning && !this.state.isPaused) {
@@ -169,6 +177,97 @@ class InfoCenterTimeTracker {
         this.observeSidebarVisibility();
     }
 
+    setupInactivityTracking() {
+        // Aktivität bei verschiedenen Events erfassen
+        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
+        
+        // Event-Handler für Aktivitätserkennung
+        const handleActivity = () => {
+            this.updateLastActivity();
+        };
+        
+        // Events registrieren (nur einmal)
+        if (!this.activityEventsRegistered) {
+            activityEvents.forEach(event => {
+                document.addEventListener(event, handleActivity, true);
+            });
+            this.activityEventsRegistered = true;
+        }
+        
+        // Regelmäßige Überprüfung auf Inaktivität starten
+        this.startInactivityCheck();
+        
+        // Initial activity update
+        this.updateLastActivity();
+    }
+
+    updateLastActivity() {
+        this.lastActivityTime = Date.now();
+        // Speichere auch global für andere Tabs/Fenster
+        try {
+            localStorage.setItem(this.lastActivityKey, this.lastActivityTime.toString());
+        } catch (e) {
+            // Ignore localStorage errors
+        }
+    }
+
+    startInactivityCheck() {
+        // Stoppe vorherigen Check
+        if (this.activityCheckInterval) {
+            clearInterval(this.activityCheckInterval);
+        }
+        
+        // Starte neuen Check (alle 30 Sekunden prüfen)
+        this.activityCheckInterval = setInterval(() => {
+            this.checkForInactivity();
+        }, 30000);
+    }
+
+    checkForInactivity() {
+        // Nur prüfen wenn Timer läuft und nicht pausiert ist
+        if (!this.state.isRunning || this.state.isPaused) return;
+        
+        // Letzte Aktivität aus localStorage holen (falls andere Tabs/Fenster aktiv waren)
+        let lastGlobalActivity = this.lastActivityTime;
+        try {
+            const stored = localStorage.getItem(this.lastActivityKey);
+            if (stored) {
+                lastGlobalActivity = Math.max(this.lastActivityTime, parseInt(stored));
+            }
+        } catch (e) {
+            // Use local activity time as fallback
+        }
+        
+        const now = Date.now();
+        const timeSinceActivity = now - lastGlobalActivity;
+        
+        // Automatisch pausieren nach Inaktivität
+        if (timeSinceActivity >= this.inactivityTimeout) {
+            this.pauseDueToInactivity();
+        }
+    }
+
+    pauseDueToInactivity() {
+        // Pause mit spezieller Kennzeichnung
+        this.pause();
+        this.updateSessionInfo('Automatisch pausiert (Inaktivität)');
+        this.updateMiniStatus('Auto-Pause');
+        
+        // Optional: Benachrichtigung anzeigen
+        this.showInactivityNotification();
+    }
+
+    showInactivityNotification() {
+        // Einfache Notification falls möglich
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('TimeTracker pausiert', {
+                body: 'Timer wurde nach 10 Minuten Inaktivität automatisch pausiert.',
+                icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTIiIGN5PSIxMiIgcj0iMTAiIHN0cm9rZT0iIzMzNzNkYyIgc3Ryb2tlLXdpZHRoPSIyIi8+CjxwYXRoIGQ9Im0xMiA2djZsNCAyIiBzdHJva2U9IiMzMzczZGMiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjwvc3ZnPgo=',
+                tag: 'timetracker-inactivity'
+            });
+        }
+    }
+
     start() {
         if (this.state.isPaused) {
             // Resume from pause
@@ -197,6 +296,9 @@ class InfoCenterTimeTracker {
         this.miniElements.tracker?.classList.add('tracking');
         this.miniElements.tracker?.classList.remove('paused');
         this.updateMiniVisibility();
+        
+        // Aktivität zurücksetzen bei Start/Resume
+        this.updateLastActivity();
     }
 
     pause() {
@@ -259,6 +361,12 @@ class InfoCenterTimeTracker {
         this.elements.container?.classList.remove('tracking', 'paused');
         this.miniElements.tracker?.classList.remove('tracking', 'paused');
         
+        // Inaktivitäts-Tracking stoppen
+        if (this.activityCheckInterval) {
+            clearInterval(this.activityCheckInterval);
+            this.activityCheckInterval = null;
+        }
+        
         // Reset to ready state after 2 seconds
         setTimeout(() => {
             this.updateSessionInfo('Bereit zum Starten');
@@ -279,6 +387,12 @@ class InfoCenterTimeTracker {
             clearInterval(this.intervalId);
             this.intervalId = null;
         }
+        
+        // Auch Inaktivitäts-Check stoppen wenn Timer gestoppt wird
+        if (this.activityCheckInterval) {
+            clearInterval(this.activityCheckInterval);
+            this.activityCheckInterval = null;
+        }
     }
 
     resumeTimer() {
@@ -293,6 +407,9 @@ class InfoCenterTimeTracker {
             
             this.displayStartTime = Date.now();
             this.startTimer();
+            
+            // Inaktivitäts-Tracking starten wenn Timer läuft
+            this.startInactivityCheck();
         }
     }
 
@@ -449,14 +566,10 @@ class InfoCenterTimeTracker {
         const sidebarVisible = this.elements.sidebar && this.elements.sidebar.classList.contains('active');
         const isActive = this.state.isRunning; // Nur zeigen wenn aktiv (läuft oder pausiert)
         
-        console.log('Mini visibility check:', { sidebarVisible, isActive, sidebarExists: !!this.elements.sidebar });
-        
         if (!sidebarVisible && isActive) {
             this.miniElements.tracker.classList.add('visible');
-            console.log('Showing mini tracker');
         } else {
             this.miniElements.tracker.classList.remove('visible');
-            console.log('Hiding mini tracker');
         }
     }
 
@@ -502,11 +615,9 @@ function initializeTimeTracker() {
     // Nur initialisieren wenn TimeTracker-Elemente vorhanden sind
     if (document.getElementById('timeDisplay')) {
         if (!window.InfoCenterTimeTracker || !window.InfoCenterTimeTracker.initialized) {
-            console.log('TimeTracker: Initializing new instance');
             new InfoCenterTimeTracker();
         } else {
             // Bereits existierend, nur refreshen
-            console.log('TimeTracker: Refreshing existing instance');
             window.InfoCenterTimeTracker.refreshAfterPjax();
         }
     }
@@ -515,7 +626,6 @@ function initializeTimeTracker() {
 // REDAXO Backend: rex:ready Event (nur wenn jQuery verfügbar)
 if (typeof $ !== 'undefined') {
     $(document).on('rex:ready', function() {
-        console.log('TimeTracker: rex:ready event triggered');
         initializeTimeTracker();
     });
 }
@@ -523,11 +633,9 @@ if (typeof $ !== 'undefined') {
 // Frontend/Universal: DOMContentLoaded Event
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('TimeTracker: DOMContentLoaded event triggered');
         initializeTimeTracker();
     });
 } else {
     // DOM already loaded
-    console.log('TimeTracker: DOM already loaded, initializing immediately');
     initializeTimeTracker();
 }
