@@ -1,23 +1,61 @@
 /* Base Styles - Dark Milchglas Design */
 .info-center-container {
     --panel-width: 360px;
-    --panel-bg: rgba(15, 15, 25, 0.7);
-    --panel-shadow: 0 0 40px rgba(0,0,0,0.6);
+    --panel-bg: rgba(0, 0, 0, 0.77);
+    --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.6);
     --border-color: rgba(255, 255, 255, 0.08);
     --text-color: #e2e8f0;
     --text-color-muted: #94a3b8;
-    --header-bg: rgba(30, 30, 40, 0.95);
-    --widget-bg: rgba(40, 40, 60, 0.4);
+    --header-bg: rgba(50, 64, 80, 0.95);
+    --widget-bg: rgba(50, 64, 80, 0.4);
     --widget-border: rgba(255, 255, 255, 0.1);
-    --button-bg: rgba(60, 60, 80, 0.5);
+    --button-bg: rgba(50, 64, 80, 0.5);
     --button-border: rgba(255, 255, 255, 0.15);
     --hover-bg: rgba(255, 255, 255, 0.06);
+    
+    /* Anpassbare Schriftgrößen */
+    --font-size-base: 13px;
+    --font-size-small: 11px;
+    --font-size-title: 15px;
+    --font-size-tiny: 10px;
+    
+    /* Toggle Position */
+    --toggle-position: 50%; /* center, top: 40px, bottom: calc(100% - 40px) */
+}
+
+/* Font Size Variants - settable via JavaScript */
+.info-center-container.font-small {
+    --font-size-base: 11px;
+    --font-size-small: 10px;
+    --font-size-title: 12px;
+    --font-size-tiny: 9px;
+}
+
+.info-center-container.font-medium {
+    --font-size-base: 13px;
+    --font-size-small: 11px;
+    --font-size-title: 15px;
+    --font-size-tiny: 10px;
+}
+
+.info-center-container.font-large {
+    --font-size-base: 15px;
+    --font-size-small: 13px;
+    --font-size-title: 17px;
+    --font-size-tiny: 11px;
+}
+
+.info-center-container.font-xlarge {
+    --font-size-base: 17px;
+    --font-size-small: 15px;
+    --font-size-title: 19px;
+    --font-size-tiny: 13px;
 }
 
 /* Toggle Button - Dark Glass */
 .info-center-toggle {
     position: fixed;
-    top: 50%;
+    top: var(--toggle-position);
     right: 0;
     transform: translateY(-50%);
     z-index: 100001;
@@ -40,14 +78,15 @@
 
 .info-center-toggle span {
     line-height: 1;
+    -webkit-user-select: none;
     user-select: none;
 }
 
 .info-center-toggle:hover {
-    background: rgba(40, 40, 60, 0.9);
+    background: rgba(50, 64, 80, 0.9);
     border-color: rgba(255, 255, 255, 0.15);
     transform: translateY(-50%) translateX(-2px);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    box-shadow: 0 8px 25px rgba(50, 64, 80, 0.3);
 }
 
 .info-center-toggle:active {
@@ -56,11 +95,41 @@
 
 .info-center-toggle.active {
     right: var(--panel-width);
-    background: rgba(60, 60, 80, 0.9);
-    border-radius: 0 8px 8px 0;
+    background: rgba(50, 64, 80, 0.9);
+  
     border-left: none;
     border-right: 1px solid var(--border-color);
     transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+}
+
+/* Toggle Icon States */
+.info-center-toggle .toggle-icon {
+    transition: all 0.3s ease;
+}
+
+.info-center-toggle:not(.active) .toggle-icon::before {
+    content: "☰";
+    font-size: 16px;
+}
+
+.info-center-toggle.active .toggle-icon::before {
+    content: "▶";
+    font-size: 14px;
+}
+
+/* Position variants */
+.info-center-container.position-top {
+    --toggle-position: 70px;
+}
+
+.info-center-container.position-center {
+    --toggle-position: 50%;
+}
+
+.info-center-container.position-bottom {
+    --toggle-position: calc(100vh - 70px);
 }
 
 /* Sidebar Panel */
@@ -129,18 +198,18 @@
     overflow: hidden;
     box-shadow: 
         inset 0 1px 0 rgba(255,255,255,0.1),
-        0 4px 12px rgba(0,0,0,0.15);
+        0 4px 12px rgba(50, 64, 80, 0.15);
     transition: all 0.3s ease;
     flex-shrink: 0; /* Verhindert ungewolltes Schrumpfen */
 }
 
 .info-center-widget:hover {
-    background: rgba(40, 40, 60, 0.4);
+    background: rgba(50, 64, 80, 0.4);
     border-color: rgba(255, 255, 255, 0.12);
     transform: translateY(-1px);
     box-shadow: 
         inset 0 1px 0 rgba(255,255,255,0.15),
-        0 6px 20px rgba(0,0,0,0.2);
+        0 6px 20px rgba(50, 64, 80, 0.2);
 }
 
 .info-center-widget:last-child {
@@ -165,10 +234,10 @@
 
 .info-center-widget-title {
     margin: 0;
-    font-size: 14px;
+    font-size: var(--font-size-title);
     font-weight: 600;
     color: var(--text-color);
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    text-shadow: 0 1px 2px rgba(50, 64, 80, 0.3);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -202,7 +271,7 @@
 .info-center-widget-content {
     padding: 16px;
     color: var(--text-color);
-    font-size: 12px;
+    font-size: var(--font-size-base);
     line-height: 1.4;
 }
 
@@ -244,12 +313,12 @@
     border-radius: 5px;
     color: var(--text-color);
     text-decoration: none;
-    font-size: 11px;
+    font-size: var(--font-size-small);
     font-weight: 500;
     transition: all 0.2s ease;
     box-shadow: 
         inset 0 1px 0 rgba(255,255,255,0.1),
-        0 1px 3px rgba(0,0,0,0.1);
+        0 1px 3px rgba(50, 64, 80, 0.1);
     white-space: nowrap;
     flex-shrink: 0;
 }
@@ -263,7 +332,7 @@
     transform: translateY(-1px);
     box-shadow: 
         inset 0 1px 0 rgba(255,255,255,0.15),
-        0 2px 6px rgba(0,0,0,0.15);
+        0 2px 6px rgba(50, 64, 80, 0.15);
 }
 
 /* Base Button Styles */
@@ -276,7 +345,7 @@
     border-radius: 6px;
     color: var(--text-color);
     text-decoration: none;
-    font-size: 11px;
+    font-size: var(--font-size-small);
     font-weight: 500;
     transition: all 0.2s ease;
     gap: 8px;
@@ -292,7 +361,7 @@
     transform: translateY(-1px);
     box-shadow: 
         inset 0 1px 0 rgba(255,255,255,0.15),
-        0 2px 6px rgba(0,0,0,0.15);
+        0 2px 6px rgba(50, 64, 80, 0.15);
 }
 
 /* Spezifische Button-Styles für verschiedene Aktionen */
@@ -357,7 +426,7 @@
 .info-center-upkeep-item .label {
     color: var(--text-color-muted);
     font-weight: 500;
-    font-size: 11px;
+    font-size: var(--font-size-small);
 }
 
 .info-center-system-item .value,
@@ -365,7 +434,7 @@
 .info-center-upkeep-item .value {
     color: var(--text-color);
     font-weight: 600;
-    font-size: 11px;
+    font-size: var(--font-size-small);
     text-align: right;
 }
 
@@ -381,7 +450,7 @@
     padding: 8px 0;
     border-bottom: 1px solid var(--widget-border);
     transition: all 0.2s ease;
-    font-size: 11px;
+    font-size: var(--font-size-small);
 }
 
 .info-center-stats-item:last-child {
@@ -400,13 +469,13 @@
 .info-center-stats-item .label {
     color: var(--text-color-muted);
     font-weight: 500;
-    font-size: 10px;
+    font-size: var(--font-size-tiny);
 }
 
 .info-center-stats-item .value {
     color: var(--text-color);
     font-weight: 600;
-    font-size: 10px;
+    font-size: var(--font-size-tiny);
     font-family: 'Courier New', monospace;
     text-align: right;
 }
@@ -452,7 +521,7 @@
     border-radius: 6px;
     color: var(--text-color);
     text-decoration: none;
-    font-size: 11px;
+    font-size: var(--font-size-small);
     font-weight: 500;
     transition: all 0.2s ease;
     gap: 8px;
@@ -472,7 +541,7 @@
 
 .info-center-recent-articles h4 {
     color: var(--text-color);
-    font-size: 13px;
+    font-size: var(--font-size-base);
     margin: 0 0 8px 0;
     text-transform: uppercase;
     font-weight: 600;
@@ -505,7 +574,7 @@
     color: var(--text-color);
     text-decoration: none;
     font-weight: 500;
-    font-size: 12px;
+    font-size: var(--font-size-base);
 }
 
 .info-center-recent-article .article-main a:hover {
@@ -516,19 +585,19 @@
     display: flex;
     justify-content: space-between;
     margin-top: 4px;
-    font-size: 11px;
+    font-size: var(--font-size-small);
     color: rgba(255, 255, 255, 0.6);
 }
 
 .info-center-recent-article .article-user,
 .info-center-recent-article .article-date {
-    font-size: 10px;
+    font-size: var(--font-size-tiny);
 }
 
 /* Recent Articles */
 .info-center-recent-articles h4 {
     margin: 0 0 12px 0;
-    font-size: 11px;
+    font-size: var(--font-size-small);
     font-weight: 600;
     color: var(--text-color-muted);
     text-transform: uppercase;
@@ -553,7 +622,7 @@
     border-radius: 4px;
     color: var(--text-color);
     text-decoration: none;
-    font-size: 10px;
+    font-size: var(--font-size-tiny);
     transition: all 0.2s ease;
 }
 
@@ -573,7 +642,7 @@
     font-weight: 400;
     color: var(--text-color-muted);
     font-family: 'Courier New', monospace;
-    font-size: 9px;
+    font-size: var(--font-size-tiny);
     flex-shrink: 0;
     margin-left: 8px;
 }
@@ -680,7 +749,7 @@
 }
 
 .info-center-url-item .label {
-    font-size: 11px;
+    font-size: var(--font-size-small);
     font-weight: 600;
     color: var(--text-color-muted);
     text-transform: uppercase;
@@ -691,7 +760,7 @@
 }
 
 .info-center-url-item .value {
-    font-size: 12px;
+    font-size: var(--font-size-base);
     color: var(--text-color);
     text-align: right;
     word-break: break-word;
@@ -708,7 +777,7 @@
 }
 
 .info-center-url2-note {
-    font-size: 11px;
+    font-size: var(--font-size-small);
     color: var(--text-color-muted);
     padding: 8px 12px;
     background: rgba(251, 191, 36, 0.1);
@@ -759,7 +828,7 @@
 }
 
 .info-center-url-note {
-    font-size: 12px;
+    font-size: var(--font-size-base);
     color: var(--text-color-muted);
     padding: 8px 12px;
     background: rgba(34, 197, 94, 0.1);

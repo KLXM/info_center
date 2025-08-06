@@ -33,6 +33,23 @@ class InfoCenter
             return '';
         }
 
+        // Benutzereinstellungen laden
+        $user = rex::getUser();
+        $userId = $user ? $user->getId() : 0;
+        $addon = rex_addon::get('info_center');
+        $uiSettings = $addon->getConfig('ui_settings_user_' . $userId, []);
+        
+        // UI-Klassen für Container
+        $containerClasses = ['info-center-container'];
+        
+        // Font Size
+        $fontSize = $uiSettings['font_size'] ?? 'medium';
+        $containerClasses[] = 'font-' . $fontSize;
+        
+        // Position
+        $position = $uiSettings['toggle_position'] ?? 'center';
+        $containerClasses[] = 'position-' . $position;
+
         // Sortiere die Widgets nach Priorität
         uasort($this->widgets, function ($a, $b) {
             return $a->getPriority() <=> $b->getPriority();
@@ -68,9 +85,9 @@ class InfoCenter
 
         // Das komplette Info Center HTML mit neuer Sidebar-Struktur
         return sprintf(
-            '<div class="info-center-container">
+            '<div class="%s">
                 <button class="info-center-toggle" type="button" title="Info Center öffnen/schließen">
-                    <span>☰</span>
+                    <span class="toggle-icon"></span>
                 </button>
                 <div class="info-center-sidebar">
                     %s
@@ -79,6 +96,7 @@ class InfoCenter
                     </div>
                 </div>
             </div>',
+            implode(' ', $containerClasses),
             $headerButtons,
             $widgetsOutput
         );

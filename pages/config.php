@@ -47,12 +47,26 @@ if (rex_post('formsubmit', 'string') == '1') {
         $package->removeConfig('widgets_user_' . $user);
     }
     
+    // UI-Einstellungen pro User speichern
+    $uiSettings = [];
+    if (isset($config['font_size'])) {
+        $uiSettings['font_size'] = $config['font_size'];
+    }
+    if (isset($config['toggle_position'])) {
+        $uiSettings['toggle_position'] = $config['toggle_position'];
+    }
+    
+    if (!empty($uiSettings)) {
+        $package->setConfig('ui_settings_user_' . $user, $uiSettings);
+    }
+    
     echo rex_view::success($package->i18n('info_center_config_saved'));
 }
 
 // Aktuelle Widget-Konfiguration laden
 $currentConfig = $package->getConfig('widgets_user_' . $user, []);
 $globalConfig = $package->getConfig('widgets', []);
+$uiSettings = $package->getConfig('ui_settings_user_' . $user, []);
 
 $content .= '<fieldset><legend>' . $package->i18n('info_center_widget_settings') . '</legend>';
 
@@ -105,6 +119,88 @@ foreach ($widgets as $widgetId => $widgetTitle) {
 }
 
 $content .= '</fieldset>';
+
+// UI Settings
+$content .= '<fieldset><legend>' . $package->i18n('info_center_ui_settings') . '</legend>';
+
+// Font Size Setting
+$formElements = [];
+$n = [];
+$currentFontSize = $uiSettings['font_size'] ?? 'medium';
+$fontSizeOptions = [
+    'small' => $package->i18n('info_center_font_size_small'),
+    'medium' => $package->i18n('info_center_font_size_medium'), 
+    'large' => $package->i18n('info_center_font_size_large'),
+    'xlarge' => $package->i18n('info_center_font_size_xlarge')
+];
+
+$fontSizeSelect = '<select name="config[font_size]" class="form-control">';
+foreach ($fontSizeOptions as $value => $label) {
+    $selected = ($value === $currentFontSize) ? ' selected="selected"' : '';
+    $fontSizeSelect .= '<option value="' . $value . '"' . $selected . '>' . $label . '</option>';
+}
+$fontSizeSelect .= '</select>';
+
+$n['label'] = '<label for="font_size">' . $package->i18n('info_center_font_size') . '</label>';
+$n['field'] = $fontSizeSelect;
+$formElements[] = $n;
+
+$fragment = new rex_fragment();
+$fragment->setVar('elements', $formElements, false);
+$content .= $fragment->parse('core/form/container.php');
+
+// Toggle Position Setting
+$formElements = [];
+$n = [];
+$currentPosition = $uiSettings['toggle_position'] ?? 'center';
+$positionOptions = [
+    'top' => $package->i18n('info_center_position_top'),
+    'center' => $package->i18n('info_center_position_center'),
+    'bottom' => $package->i18n('info_center_position_bottom')
+];
+
+$positionSelect = '<select name="config[toggle_position]" class="form-control">';
+foreach ($positionOptions as $value => $label) {
+    $selected = ($value === $currentPosition) ? ' selected="selected"' : '';
+    $positionSelect .= '<option value="' . $value . '"' . $selected . '>' . $label . '</option>';
+}
+$positionSelect .= '</select>';
+
+$n['label'] = '<label for="toggle_position">' . $package->i18n('info_center_toggle_position') . '</label>';
+$n['field'] = $positionSelect;
+$formElements[] = $n;
+
+$fragment = new rex_fragment();
+$fragment->setVar('elements', $formElements, false);
+$content .= $fragment->parse('core/form/container.php');
+
+$content .= '</fieldset>';
+
+// JavaScript for live preview
+$content .= '
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const fontSizeSelect = document.querySelector("select[name=\'config[font_size]\']");
+    const positionSelect = document.querySelector("select[name=\'config[toggle_position]\']");
+    
+    if (fontSizeSelect) {
+        fontSizeSelect.addEventListener("change", function() {
+            if (window.InfoCenter) {
+                window.InfoCenter.setFontSize(this.value);
+            }
+        });
+    }
+    
+    if (positionSelect) {
+        positionSelect.addEventListener("change", function() {
+            if (window.InfoCenter) {
+                window.InfoCenter.setPosition(this.value);
+            }
+        });
+    }
+});
+</script>
+';
 
 // Save-Button
 $formElements = [];

@@ -96,6 +96,18 @@ info_center_widget_configuration = Widget Configuration
 info_center_config_save = Save Settings
 info_center_widget_disabled_globally = This widget is disabled globally
 
+# UI Settings
+info_center_ui_settings = User Interface
+info_center_font_size = Font Size
+info_center_font_size_small = Small
+info_center_font_size_medium = Medium
+info_center_font_size_large = Large
+info_center_font_size_xlarge = Extra Large
+info_center_toggle_position = Toggle Position
+info_center_position_top = Top (70px from edge)
+info_center_position_center = Center
+info_center_position_bottom = Bottom (70px from edge)
+
 # Widget Builder
 info_center_widget_builder = Widget Builder
 info_center_widget_builder_title = Create Custom Widgets

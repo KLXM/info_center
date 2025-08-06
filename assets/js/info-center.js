@@ -52,10 +52,21 @@
         
         console.log('InfoCenter: Found', toggleBtns.length, 'toggle buttons and', closeBtns.length, 'close buttons');
         
+        // Apply saved settings
+        applySavedSettings();
+        
         toggleBtns.forEach(btn => {
             // Entferne alte Event Listener um Duplikate zu vermeiden
             btn.removeEventListener('click', handleToggleClick);
             btn.addEventListener('click', handleToggleClick);
+            
+            // Ensure toggle icon is properly set
+            if (!btn.querySelector('.toggle-icon')) {
+                const iconSpan = document.createElement('span');
+                iconSpan.className = 'toggle-icon';
+                btn.innerHTML = '';
+                btn.appendChild(iconSpan);
+            }
         });
         
         closeBtns.forEach(btn => {
@@ -166,4 +177,45 @@
         // URL Widget verwendet kein Lazy Loading - nicht benötigt
         console.log('InfoCenter: URL widget refresh not needed (no lazy loading)');
     }
+    
+    // Apply saved user settings
+    function applySavedSettings() {
+        const container = document.querySelector('.info-center-container');
+        if (!container) return;
+        
+        // Apply font size setting
+        const fontSize = localStorage.getItem('infoCenterFontSize') || 'medium';
+        container.className = container.className.replace(/font-\w+/g, '');
+        container.classList.add('font-' + fontSize);
+        
+        // Apply position setting
+        const position = localStorage.getItem('infoCenterPosition') || 'center';
+        container.className = container.className.replace(/position-\w+/g, '');
+        container.classList.add('position-' + position);
+        
+        console.log('InfoCenter: Applied settings - Font:', fontSize, 'Position:', position);
+    }
+    
+    // Save and apply font size
+    window.InfoCenter = window.InfoCenter || {};
+    window.InfoCenter.setFontSize = function(size) {
+        localStorage.setItem('infoCenterFontSize', size);
+        applySavedSettings();
+        console.log('InfoCenter: Font size changed to:', size);
+    };
+    
+    // Save and apply position
+    window.InfoCenter.setPosition = function(position) {
+        localStorage.setItem('infoCenterPosition', position);
+        applySavedSettings();
+        console.log('InfoCenter: Position changed to:', position);
+    };
+    
+    // Get current settings
+    window.InfoCenter.getSettings = function() {
+        return {
+            fontSize: localStorage.getItem('infoCenterFontSize') || 'medium',
+            position: localStorage.getItem('infoCenterPosition') || 'center'
+        };
+    };
 })(); // Self-executing anonymous function without jQuery dependency
