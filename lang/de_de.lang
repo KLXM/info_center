@@ -125,10 +125,14 @@ info_center_widget_visibility_backend = Nur Backend
 info_center_widget_visibility_frontend = Nur Frontend
 info_center_widget_filter_conditions = Filter-Bedingungen
 info_center_widget_filter_optional = (Optional)
-info_center_widget_filter_help = SQL WHERE-Bedingung ohne "WHERE"
+info_center_widget_filter_help = SQL WHERE-Bedingung ohne "WHERE". Unterstützt PHP-Zeitplatzhalter wie {NOW}, {TODAY}, {30_DAYS_AGO}
 info_center_widget_orderby = Sortierung (ORDER BY)
 info_center_widget_orderby_optional = (Optional)
 info_center_widget_orderby_help = SQL ORDER BY-Klausel ohne "ORDER BY"
+info_center_widget_priority = Priorität
+info_center_widget_priority_help = Reihenfolge der Widgets (1 = zuerst, 100 = zuletzt). Standard-Widgets haben Priorität 10-30.
+info_center_widget_clone = Klonen
+info_center_widget_cloned = Widget wurde erfolgreich geklont
 info_center_widget_custom_url_placeholder = Verwenden Sie {feldname} als Platzhalter, z.B. {id}, {name}
 info_center_widget_enabled = Widget aktiviert
 info_center_widget_select_table_first = Wählen Sie zuerst eine YForm-Tabelle aus, um die verfügbaren Felder zu sehen

@@ -36,6 +36,22 @@ switch ($func) {
         echo renderWidgetForm($package, $func, $widgetId, $customWidgets);
         break;
     
+    case 'clone':
+        if ($widgetId && isset($customWidgets[$widgetId])) {
+            $originalWidget = $customWidgets[$widgetId];
+            $newWidgetId = 'custom_' . uniqid();
+            $clonedWidget = $originalWidget;
+            $clonedWidget['name'] = $originalWidget['name'] . ' (Kopie)';
+            $clonedWidget['created'] = date('Y-m-d H:i:s');
+            $clonedWidget['updated'] = date('Y-m-d H:i:s');
+            
+            $customWidgets[$newWidgetId] = $clonedWidget;
+            $package->setConfig('custom_widgets', $customWidgets);
+            echo rex_view::success($package->i18n('info_center_widget_cloned'));
+        }
+        echo renderWidgetList($package, $customWidgets);
+        break;
+    
     case 'delete':
         if ($widgetId && isset($customWidgets[$widgetId])) {
             unset($customWidgets[$widgetId]);
@@ -90,16 +106,28 @@ function renderWidgetList($package, $customWidgets)
         $content .= '<thead><tr>';
         $content .= '<th>' . $package->i18n('info_center_widget_name') . '</th>';
         $content .= '<th>' . $package->i18n('info_center_widget_table') . '</th>';
+        $content .= '<th>' . $package->i18n('info_center_widget_priority') . '</th>';
         $content .= '<th>' . $package->i18n('info_center_widget_link_type') . '</th>';
         $content .= '<th>' . $package->i18n('info_center_widget_visibility') . '</th>';
         $content .= '<th>Status</th>';
         $content .= '<th>Aktionen</th>';
         $content .= '</tr></thead><tbody>';
         
+        // Widgets nach Priorität sortieren
+        uasort($customWidgets, function($a, $b) {
+            $prioA = (int)($a['priority'] ?? 50);
+            $prioB = (int)($b['priority'] ?? 50);
+            return $prioA <=> $prioB;
+        });
+        
         foreach ($customWidgets as $id => $widget) {
             $content .= '<tr>';
             $content .= '<td><strong>' . rex_escape($widget['name']) . '</strong></td>';
             $content .= '<td>' . rex_escape($widget['table_name']) . '</td>';
+            
+            // Priorität anzeigen
+            $priority = (int)($widget['priority'] ?? 50);
+            $content .= '<td><span class="label label-default">' . $priority . '</span></td>';
             
             // Link-Typ anzeigen
             $content .= '<td>';
@@ -153,6 +181,9 @@ function renderWidgetList($package, $customWidgets)
             $content .= '<td>';
             $content .= '<a href="' . rex_url::currentBackendPage(['func' => 'edit', 'widget_id' => $id]) . '" class="btn btn-xs btn-primary">';
             $content .= '<i class="rex-icon fa-edit"></i> ' . $package->i18n('info_center_widget_edit');
+            $content .= '</a> ';
+            $content .= '<a href="' . rex_url::currentBackendPage(['func' => 'clone', 'widget_id' => $id]) . '" class="btn btn-xs btn-success" title="' . $package->i18n('info_center_widget_clone') . '">';
+            $content .= '<i class="rex-icon fa-copy"></i> ' . $package->i18n('info_center_widget_clone');
             $content .= '</a> ';
             $content .= '<a href="' . rex_url::currentBackendPage(['func' => 'delete', 'widget_id' => $id]) . '" class="btn btn-xs btn-danger" onclick="return confirm(\'' . $package->i18n('info_center_widget_confirm_delete') . '\');">';
             $content .= '<i class="rex-icon fa-trash"></i> ' . $package->i18n('info_center_widget_delete');
@@ -252,13 +283,70 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     $fragment->setVar('elements', $formElements, false);
     $content .= $fragment->parse('core/form/form.php');
     
+    // Priorität/Reihenfolge
+    $formElements = [];
+    $n = [];
+    $n['label'] = '<label for="widget-position">' . $package->i18n('info_center_widget_position') . '</label>';
+    
+    // Aktuelle Priorität ermitteln für Auswahl
+    $currentPosition = $widget['position'] ?? 'end';
+    $currentAfterWidget = $widget['after_widget'] ?? '';
+    
+    $positionOptions = '
+    <div class="radio">
+        <label><input type="radio" name="widget_config[position]" value="start"' . ($currentPosition === 'start' ? ' checked' : '') . '> ' . $package->i18n('info_center_widget_position_start') . '</label>
+        <small class="text-muted" style="margin-left: 20px; display: block;">' . $package->i18n('info_center_widget_position_start_help') . '</small>
+    </div>
+    <div class="radio">
+        <label><input type="radio" name="widget_config[position]" value="after"' . ($currentPosition === 'after' ? ' checked' : '') . '> ' . $package->i18n('info_center_widget_position_after') . '</label>
+        <div class="form-group" id="after-widget-container" style="margin-top: 10px; margin-left: 20px; ' . ($currentPosition !== 'after' ? 'display: none;' : '') . '">
+            <select name="widget_config[after_widget]" class="form-control">
+                <option value="">-- ' . $package->i18n('info_center_widget_select_widget') . ' --</option>
+                <optgroup label="Standard Widgets">
+                    <option value="url"' . ($currentAfterWidget === 'url' ? ' selected' : '') . '>🔗 URL Widget</option>
+                    <option value="timetracker"' . ($currentAfterWidget === 'timetracker' ? ' selected' : '') . '>⏱️ Time Tracker</option>
+                    <option value="article"' . ($currentAfterWidget === 'article' ? ' selected' : '') . '>📄 Article Widget</option>
+                    <option value="upkeep"' . ($currentAfterWidget === 'upkeep' ? ' selected' : '') . '>🛡️ Upkeep Widget</option>
+                    <option value="stats"' . ($currentAfterWidget === 'stats' ? ' selected' : '') . '>📊 Stats Widget</option>
+                    <option value="system"' . ($currentAfterWidget === 'system' ? ' selected' : '') . '>⚙️ System Widget</option>
+                </optgroup>';
+    
+    // Custom Widgets hinzufügen (außer dem aktuell bearbeiteten Widget)
+    if (!empty($customWidgets)) {
+        $positionOptions .= '<optgroup label="Custom Widgets">';
+        foreach ($customWidgets as $customId => $customWidget) {
+            // Das aktuell bearbeitete Widget nicht in der Liste anzeigen
+            if ($customId === $widgetId) {
+                continue;
+            }
+            $selected = ($currentAfterWidget === $customId) ? ' selected' : '';
+            $positionOptions .= '<option value="' . rex_escape($customId) . '"' . $selected . '>📋 ' . rex_escape($customWidget['name']) . '</option>';
+        }
+        $positionOptions .= '</optgroup>';
+    }
+    
+    $positionOptions .= '</select>
+            <small class="text-muted">' . $package->i18n('info_center_widget_position_after_help') . '</small>
+        </div>
+    </div>
+    <div class="radio">
+        <label><input type="radio" name="widget_config[position]" value="end"' . ($currentPosition === 'end' ? ' checked' : '') . '> ' . $package->i18n('info_center_widget_position_end') . '</label>
+        <small class="text-muted" style="margin-left: 20px; display: block;">' . $package->i18n('info_center_widget_position_end_help') . '</small>
+    </div>';
+    
+    $n['field'] = $positionOptions;
+    $formElements[] = $n;
+    $fragment = new rex_fragment();
+    $fragment->setVar('elements', $formElements, false);
+    $content .= $fragment->parse('core/form/form.php');
+    
     // Filter-Bedingungen
     $formElements = [];
     $n = [];
-    $n['label'] = '<label for="widget-filter">' . $package->i18n('info_center_widget_filter_conditions') . ' <small class="text-muted">' . $package->i18n('info_center_widget_filter_optional') . '</small></label>';
+    $n['label'] = '<label for="widget-filter">' . $package->i18n('info_center_widget_filter_conditions') . ' <small class="text-muted">' . $package->i18n('info_center_widget_filter_optional') . '</small> <a href="#" id="filter-help-btn" class="btn btn-xs btn-info" style="margin-left: 10px;"><i class="rex-icon fa-question-circle"></i> Hilfe</a></label>';
     $filterValue = $widget['filter'] ?? '';
-    $n['field'] = '<textarea id="widget-filter" name="widget_config[filter]" class="form-control" rows="3" placeholder="z.B. status = 1 AND created > \'2024-01-01\'">' . rex_escape($filterValue) . '</textarea>';
-    $n['note'] = '<small class="text-muted">' . $package->i18n('info_center_widget_filter_help') . '. Beispiele:<br>• <code>status = 1</code><br>• <code>createdate >= CURDATE() - INTERVAL 30 DAY</code><br>• <code>status = 1 AND email LIKE \'%@example.com\'</code></small>';
+    $n['field'] = '<textarea id="widget-filter" name="widget_config[filter]" class="form-control" rows="3" placeholder="z.B. status = 1 AND created > \'{30_DAYS_AGO}\'">' . rex_escape($filterValue) . '</textarea>';
+    $n['note'] = '<small class="text-muted">' . $package->i18n('info_center_widget_filter_help') . '. Grundlegende Beispiele:<br>• <code>status = 1</code><br>• <code>createdate >= \'{30_DAYS_AGO}\'</code><br>• <code>status = 1 AND email LIKE \'%@example.com\'</code></small>';
     $formElements[] = $n;
     $fragment = new rex_fragment();
     $fragment->setVar('elements', $formElements, false);
@@ -401,6 +489,71 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
     ' . $output . '
     </form>
     
+    <!-- Filter Hilfe Modal -->
+    <div class="modal fade" id="filter-help-modal" tabindex="-1" role="dialog">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                    <h4 class="modal-title">PHP-Zeitplatzhalter für Filter-Bedingungen</h4>
+                </div>
+                <div class="modal-body">
+                    <h5>Aktuelle Zeit/Datum:</h5>
+                    <ul>
+                        <li><code>{NOW}</code> - Aktuelles Datum und Zeit (' . date('Y-m-d H:i:s') . ')</li>
+                        <li><code>{TODAY}</code> - Heutiges Datum (' . date('Y-m-d') . ')</li>
+                        <li><code>{YESTERDAY}</code> - Gestern (' . date('Y-m-d', strtotime('-1 day')) . ')</li>
+                        <li><code>{TOMORROW}</code> - Morgen (' . date('Y-m-d', strtotime('+1 day')) . ')</li>
+                        <li><code>{CURRENT_TIME}</code> - Aktuelle Zeit (' . date('H:i:s') . ')</li>
+                    </ul>
+                    
+                    <h5>Zeiträume:</h5>
+                    <ul>
+                        <li><code>{WEEK_START}</code> - Wochenanfang/Montag (' . date('Y-m-d', strtotime('monday this week')) . ')</li>
+                        <li><code>{WEEK_END}</code> - Wochenende/Sonntag (' . date('Y-m-d', strtotime('sunday this week')) . ')</li>
+                        <li><code>{MONTH_START}</code> - Monatsanfang (' . date('Y-m-01') . ')</li>
+                        <li><code>{MONTH_END}</code> - Monatsende (' . date('Y-m-t') . ')</li>
+                        <li><code>{YEAR_START}</code> - Jahresanfang (' . date('Y-01-01') . ')</li>
+                        <li><code>{YEAR_END}</code> - Jahresende (' . date('Y-12-31') . ')</li>
+                    </ul>
+                    
+                    <h5>Relative Zeiträume:</h5>
+                    <ul>
+                        <li><code>{7_DAYS_AGO}</code> - Vor 7 Tagen (' . date('Y-m-d', strtotime('-7 days')) . ')</li>
+                        <li><code>{30_DAYS_AGO}</code> - Vor 30 Tagen (' . date('Y-m-d', strtotime('-30 days')) . ')</li>
+                        <li><code>{1_YEAR_AGO}</code> - Vor 1 Jahr (' . date('Y-m-d', strtotime('-1 year')) . ')</li>
+                    </ul>
+                    
+                    <h5>Unix Timestamps:</h5>
+                    <ul>
+                        <li><code>{NOW_TIMESTAMP}</code> - Aktueller Timestamp (' . time() . ')</li>
+                        <li><code>{TODAY_TIMESTAMP}</code> - Heute 00:00 Timestamp (' . strtotime('today') . ')</li>
+                        <li><code>{YESTERDAY_TIMESTAMP}</code> - Gestern 00:00 Timestamp (' . strtotime('yesterday') . ')</li>
+                    </ul>
+                    
+                    <h5>Beispiele für Filter-Bedingungen:</h5>
+                    <pre><code>-- Einträge der letzten 30 Tage
+createdate >= \'{30_DAYS_AGO}\'
+
+-- Einträge von heute
+DATE(createdate) = \'{TODAY}\'
+
+-- Einträge dieser Woche
+createdate >= \'{WEEK_START}\' AND createdate <= \'{WEEK_END}\'
+
+-- Aktive Einträge von heute
+status = 1 AND DATE(createdate) = \'{TODAY}\'
+
+-- Timestamp-basierte Abfrage
+timestamp_field >= {TODAY_TIMESTAMP}</code></pre>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Schließen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <script>
     // JavaScript für dynamische Feldauswahl und Link-Optionen
     jQuery(document).on("rex:ready", function() {
@@ -425,10 +578,33 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
             });
         });
         
+        // Position Radio Handler
+        const positionRadios = document.querySelectorAll("input[name=\'widget_config[position]\']");
+        positionRadios.forEach(function(radio) {
+            radio.addEventListener("change", function() {
+                toggleAfterWidgetContainer(this.value === "after");
+            });
+        });
+        
         // Initial state für Custom URL Container
         const checkedRadio = document.querySelector("input[name=\'widget_config[link_type]\']:checked");
         if (checkedRadio) {
             toggleCustomUrlContainer(checkedRadio.value === "custom");
+        }
+        
+        // Initial state für After Widget Container
+        const checkedPositionRadio = document.querySelector("input[name=\'widget_config[position]\']:checked");
+        if (checkedPositionRadio) {
+            toggleAfterWidgetContainer(checkedPositionRadio.value === "after");
+        }
+        
+        // Filter Hilfe Modal
+        const filterHelpBtn = document.getElementById("filter-help-btn");
+        if (filterHelpBtn) {
+            filterHelpBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                jQuery("#filter-help-modal").modal("show");
+            });
         }
     });
     
@@ -436,6 +612,17 @@ function renderWidgetForm($package, $func, $widgetId, $customWidgets)
         const customContainer = document.getElementById("custom-link-container");
         if (customContainer) {
             customContainer.style.display = show ? "block" : "none";
+        }
+    }
+    
+    function toggleAfterWidgetContainer(isAfter) {
+        let container = document.getElementById("after-widget-container");
+        if (container) {
+            container.style.display = isAfter ? "block" : "none";
+            let select = container.querySelector("select[name=\"widget_config[after_widget]\"]");
+            if (select) {
+                select.required = isAfter;
+            }
         }
     }
     
@@ -516,11 +703,52 @@ function saveWidget($package, $customWidgets)
         $widgetId = 'custom_' . uniqid();
     }
     
+    // Priorität basierend auf Position berechnen
+    $priority = 50; // Default-Wert
+    $position = $config['position'] ?? 'end';
+    
+    switch ($position) {
+        case 'start':
+            $priority = -2;
+            break;
+        case 'after':
+            $afterWidget = $config['after_widget'] ?? '';
+            if (!empty($afterWidget)) {
+                // Standard Widget-Prioritäten
+                $standardPriorities = [
+                    'url' => -1,
+                    'timetracker' => 0,
+                    'article' => 1,
+                    'upkeep' => 2,
+                    'stats' => 5,
+                    'system' => 10
+                ];
+                
+                if (isset($standardPriorities[$afterWidget])) {
+                    // Nach Standard-Widget positionieren
+                    $priority = $standardPriorities[$afterWidget] + 0.5;
+                } else {
+                    // Nach Custom-Widget positionieren
+                    if (isset($customWidgets[$afterWidget])) {
+                        $priority = (float)($customWidgets[$afterWidget]['priority'] ?? 50) + 0.5;
+                    }
+                }
+            }
+            break;
+        case 'end':
+        default:
+            $priority = 999;
+            break;
+    }
+    
     // Widget-Konfiguration speichern
     $customWidgets[$widgetId] = [
         'name' => $config['name'],
         'table_name' => $config['table_name'],
         'limit' => max(1, min(50, (int)($config['limit'] ?? 5))),
+        'priority' => $priority,
+        'position' => $position,
+        'after_widget' => $config['after_widget'] ?? '',
         'enabled' => isset($config['enabled']),
         'fields' => $fieldsArray, // Verwende die separat abgerufenen Felder
         'filter' => trim($config['filter'] ?? ''),

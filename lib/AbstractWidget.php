@@ -8,7 +8,7 @@ abstract class AbstractWidget implements WidgetInterface
 {
     protected string $id;
     protected string $title;
-    protected int $priority = 999;
+    protected float $priority = 999;
     protected bool $enabled = true;
     protected array $config = [];
     protected bool $supportsLazyLoading = false;
@@ -45,12 +45,12 @@ abstract class AbstractWidget implements WidgetInterface
         return $this->title;
     }
 
-    public function getPriority(): int
+    public function getPriority(): float
     {
         return $this->priority;
     }
 
-    public function setPriority(int $priority): void
+    public function setPriority(float $priority): void
     {
         $this->priority = $priority;
     }

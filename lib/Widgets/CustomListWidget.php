@@ -85,6 +85,9 @@ class CustomListWidget extends AbstractWidget
         // Basis-Query mit optionalem Filter
         $whereClause = '';
         if (!empty($filter)) {
+            // Ersetze PHP-Zeitplatzhalter
+            $filter = $this->replaceDatePlaceholders($filter);
+            
             // Validiere Filter-SQL (einfache Prüfung)
             if (!$this->isValidFilter($filter)) {
                 throw new \Exception("Ungültige Filter-Bedingung");
@@ -113,17 +116,54 @@ class CustomListWidget extends AbstractWidget
 
     private function isValidFilter(string $filter): bool
     {
-        // Einfache Validierung - gefährliche Befehle blockieren
-        $dangerous = ['DROP', 'DELETE', 'UPDATE', 'INSERT', 'ALTER', 'CREATE', 'TRUNCATE'];
+        // Einfache Blacklist für gefährliche SQL-Operationen
+        $blacklist = ['DROP', 'DELETE', 'INSERT', 'UPDATE', 'CREATE', 'ALTER', 'TRUNCATE', '--', ';'];
         $upperFilter = strtoupper($filter);
         
-        foreach ($dangerous as $cmd) {
-            if (strpos($upperFilter, $cmd) !== false) {
+        foreach ($blacklist as $forbidden) {
+            if (strpos($upperFilter, $forbidden) !== false) {
                 return false;
             }
         }
         
         return true;
+    }
+
+    /**
+     * Ersetzt PHP-Zeitplatzhalter durch aktuelle Werte
+     */
+    private function replaceDatePlaceholders(string $filter): string
+    {
+        $placeholders = [
+            // Aktuelle Zeit/Datum
+            '{NOW}' => "'" . date('Y-m-d H:i:s') . "'",
+            '{CURRENT_DATE}' => "'" . date('Y-m-d') . "'",
+            '{CURRENT_TIME}' => "'" . date('H:i:s') . "'",
+            '{TODAY}' => "'" . date('Y-m-d') . "'",
+            '{YESTERDAY}' => "'" . date('Y-m-d', strtotime('-1 day')) . "'",
+            '{TOMORROW}' => "'" . date('Y-m-d', strtotime('+1 day')) . "'",
+            
+            // Zeiträume
+            '{WEEK_START}' => "'" . date('Y-m-d', strtotime('monday this week')) . "'",
+            '{WEEK_END}' => "'" . date('Y-m-d', strtotime('sunday this week')) . "'",
+            '{MONTH_START}' => "'" . date('Y-m-01') . "'",
+            '{MONTH_END}' => "'" . date('Y-m-t') . "'",
+            '{YEAR_START}' => "'" . date('Y-01-01') . "'",
+            '{YEAR_END}' => "'" . date('Y-12-31') . "'",
+            
+            // Relative Zeiträume (Beispiele)
+            '{7_DAYS_AGO}' => "'" . date('Y-m-d', strtotime('-7 days')) . "'",
+            '{30_DAYS_AGO}' => "'" . date('Y-m-d', strtotime('-30 days')) . "'",
+            '{1_YEAR_AGO}' => "'" . date('Y-m-d', strtotime('-1 year')) . "'",
+            
+            // Unix Timestamps
+            '{NOW_TIMESTAMP}' => time(),
+            '{TODAY_TIMESTAMP}' => strtotime('today'),
+            '{YESTERDAY_TIMESTAMP}' => strtotime('yesterday'),
+            '{TOMORROW_TIMESTAMP}' => strtotime('tomorrow'),
+        ];
+        
+        return str_replace(array_keys($placeholders), array_values($placeholders), $filter);
     }
 
     private function isValidOrderBy(string $orderBy): bool
@@ -494,9 +534,10 @@ class CustomListWidget extends AbstractWidget
         return substr($string, 0, $length - 3) . '...';
     }
 
-    public function getPriority(): int
+    public function getPriority(): float
     {
-        return $this->customConfig['priority'] ?? 20; // Nach Standard-Widgets
+        // Float-Werte für präzise Positionierung zwischen anderen Widgets
+        return (float)($this->customConfig['priority'] ?? 50);
     }
 
     public function isEnabled(): bool

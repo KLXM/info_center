@@ -17,12 +17,12 @@ interface WidgetInterface
     /**
      * Get the widget priority (lower = higher up)
      */
-    public function getPriority(): int;
+    public function getPriority(): float;
 
     /**
      * Set the widget priority
      */
-    public function setPriority(int $priority): void;
+    public function setPriority(float $priority): void;
 
     /**
      * Check if the widget is enabled
