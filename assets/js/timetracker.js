@@ -624,7 +624,7 @@ function initializeTimeTracker() {
 }
 
 // REDAXO Backend: rex:ready Event (nur wenn jQuery verfügbar)
-if (typeof $ !== 'undefined') {
+if (typeof $ !== 'undefined' && typeof jQuery !== 'undefined') {
     $(document).on('rex:ready', function() {
         initializeTimeTracker();
     });
