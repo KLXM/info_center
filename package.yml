@@ -36,7 +36,7 @@ default_config:
             enabled: true
             prio: -1
         timetracker:
-            enabled: false
+            enabled: true
             prio: 0
         article:
             enabled: true 
