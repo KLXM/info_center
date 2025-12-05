@@ -1342,7 +1342,7 @@ body.rex-theme-dark .info-center-widget:hover {
     justify-content: center;
     width: 24px;
     height: 24px;
-    margin-left: 4px;
+    margin-left: 12px;
     padding: 4px;
     border-radius: 4px;
     color: var(--text-color-muted);
