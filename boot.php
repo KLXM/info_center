@@ -150,3 +150,19 @@ if (rex::isFrontend() && rex_backend_login::createUser()) {
         $ep->setSubject($content);
     });
 }
+
+// Quick Navigation Integration - CategoryButton öffnet Info Center Struktur-Tab
+if (rex::isBackend() && rex::getUser() && rex_addon::get('quick_navigation')->isAvailable()) {
+    rex_extension::register('PACKAGES_INCLUDED', function() {
+        // Registriere unseren Button an Stelle des CategoryButtons
+        if (class_exists('\FriendsOfRedaxo\QuickNavigation\Button\ButtonRegistry')) {
+            // Der CategoryButton wird normalerweise mit Priorität 30 registriert
+            // Wir registrieren unseren Button mit derselben Priorität, aber später im Code
+            // Das überschreibt den ursprünglichen Button
+            \FriendsOfRedaxo\QuickNavigation\Button\ButtonRegistry::registerButton(
+                new \KLXM\InfoCenter\QuickNavigation\InfoCenterStructureButton(), 
+                30
+            );
+        }
+    }, rex_extension::LATE);
+}
