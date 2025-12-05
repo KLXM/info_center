@@ -1143,11 +1143,12 @@ body.rex-theme-dark .info-center-widget:hover {
     border-radius: 8px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    box-shadow: 0 0 0 0 transparent;
 }
 
 .info-center-tree-node:hover {
     background: var(--hover-bg);
-    border-color: var(--text-color);
+    box-shadow: 0 0 0 1px var(--text-color);
 }
 
 .info-center-tree-toggle {
