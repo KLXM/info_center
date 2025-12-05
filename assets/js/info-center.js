@@ -1747,23 +1747,6 @@
         
         document.body.appendChild(modal);
     }
-                    <li><strong>Templates</strong> - Name und Code</li>
-                    <li><strong>Medien</strong> - Dateiname und Titel</li>
-                </ul>
-            </div>
-            
-            <div style="text-align:center;margin-top:25px;">
-                <button class="btn btn-primary" onclick="this.closest('div[style*=fixed]').remove()">
-                    Schließen
-                </button>
-            </div>
-        `;
-        
-        modal.appendChild(content);
-        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
-        
-        document.body.appendChild(modal);
-    }
 
     // Initialize tabs on load
     document.addEventListener('DOMContentLoaded', function() {
