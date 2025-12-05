@@ -1,0 +1,477 @@
+<?php
+
+namespace KLXM\InfoCenter\Widgets;
+
+use KLXM\InfoCenter\AbstractWidget;
+use rex;
+use rex_article;
+use rex_category;
+use rex_clang;
+use rex_context;
+use rex_i18n;
+use rex_url;
+use rex_addon;
+use rex_yrewrite;
+
+class StructureWidget extends AbstractWidget
+{
+    protected bool $supportsLazyLoading = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->title = '🏗️ ' . rex_i18n::msg('info_center_structure_title', 'Struktur');
+    }
+
+    public function render(): string
+    {
+        // Backend-User-Session erstellen
+        if (!rex::getUser()) {
+            return '';
+        }
+
+        $clangId = rex_clang::getCurrentId();
+        $currentArticleId = rex_request('article_id', 'int', 0);
+        $currentCategoryId = rex_request('category_id', 'int', 0);
+        
+        // Determine current position from URL parameters
+        // If we have article_id, that's our current article
+        if ($currentArticleId > 0) {
+            $article = rex_article::get($currentArticleId, $clangId);
+            if ($article) {
+                // If article has no category (root), keep currentCategoryId = 0
+                // Otherwise use the article's category
+                if ($article->getCategoryId() > 0) {
+                    $currentCategoryId = $article->getCategoryId();
+                }
+            }
+        }
+        // If we only have category_id (structure page), that's our current category
+        // currentCategoryId is already set from rex_request
+        
+        $structure = $this->buildStructureTree($clangId, 0, $currentCategoryId, $currentArticleId);
+        
+        $searchbar = '
+            <div class="info-center-structure-search">
+                <input type="text" 
+                    id="structure-search" 
+                    class="form-control" 
+                    placeholder="' . rex_i18n::msg('info_center_structure_search', 'Suche in Struktur...') . '">
+            </div>';
+
+        $content = $searchbar . '
+            <div class="info-center-structure-tree">
+                ' . $this->renderTree($structure, 0) . '
+            </div>';
+
+        return $content;
+    }
+
+    private function buildStructureTree(int $clangId, int $parentId = 0, int $currentCategoryId = 0, int $currentArticleId = 0): array
+    {
+        $user = rex::getUser();
+        $tree = [];
+
+        if ($parentId === 0) {
+            // Root-Level Kategorien oder Mountpoints
+            $mountpoints = $user->getComplexPerm('structure')->getMountpoints();
+            if (!empty($mountpoints)) {
+                foreach ($mountpoints as $mpId) {
+                    if ($category = rex_category::get($mpId, $clangId)) {
+                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId);
+                    }
+                }
+            } else {
+                $categories = rex_category::getRootCategories(false, $clangId);
+                foreach ($categories as $category) {
+                    if ($user->getComplexPerm('structure')->hasCategoryPerm($category->getId())) {
+                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId);
+                    }
+                }
+                
+                // Add root articles (not in any category) to tree
+                $rootArticles = rex_article::getRootArticles(false, $clangId);
+                foreach ($rootArticles as $article) {
+                    if (!$article->isStartArticle()) {
+                        // Check if article ID matches any category ID (would be a start article)
+                        $isStartArticle = rex_category::get($article->getId(), $clangId) !== null;
+                        if (!$isStartArticle) {
+                            $articleUrl = rex_url::backendPage('content/edit', [
+                                'article_id' => $article->getId(),
+                                'clang' => $clangId
+                            ]);
+                            
+                            $tree[] = [
+                                'id' => $article->getId(),
+                                'name' => $article->getName(),
+                                'status' => $article->getValue('status'),
+                                'url' => $articleUrl,
+                                'domain' => '',
+                                'hasChildren' => false,
+                                'children' => [],
+                                'articles' => [],
+                                'isInPath' => false,
+                                'isCurrent' => $article->getId() == $currentArticleId,
+                                'isStartArticle' => false,
+                                'isArticle' => true,
+                            ];
+                        }
+                    }
+                }
+            }
+        } else {
+            if ($parentCategory = rex_category::get($parentId, $clangId)) {
+                $categories = $parentCategory->getChildren(false);
+                foreach ($categories as $category) {
+                    if ($user->getComplexPerm('structure')->hasCategoryPerm($category->getId())) {
+                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId);
+                    }
+                }
+            }
+        }
+
+        return $tree;
+    }
+
+    private function buildCategoryNode(rex_category $category, int $clangId, int $currentCategoryId = 0, int $currentArticleId = 0): array
+    {
+        $user = rex::getUser();
+        $categoryId = $category->getId();
+        $children = $this->buildStructureTree($clangId, $categoryId, $currentCategoryId, $currentArticleId);
+        
+        // Build clean backend URL
+        $url = rex_url::backendPage('structure', [
+            'category_id' => $categoryId,
+            'article_id' => $categoryId,
+            'clang' => $clangId
+        ]);
+        
+        $domain = '';
+        if (rex_addon::get('yrewrite')->isAvailable()) {
+            $yrewriteDomain = \rex_yrewrite::getDomainByArticleId($categoryId);
+            if ($yrewriteDomain) {
+                $domain = $yrewriteDomain->getName();
+            }
+        }
+        
+        // Check if this category is in the path to current article/category
+        $isInPath = $this->isInPath($categoryId, $currentCategoryId, $currentArticleId, $clangId);
+        $isCurrent = ($categoryId == $currentCategoryId && $currentArticleId == 0) || 
+                     ($categoryId == $currentArticleId);
+        
+        // If this is the current category being viewed (from structure page), it should be expanded
+        // This ensures that when you're on page=structure&category_id=3, category 3 is opened
+        if ($categoryId == $currentCategoryId) {
+            $isInPath = true;
+        }
+        
+        // Get articles in this category if user has permission
+        $articles = [];
+        if ($user->getComplexPerm('structure')->hasCategoryPerm($categoryId)) {
+            // Get articles using category method (excludes start article automatically)
+            $articlesInCategory = $category->getArticles(false);
+            foreach ($articlesInCategory as $article) {
+                // getArticles() already excludes start article, so we don't need to check
+                // But also check if article ID matches a category ID (would be a start article of a subcategory)
+                $isStartArticleOfSubcategory = rex_category::get($article->getId(), $clangId) !== null;
+                
+                if (!$isStartArticleOfSubcategory) {
+                    $articleUrl = rex_url::backendPage('content/edit', [
+                        'category_id' => $categoryId,
+                        'article_id' => $article->getId(),
+                        'clang' => $clangId,
+                        'mode' => 'edit'
+                    ]);
+                    
+                    $articles[] = [
+                        'id' => $article->getId(),
+                        'name' => $article->getName(),
+                        'status' => $article->getValue('status'),
+                        'url' => $articleUrl,
+                        'isCurrent' => $article->getId() == $currentArticleId,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'id' => $categoryId,
+            'name' => $category->getName(),
+            'status' => $category->getValue('status'),
+            'url' => $url,
+            'domain' => $domain,
+            'hasChildren' => count($children) > 0 || count($articles) > 0,
+            'children' => $children,
+            'articles' => $articles,
+            'isInPath' => $isInPath,
+            'isCurrent' => $isCurrent,
+            'isStartArticle' => true, // Categories are always start articles
+            'isArticle' => false,
+        ];
+    }
+    
+    private function isInPath(int $categoryId, int $currentCategoryId, int $currentArticleId, int $clangId): bool
+    {
+        // Check if category is in path to current position
+        if ($currentArticleId > 0) {
+            $article = rex_article::get($currentArticleId, $clangId);
+            if ($article) {
+                $path = explode('|', trim($article->getPath(), '|'));
+                if (in_array($categoryId, $path)) {
+                    return true;
+                }
+                // Also check if this is the article's direct category
+                if ($article->getCategoryId() == $categoryId) {
+                    return true;
+                }
+            }
+        }
+        
+        if ($currentCategoryId > 0) {
+            // Check if this is the current category itself
+            if ($categoryId == $currentCategoryId) {
+                return true;
+            }
+            $category = rex_category::get($currentCategoryId, $clangId);
+            if ($category) {
+                $path = explode('|', trim($category->getPath(), '|'));
+                return in_array($categoryId, $path);
+            }
+        }
+        
+        return false;
+    }
+
+    private function renderTree(array $items, int $depth = 0): string
+    {
+        if (empty($items)) {
+            return '';
+        }
+
+        $html = '<ul class="info-center-tree-level" data-depth="' . $depth . '">';
+        
+        foreach ($items as $item) {
+            $offlineClass = $item['status'] == 0 ? ' offline' : '';
+            $hasChildrenClass = $item['hasChildren'] ? ' has-children' : '';
+            // Expand if in path to current position
+            $expandedClass = $item['isInPath'] ? ' expanded' : '';
+            $currentClass = $item['isCurrent'] ? ' current' : '';
+            
+            // Check if it's an article or category
+            $isArticle = $item['isArticle'] ?? false;
+            
+            if ($isArticle) {
+                // Render as article
+                // Status: 0 = offline (orange), 1 = online (green), 2 = locked (red)
+                $statusClass = 'status-online';
+                if ($item['status'] == 0) {
+                    $statusClass = 'status-offline';
+                } elseif ($item['status'] == 2) {
+                    $statusClass = 'status-locked';
+                }
+                
+                $html .= sprintf(
+                    '<li class="info-center-tree-item info-center-tree-article%s%s" data-id="article-%d">
+                        <div class="info-center-tree-node">
+                            <span class="info-center-tree-spacer"></span>
+                            <a href="%s" class="info-center-tree-link">
+                                <svg class="info-center-tree-article-icon %s" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
+                                    <path d="M14 2v6h6" fill="none" stroke="white" stroke-width="1" opacity="0.3"/>
+                                </svg>
+                                <span class="info-center-tree-name">%s</span>
+                                <span class="info-center-tree-id">#%d</span>
+                            </a>
+                        </div>
+                    </li>',
+                    $offlineClass,
+                    $currentClass,
+                    $item['id'],
+                    $item['url'],
+                    $statusClass,
+                    rex_escape($item['name']),
+                    $item['id']
+                );
+            } else {
+                // Render as category with folder icon
+                // Status: 0 = offline (orange), 1 = online (green), 2 = locked (red)
+                $statusClass = 'status-online';
+                if ($item['status'] == 0) {
+                    $statusClass = 'status-offline';
+                } elseif ($item['status'] == 2) {
+                    $statusClass = 'status-locked';
+                }
+                
+                $editUrl = rex_url::backendPage('content/edit', [
+                    'category_id' => $item['id'],
+                    'article_id' => $item['id'],
+                    'clang' => rex_clang::getCurrentId(),
+                    'mode' => 'edit'
+                ]);
+                
+                $html .= sprintf(
+                    '<li class="info-center-tree-item%s%s%s%s" data-id="%d">
+                        <div class="info-center-tree-node">
+                            <a href="%s" class="info-center-tree-link" title="%s">
+                                <svg class="info-center-tree-folder-icon %s" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M3 5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
+                                </svg>
+                                <span class="info-center-tree-name">%s</span>
+                                <span class="info-center-tree-id">#%d</span>
+                            </a>
+                            <a href="%s" class="info-center-tree-edit" title="Kategorie bearbeiten">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </a>
+                            %s
+                        </div>
+                        %s
+                    </li>',
+                    $offlineClass,
+                    $hasChildrenClass,
+                    $expandedClass,
+                    $currentClass,
+                    $item['id'],
+                    $item['url'],
+                    $item['domain'] ? 'Domain: ' . rex_escape($item['domain']) : '',
+                    $statusClass,
+                    rex_escape($item['name']),
+                    $item['id'],
+                    $editUrl,
+                    $item['hasChildren'] ? '<button class="info-center-tree-toggle" type="button">
+                        <svg class="icon-toggle" viewBox="0 0 24 24" fill="none">
+                            <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                            <circle cx="12" cy="6" r="1.5" fill="currentColor"/>
+                            <circle cx="12" cy="18" r="1.5" fill="currentColor"/>
+                        </svg>
+                    </button>' : '',
+                    $this->renderChildrenAndArticles($item, $depth)
+                );
+            }
+        }
+        
+        $html .= '</ul>';
+        
+        return $html;
+    }
+    
+    private function renderChildrenAndArticles(array $item, int $depth): string
+    {
+        $html = '';
+        
+        if ($item['hasChildren']) {
+            $html .= '<ul class="info-center-tree-level" data-depth="' . ($depth + 1) . '">';
+            
+            // First render child categories
+            if (!empty($item['children'])) {
+                foreach ($item['children'] as $child) {
+                    $offlineClass = $child['status'] == 0 ? ' offline' : '';
+                    $hasChildrenClass = $child['hasChildren'] ? ' has-children' : '';
+                    $expandedClass = $child['isInPath'] ? ' expanded' : '';
+                    $currentClass = $child['isCurrent'] ? ' current' : '';
+                    
+                    // Status: 0 = offline (orange), 1 = online (green), 2 = locked (red)
+                    $childStatusClass = 'status-online';
+                    if ($child['status'] == 0) {
+                        $childStatusClass = 'status-offline';
+                    } elseif ($child['status'] == 2) {
+                        $childStatusClass = 'status-locked';
+                    }
+                    
+                    $childEditUrl = rex_url::backendPage('content/edit', [
+                        'category_id' => $child['id'],
+                        'article_id' => $child['id'],
+                        'clang' => rex_clang::getCurrentId(),
+                        'mode' => 'edit'
+                    ]);
+                    
+                    $html .= sprintf(
+                        '<li class="info-center-tree-item%s%s%s%s" data-id="%d">
+                            <div class="info-center-tree-node">
+                                <a href="%s" class="info-center-tree-link" title="%s">
+                                    <svg class="info-center-tree-folder-icon %s" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M3 5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
+                                    </svg>
+                                    <span class="info-center-tree-name">%s</span>
+                                    <span class="info-center-tree-id">#%d</span>
+                                </a>
+                                <a href="%s" class="info-center-tree-edit" title="Kategorie bearbeiten">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </a>
+                                %s
+                            </div>
+                            %s
+                        </li>',
+                        $offlineClass,
+                        $hasChildrenClass,
+                        $expandedClass,
+                        $currentClass,
+                        $child['id'],
+                        $child['url'],
+                        $child['domain'] ? 'Domain: ' . rex_escape($child['domain']) : '',
+                        $childStatusClass,
+                        rex_escape($child['name']),
+                        $child['id'],
+                        $childEditUrl,
+                        $child['hasChildren'] ? '<button class="info-center-tree-toggle" type="button">
+                            <svg class="icon-toggle" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                                <circle cx="12" cy="6" r="1.5" fill="currentColor"/>
+                                <circle cx="12" cy="18" r="1.5" fill="currentColor"/>
+                            </svg>
+                        </button>' : '',
+                        $this->renderChildrenAndArticles($child, $depth + 1)
+                    );
+                }
+            }
+            
+            // Then render articles (after child categories)
+            if (!empty($item['articles'])) {
+                foreach ($item['articles'] as $article) {
+                    $offlineClass = $article['status'] == 0 ? ' offline' : '';
+                    $currentClass = $article['isCurrent'] ? ' current' : '';
+                    
+                    // Status: 0 = offline (orange), 1 = online (green), 2 = locked (red)
+                    $articleStatusClass = 'status-online';
+                    if ($article['status'] == 0) {
+                        $articleStatusClass = 'status-offline';
+                    } elseif ($article['status'] == 2) {
+                        $articleStatusClass = 'status-locked';
+                    }
+                    
+                    $html .= sprintf(
+                        '<li class="info-center-tree-item info-center-tree-article%s%s" data-id="article-%d">
+                            <div class="info-center-tree-node">
+                                <span class="info-center-tree-spacer"></span>
+                                <a href="%s" class="info-center-tree-link">
+                                    <svg class="info-center-tree-article-icon %s" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 0 002-2V8l-6-6z"/>
+                                        <path d="M14 2v6h6" fill="none" stroke="white" stroke-width="1" opacity="0.3"/>
+                                    </svg>
+                                    <span class="info-center-tree-name">%s</span>
+                                    <span class="info-center-tree-id">#%d</span>
+                                </a>
+                            </div>
+                        </li>',
+                        $offlineClass,
+                        $currentClass,
+                        $article['id'],
+                        rex_escape($article['url']),
+                        $articleStatusClass,
+                        rex_escape($article['name']),
+                        $article['id']
+                    );
+                }
+            }
+            
+            $html .= '</ul>';
+        }
+        
+        return $html;
+    }
+}
