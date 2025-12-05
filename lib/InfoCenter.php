@@ -114,16 +114,20 @@ class InfoCenter
                 </button>';
         }
         
-        $tabNav = '
-            <div class="info-center-tabs">
-                <button class="info-center-tab active" data-tab="widgets">
-                    <svg class="info-center-icon" viewBox="0 0 24 24" fill="none">
-                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/>
-                    </svg>
-                    <span>Widgets</span>
-                </button>
-                ' . $structureTab . '
-            </div>';
+        // Tab Navigation nur im Backend anzeigen
+        $tabNav = '';
+        if (rex::isBackend()) {
+            $tabNav = '
+                <div class="info-center-tabs">
+                    <button class="info-center-tab active" data-tab="widgets">
+                        <svg class="info-center-icon" viewBox="0 0 24 24" fill="none">
+                            <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/>
+                        </svg>
+                        <span>Widgets</span>
+                    </button>
+                    ' . $structureTab . '
+                </div>';
+        }
 
         // Structure Content nur im Backend rendern
         $structureContent = '';
