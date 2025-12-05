@@ -308,7 +308,20 @@ class StructureWidget extends AbstractWidget
         }
         
         // Always check if category has potential children (even if not loaded yet)
-        $hasChildren = count($category->getChildren(false)) > 0 || count($category->getArticles(false)) > 0;
+        // getChildren() returns subcategories, getArticles() returns articles (excluding start article)
+        $subcategories = $category->getChildren(false);
+        $articlesInCategory = $category->getArticles(false);
+        
+        // Filter out articles that are start articles of subcategories
+        $actualArticles = [];
+        foreach ($articlesInCategory as $article) {
+            $isStartArticleOfSubcategory = rex_category::get($article->getId(), $clangId) !== null;
+            if (!$isStartArticleOfSubcategory) {
+                $actualArticles[] = $article;
+            }
+        }
+        
+        $hasChildren = count($subcategories) > 0 || count($actualArticles) > 0;
 
         return [
             'id' => $categoryId,
