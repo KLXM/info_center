@@ -126,8 +126,8 @@ class ArticleWidget extends AbstractWidget
 
         $html = '<div class="info-center-quick-links">';
         
-        // Struktur-Hauptseite - nur für Admins oder User mit quick_navigation Berechtigung
-        if ($user->isAdmin() || $user->hasPerm('quick_navigation[]')) {
+        // Struktur-Hauptseite - nur für Admins oder User mit info_center[structure_links] Berechtigung
+        if ($user->isAdmin() || $user->hasPerm('info_center[structure_links]')) {
             $html .= sprintf(
                 '<div class="info-center-quick-link">
                     <a href="%s">%s</a>
@@ -144,8 +144,8 @@ class ArticleWidget extends AbstractWidget
     private function renderRecentArticles(): string
     {
         $user = rex_backend_login::createUser();
-        // Nur Admins oder User mit quick_navigation[history] Berechtigung
-        if (!$user || (!$user->isAdmin() && !$user->hasPerm('quick_navigation[history]'))) {
+        // Nur Admins oder User mit info_center[recent_articles] Berechtigung
+        if (!$user || (!$user->isAdmin() && !$user->hasPerm('info_center[recent_articles]'))) {
             return '';
         }
 
@@ -210,11 +210,11 @@ class ArticleWidget extends AbstractWidget
                 return [];
             }
 
-            // Vereinfachte Berechtigungsprüfung: Nur quick_navigation Berechtigungen verwenden
+            // Vereinfachte Berechtigungsprüfung
             // 1. Admins sehen alle Änderungen
-            // 2. User mit quick_navigation[all_changes] sehen alle Änderungen  
+            // 2. User mit info_center[all_articles] sehen alle Änderungen  
             // 3. Andere sehen nur ihre eigenen Änderungen
-            if ($user->isAdmin() || $user->hasPerm('quick_navigation[all_changes]')) {
+            if ($user->isAdmin() || $user->hasPerm('info_center[all_articles]')) {
                 $where = 'WHERE updatedate > 0';
             } else {
                 $where = 'WHERE updateuser = :user';
@@ -312,8 +312,8 @@ class ArticleWidget extends AbstractWidget
                     // Im Backend: Normale Berechtigungsprüfung
                     $canLinkToStructure = $user->getComplexPerm('structure')?->hasCategoryPerm($parent->getId()) ?? false;
                 } else {
-                    // Im Frontend: Nur für Admins oder User mit quick_navigation Berechtigung
-                    $canLinkToStructure = $user->isAdmin() || $user->hasPerm('quick_navigation[]');
+                    // Im Frontend: Nur für Admins oder User mit info_center[structure_links] Berechtigung
+                    $canLinkToStructure = $user->isAdmin() || $user->hasPerm('info_center[structure_links]');
                 }
             }
             
@@ -348,8 +348,8 @@ class ArticleWidget extends AbstractWidget
                 // Im Backend: Normale Berechtigungsprüfung
                 $hasStructurePerm = $user->getComplexPerm('structure')?->hasCategoryPerm($this->article->getCategoryId()) ?? false;
             } else {
-                // Im Frontend: Nur für Admins oder User mit quick_navigation Berechtigung
-                $hasStructurePerm = $user->isAdmin() || $user->hasPerm('quick_navigation[]');
+                // Im Frontend: Nur für Admins oder User mit info_center[structure_links] Berechtigung
+                $hasStructurePerm = $user->isAdmin() || $user->hasPerm('info_center[structure_links]');
             }
         }
         

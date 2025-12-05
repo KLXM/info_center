@@ -56,6 +56,9 @@ default_config:
 default_permissions:
     info_center: 'Info Center'
     info_center[config]: 'Info Center Settings'
+    info_center[recent_articles]: 'Zuletzt bearbeitete Artikel anzeigen'
+    info_center[all_articles]: 'Alle Artikel-Änderungen sehen (nicht nur eigene)'
+    info_center[structure_links]: 'Links zur Struktur-Verwaltung nutzen'
 
 conflicts:
     packages:
