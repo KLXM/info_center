@@ -765,16 +765,21 @@
 
         searchResults.innerHTML = '<div class="info-center-search-loading">Suche läuft...</div>';
         
-        // Check for quick actions first
-        const quickActions = getQuickActions(query);
-        if (quickActions.length > 0) {
-            renderSearchResults({ quickActions: quickActions });
-            return;
-        }
-        
-        // Parse filters from query
+        // Parse filters from query FIRST (before quick actions)
         const filters = parseSearchFilters(query);
         const searchQuery = filters.query;
+        
+        // Check if we have filters - if yes, perform search even without query text
+        const hasFilters = filters.modified || filters.created || filters.author || filters.editor;
+        
+        // Check for quick actions only if no filters present
+        if (!hasFilters) {
+            const quickActions = getQuickActions(query);
+            if (quickActions.length > 0) {
+                renderSearchResults({ quickActions: quickActions });
+                return;
+            }
+        }
         
         // Build API URL with filters
         let apiUrl = 'index.php?rex-api-call=info_center_search&query=' + encodeURIComponent(searchQuery);
@@ -1382,29 +1387,29 @@
             editor: null
         };
         
-        // Extract modified: filter
-        const modifiedMatch = query.match(/modified:(today|yesterday|last-week|last-month|\\d{4}-\\d{2}-\\d{2})/i);
+        // Extract #modified: filter
+        const modifiedMatch = query.match(/#modified:(today|yesterday|last-week|last-month|\d{4}-\d{2}-\d{2})/i);
         if (modifiedMatch) {
             filters.modified = modifiedMatch[1];
             filters.query = filters.query.replace(modifiedMatch[0], '').trim();
         }
         
-        // Extract created: filter
-        const createdMatch = query.match(/created:(today|yesterday|last-week|last-month|\\d{4}-\\d{2}-\\d{2})/i);
+        // Extract #created: filter
+        const createdMatch = query.match(/#created:(today|yesterday|last-week|last-month|\d{4}-\d{2}-\d{2})/i);
         if (createdMatch) {
             filters.created = createdMatch[1];
             filters.query = filters.query.replace(createdMatch[0], '').trim();
         }
         
-        // Extract author: filter
-        const authorMatch = query.match(/author:(\\S+)/i);
+        // Extract #author: filter
+        const authorMatch = query.match(/#author:(\S+)/i);
         if (authorMatch) {
             filters.author = authorMatch[1];
             filters.query = filters.query.replace(authorMatch[0], '').trim();
         }
         
-        // Extract editor: filter
-        const editorMatch = query.match(/editor:(\\S+)/i);
+        // Extract #editor: filter
+        const editorMatch = query.match(/#editor:(\S+)/i);
         if (editorMatch) {
             filters.editor = editorMatch[1];
             filters.query = filters.query.replace(editorMatch[0], '').trim();

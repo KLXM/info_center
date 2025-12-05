@@ -46,7 +46,11 @@ class rex_api_info_center_search extends rex_api_function
             $types = ['articles', 'categories', 'modules', 'templates', 'media'];
         }
 
-        if (strlen($query) < 2) {
+        // Allow search with filters only (no query text required)
+        $hasFilters = !empty($filters['modified']) || !empty($filters['created']) || 
+                     !empty($filters['author']) || !empty($filters['editor']);
+        
+        if (strlen($query) < 2 && !$hasFilters) {
             rex_response::sendJson(['results' => []]);
             exit;
         }
@@ -100,15 +104,19 @@ class rex_api_info_center_search extends rex_api_function
             // Build WHERE conditions
             $whereConditions = [
                 'a.clang_id = :clang_id',
-                '(a.name LIKE :query OR a.id LIKE :query_exact OR CONCAT_WS(" ", s.value1, s.value2, s.value3, s.value4, s.value5, s.value6, s.value7, s.value8, s.value9, s.value10, s.value11, s.value12, s.value13, s.value14, s.value15, s.value16, s.value17, s.value18, s.value19, s.value20) LIKE :query)',
                 'a.startarticle = 0'
             ];
             
             $params = [
-                'clang_id' => $clangId,
-                'query' => '%' . $query . '%',
-                'query_exact' => $query . '%'
+                'clang_id' => $clangId
             ];
+            
+            // Only add query condition if query is not empty
+            if (!empty($query)) {
+                $whereConditions[] = '(a.name LIKE :query OR a.id LIKE :query_exact OR CONCAT_WS(" ", s.value1, s.value2, s.value3, s.value4, s.value5, s.value6, s.value7, s.value8, s.value9, s.value10, s.value11, s.value12, s.value13, s.value14, s.value15, s.value16, s.value17, s.value18, s.value19, s.value20) LIKE :query)';
+                $params['query'] = '%' . $query . '%';
+                $params['query_exact'] = $query . '%';
+            }
             
             // Add date filters
             if (!empty($filters['modified'])) {
@@ -201,15 +209,19 @@ class rex_api_info_center_search extends rex_api_function
             // Build WHERE conditions
             $whereConditions = [
                 'clang_id = :clang_id',
-                '(name LIKE :query OR id LIKE :query_exact)',
                 'startarticle = 1'
             ];
             
             $params = [
-                'clang_id' => $clangId,
-                'query' => '%' . $query . '%',
-                'query_exact' => $query . '%'
+                'clang_id' => $clangId
             ];
+            
+            // Only add query condition if query is not empty
+            if (!empty($query)) {
+                $whereConditions[] = '(name LIKE :query OR id LIKE :query_exact)';
+                $params['query'] = '%' . $query . '%';
+                $params['query_exact'] = $query . '%';
+            }
             
             // Add date filters
             if (!empty($filters['modified'])) {

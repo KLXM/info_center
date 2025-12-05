@@ -217,6 +217,23 @@ Eine **Spotlight-ähnliche Universalsuche** direkt im Info Center - durchsuche a
   - Intelligenter Schnitt am Satzende
 - **🔗 URL-Erkennung** - URLs werden automatisch erkannt und sind direkt öffenbar
 
+#### 🔍 **Erweiterte Filter mit #-Prefix**
+- **📅 Datum-Filter**
+  - `#modified:today` - Heute geändert
+  - `#modified:yesterday` - Gestern geändert
+  - `#modified:last-week` - Letzte Woche geändert
+  - `#modified:last-month` - Letzter Monat geändert
+  - `#modified:2024-12-05` - An bestimmtem Datum geändert
+  - `#created:today` - Heute erstellt
+  - `#created:last-week` - Letzte Woche erstellt
+- **👤 User-Filter**
+  - `#author:username` - Erstellt von User
+  - `#editor:username` - Bearbeitet von User
+- **🎯 Kombinationen**
+  - `Startseite #modified:today` - "Startseite" heute geändert
+  - `#author:admin #created:last-week` - Von Admin letzte Woche erstellt
+  - `#modified:yesterday #editor:admin` - Gestern von Admin bearbeitet
+
 #### 🎨 **Rich Previews**
 - **Bild-Thumbnails** - 32x32px Vorschau, 200x200px bei Hover
 - **Video-Vorschau** - Tooltip mit Autoplay bei Hover
@@ -241,12 +258,22 @@ logo.png       → Findet Mediendateien
 
 #### Quick Actions
 ```
-2+2            → Rechner: = 4 (kopiert in Zwischenablage)
-15*20%         → Rechner: = 3
-wiki Berlin    → Wikipedia mit Live-Vorschau
-define CMS     → Wörterbuch-Definition aus Wiktionary
-blindtext 500  → Generiert 500 Zeichen deutschen Blindtext
-https://...    → URL wird erkannt und kann geöffnet werden
+2+2                      → Rechner: = 4 (kopiert in Zwischenablage)
+15*20%                   → Rechner: = 3
+wiki Berlin              → Wikipedia mit Live-Vorschau
+define CMS               → Wörterbuch-Definition aus Wiktionary
+blindtext 500            → Generiert 500 Zeichen deutschen Blindtext
+https://...              → URL wird erkannt und kann geöffnet werden
+```
+
+#### Erweiterte Filter
+```
+#modified:today          → Heute geänderte Inhalte
+#created:yesterday       → Gestern erstellte Inhalte
+#author:admin            → Von Admin erstellte Inhalte
+#editor:username         → Von User bearbeitete Inhalte
+Startseite #modified:today  → "Startseite" heute geändert
+#author:admin #created:last-week  → Von Admin letzte Woche erstellt
 ```
 
 #### Keyboard Shortcuts
