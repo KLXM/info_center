@@ -213,6 +213,8 @@ class StructureWidget extends AbstractWidget
                                 'isCurrent' => $article->getId() == $currentArticleId,
                                 'isStartArticle' => false,
                                 'isArticle' => true,
+                                'updateuser' => $article->getValue('updateuser'),
+                                'updatedate' => $article->getValue('updatedate'),
                             ];
                         }
                     }
@@ -301,6 +303,8 @@ class StructureWidget extends AbstractWidget
                             'status' => $article->getValue('status'),
                             'url' => html_entity_decode($articleUrl, ENT_QUOTES | ENT_HTML5),
                             'isCurrent' => $article->getId() == $currentArticleId,
+                            'updateuser' => $article->getValue('updateuser'),
+                            'updatedate' => $article->getValue('updatedate'),
                         ];
                     }
                 }
@@ -322,6 +326,10 @@ class StructureWidget extends AbstractWidget
         }
         
         $hasChildren = count($subcategories) > 0 || count($actualArticles) > 0;
+        
+        // Get update information
+        $updateUser = $category->getValue('updateuser');
+        $updateDate = $category->getValue('updatedate');
 
         return [
             'id' => $categoryId,
@@ -337,6 +345,8 @@ class StructureWidget extends AbstractWidget
             'isStartArticle' => true, // Categories are always start articles
             'isArticle' => false,
             'lazyLoaded' => count($children) > 0 || count($articles) > 0, // Mark if children are already loaded
+            'updateuser' => $updateUser,
+            'updatedate' => $updateDate,
         ];
     }
     
@@ -408,11 +418,22 @@ class StructureWidget extends AbstractWidget
                     $articleViewUrl = rex_getUrl($item['id'], rex_clang::getCurrentId());
                 }
                 
+                // Build title with update info
+                $articleTitle = rex_i18n::msg('info_center_article_id') . ': ' . $item['id'];
+                if (!empty($item['updatedate'])) {
+                    $updateDate = date('d.m.Y H:i', strtotime($item['updatedate']));
+                    $updateUser = $item['updateuser'] ?? '';
+                    $articleTitle .= ' | ' . rex_i18n::msg('info_center_last_updated', 'Zuletzt geändert') . ': ' . $updateDate;
+                    if ($updateUser) {
+                        $articleTitle .= ' (' . rex_escape($updateUser) . ')';
+                    }
+                }
+                
                 $html .= sprintf(
                     '<li class="info-center-tree-item info-center-tree-article%s%s" data-id="article-%d">
                         <div class="info-center-tree-node">
                             <span class="info-center-tree-spacer"></span>
-                            <a href="%s" class="info-center-tree-link" title="' . rex_i18n::msg('info_center_article_id') . ': %d">
+                            <a href="%s" class="info-center-tree-link" title="%s">
                                 <svg class="info-center-tree-article-icon %s" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
                                     <path d="M14 2v6h6" fill="none" stroke="white" stroke-width="1" opacity="0.3"/>
@@ -439,7 +460,7 @@ class StructureWidget extends AbstractWidget
                     $currentClass,
                     $item['id'],
                     $item['url'],
-                    $item['id'],
+                    $articleTitle,
                     $statusClass,
                     rex_escape($item['name']),
                     $articleViewUrl,
@@ -471,7 +492,16 @@ class StructureWidget extends AbstractWidget
                     $viewUrl = rex_getUrl($item['id'], rex_clang::getCurrentId());
                 }
                 
+                // Build title with update info
                 $itemTitle = $item['domain'] ? rex_i18n::msg('info_center_domain', 'Domain') . ': ' . rex_escape($item['domain']) . ' | ID: ' . $item['id'] : 'ID: ' . $item['id'];
+                if (!empty($item['updatedate'])) {
+                    $updateDate = date('d.m.Y H:i', strtotime($item['updatedate']));
+                    $updateUser = $item['updateuser'] ?? '';
+                    $itemTitle .= ' | ' . rex_i18n::msg('info_center_last_updated', 'Zuletzt geändert') . ': ' . $updateDate;
+                    if ($updateUser) {
+                        $itemTitle .= ' (' . rex_escape($updateUser) . ')';
+                    }
+                }
                 
                 // Mark if children are already loaded or need lazy loading
                 $childrenLoadedAttr = ($item['lazyLoaded'] ?? false) ? 'data-children-loaded="true"' : '';

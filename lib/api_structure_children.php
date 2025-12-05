@@ -114,7 +114,9 @@ class rex_api_info_center_structure_children extends rex_api_function
             'editUrl' => $editUrl,
             'viewUrl' => $viewUrl,
             'domain' => $domain,
-            'hasChildren' => $hasChildren
+            'hasChildren' => $hasChildren,
+            'updateuser' => $category->getValue('updateuser'),
+            'updatedate' => $category->getValue('updatedate')
         ];
     }
     
@@ -144,7 +146,9 @@ class rex_api_info_center_structure_children extends rex_api_function
             'name' => rex_escape($article->getName()),
             'status' => $article->getValue('status'),
             'url' => $articleUrl,
-            'viewUrl' => $viewUrl
+            'viewUrl' => $viewUrl,
+            'updateuser' => $article->getValue('updateuser'),
+            'updatedate' => $article->getValue('updatedate')
         ];
     }
 }

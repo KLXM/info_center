@@ -552,10 +552,26 @@
                 
                 const statusClass = child.status == 0 ? 'status-offline' : (child.status == 2 ? 'status-locked' : 'status-online');
                 
+                // Build title with update info
+                let categoryTitle = (child.domain ? rex_i18n_msg('info_center_domain') + ': ' + child.domain + ' | ' : '') + 'ID: ' + child.id;
+                if (child.updatedate) {
+                    const updateDate = new Date(child.updatedate).toLocaleString('de-DE', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    categoryTitle += ' | ' + rex_i18n_msg('info_center_last_updated', 'Zuletzt geändert') + ': ' + updateDate;
+                    if (child.updateuser) {
+                        categoryTitle += ' (' + child.updateuser + ')';
+                    }
+                }
+                
                 li.innerHTML = `
                     <div class="info-center-tree-node">
                         ${child.hasChildren ? '<button class="info-center-tree-toggle" type="button"></button>' : '<span class="info-center-tree-spacer"></span>'}
-                        <a href="${child.url}" class="info-center-tree-link" title="${child.domain ? rex_i18n_msg('info_center_domain') + ': ' + child.domain + ' | ' : ''}ID: ${child.id}">
+                        <a href="${child.url}" class="info-center-tree-link" title="${categoryTitle}">
                             <svg class="info-center-tree-folder-icon ${statusClass}" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M3 5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
                             </svg>
@@ -583,10 +599,26 @@
                 
                 const statusClass = child.status == 0 ? 'status-offline' : (child.status == 2 ? 'status-locked' : 'status-online');
                 
+                // Build title with update info
+                let articleTitle = rex_i18n_msg('info_center_article_id') + ': ' + child.id;
+                if (child.updatedate) {
+                    const updateDate = new Date(child.updatedate).toLocaleString('de-DE', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    articleTitle += ' | ' + rex_i18n_msg('info_center_last_updated', 'Zuletzt geändert') + ': ' + updateDate;
+                    if (child.updateuser) {
+                        articleTitle += ' (' + child.updateuser + ')';
+                    }
+                }
+                
                 li.innerHTML = `
                     <div class="info-center-tree-node">
                         <span class="info-center-tree-spacer"></span>
-                        <a href="${child.url}" class="info-center-tree-link" title="${rex_i18n_msg('info_center_article_id')}: ${child.id}">
+                        <a href="${child.url}" class="info-center-tree-link" title="${articleTitle}">
                             <svg class="info-center-tree-article-icon ${statusClass}" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
                                 <path d="M14 2v6h6" fill="none" stroke="white" stroke-width="1" opacity="0.3"/>

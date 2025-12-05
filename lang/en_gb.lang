@@ -187,6 +187,7 @@ info_center_view_frontend = View in frontend
 info_center_edit_article = Edit article
 info_center_edit_category = Edit category
 info_center_domain = Domain
+info_center_last_updated = Last updated
 
 # Recently Edited Widget
 info_center_recently_edited_title = Recently Edited
