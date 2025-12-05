@@ -1258,8 +1258,17 @@ body.rex-theme-dark .info-center-widget:hover {
     color: #ef4444;
 }
 
-.info-center-tree-item.current .info-center-tree-folder-icon {
-    color: #ffffff !important;
+/* Keep status colors visible even when item is current */
+.info-center-tree-item.current .info-center-tree-folder-icon.status-online {
+    color: #4b9ad9 !important;
+}
+
+.info-center-tree-item.current .info-center-tree-folder-icon.status-offline {
+    color: #6c757d !important;
+}
+
+.info-center-tree-item.current .info-center-tree-folder-icon.status-locked {
+    color: #ef4444 !important;
 }
 
 .info-center-tree-name {
@@ -1347,8 +1356,17 @@ body.rex-theme-dark .info-center-widget:hover {
     font-weight: 400;
 }
 
-.info-center-tree-article.current .info-center-tree-article-icon {
-    color: #3bb594;
+/* Keep status colors for article icons even when current */
+.info-center-tree-article.current .info-center-tree-article-icon.status-online {
+    color: #4b9ad9 !important;
+}
+
+.info-center-tree-article.current .info-center-tree-article-icon.status-offline {
+    color: #6c757d !important;
+}
+
+.info-center-tree-article.current .info-center-tree-article-icon.status-locked {
+    color: #ef4444 !important;
 }
 
 /* Icon Status für inline articles */
