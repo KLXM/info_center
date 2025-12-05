@@ -1489,3 +1489,25 @@ body.rex-theme-dark .info-center-widget:hover {
     font-size: var(--font-size-tiny);
     padding-left: 20px;
 }
+
+/* Lazy Loading Indicator */
+.info-center-tree-item.loading > .info-center-tree-node::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    margin-left: 8px;
+    margin-top: -6px;
+    border: 2px solid var(--text-color-muted);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

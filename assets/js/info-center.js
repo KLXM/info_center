@@ -402,7 +402,13 @@
                 e.stopPropagation();
                 const item = this.closest('.info-center-tree-item');
                 if (item) {
+                    const wasExpanded = item.classList.contains('expanded');
                     item.classList.toggle('expanded');
+                    
+                    // Lazy load children if not already loaded
+                    if (!wasExpanded && !item.dataset.childrenLoaded && item.dataset.hasChildren === 'true') {
+                        loadCategoryChildren(item);
+                    }
                 }
             });
         });
@@ -492,6 +498,144 @@
             parent.classList.remove('search-hidden');
             parent = parent.parentElement?.closest('.info-center-tree-item');
         }
+    }
+    
+    function loadCategoryChildren(item) {
+        const categoryId = item.dataset.id.replace('category-', '').replace('article-', '');
+        const clang = item.dataset.clang || '1';
+        
+        // Mark as loading
+        item.classList.add('loading');
+        
+        // API URL
+        const apiUrl = typeof rex !== 'undefined' && rex.backend_url 
+            ? rex.backend_url + 'index.php?rex-api-call=info_center_structure_children'
+            : '../redaxo/index.php?rex-api-call=info_center_structure_children';
+        
+        fetch(apiUrl + '&category_id=' + categoryId + '&clang=' + clang)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.children) {
+                    renderChildren(item, data.children);
+                    item.dataset.childrenLoaded = 'true';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading children:', error);
+            })
+            .finally(() => {
+                item.classList.remove('loading');
+            });
+    }
+    
+    function renderChildren(parentItem, children) {
+        // Find or create children container
+        let childrenContainer = parentItem.querySelector(':scope > ul');
+        if (!childrenContainer) {
+            childrenContainer = document.createElement('ul');
+            childrenContainer.className = 'info-center-tree-children';
+            parentItem.appendChild(childrenContainer);
+        }
+        
+        // Clear existing content
+        childrenContainer.innerHTML = '';
+        
+        // Render each child
+        children.forEach(child => {
+            const li = document.createElement('li');
+            li.className = 'info-center-tree-item';
+            
+            if (child.type === 'category') {
+                li.classList.add('info-center-tree-category');
+                li.dataset.id = child.id;
+                li.dataset.hasChildren = child.hasChildren;
+                
+                const statusClass = child.status == 0 ? 'status-offline' : (child.status == 2 ? 'status-locked' : 'status-online');
+                
+                li.innerHTML = `
+                    <div class="info-center-tree-node">
+                        ${child.hasChildren ? '<button class="info-center-tree-toggle" type="button"></button>' : '<span class="info-center-tree-spacer"></span>'}
+                        <a href="${child.url}" class="info-center-tree-link" title="${child.domain ? rex_i18n_msg('info_center_domain') + ': ' + child.domain + ' | ' : ''}ID: ${child.id}">
+                            <svg class="info-center-tree-folder-icon ${statusClass}" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
+                            </svg>
+                            <span class="info-center-tree-name">${child.name}</span>
+                        </a>
+                        <div class="info-center-tree-actions">
+                            <a href="${child.viewUrl}" class="info-center-tree-view" title="${rex_i18n_msg('info_center_view_frontend')}" target="_blank">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </a>
+                            <a href="${child.editUrl}" class="info-center-tree-edit" title="${rex_i18n_msg('info_center_edit_category')}">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>`;
+            } else {
+                // Article
+                li.classList.add('info-center-tree-article');
+                li.dataset.id = 'article-' + child.id;
+                
+                const statusClass = child.status == 0 ? 'status-offline' : (child.status == 2 ? 'status-locked' : 'status-online');
+                
+                li.innerHTML = `
+                    <div class="info-center-tree-node">
+                        <span class="info-center-tree-spacer"></span>
+                        <a href="${child.url}" class="info-center-tree-link" title="${rex_i18n_msg('info_center_article_id')}: ${child.id}">
+                            <svg class="info-center-tree-article-icon ${statusClass}" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
+                                <path d="M14 2v6h6" fill="none" stroke="white" stroke-width="1" opacity="0.3"/>
+                            </svg>
+                            <span class="info-center-tree-name">${child.name}</span>
+                        </a>
+                        <div class="info-center-tree-actions">
+                            <a href="${child.viewUrl}" class="info-center-tree-view" title="${rex_i18n_msg('info_center_view_frontend')}" target="_blank">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </a>
+                            <a href="${child.url}" class="info-center-tree-edit" title="${rex_i18n_msg('info_center_edit_article')}">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>`;
+            }
+            
+            childrenContainer.appendChild(li);
+        });
+        
+        // Re-init toggle buttons for new items
+        const newToggles = childrenContainer.querySelectorAll('.info-center-tree-toggle');
+        newToggles.forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const item = this.closest('.info-center-tree-item');
+                if (item) {
+                    const wasExpanded = item.classList.contains('expanded');
+                    item.classList.toggle('expanded');
+                    
+                    // Lazy load children if not already loaded
+                    if (!wasExpanded && !item.dataset.childrenLoaded && item.dataset.hasChildren === 'true') {
+                        loadCategoryChildren(item);
+                    }
+                }
+            });
+        });
+    }
+    
+    // Helper for i18n messages (fallback if not available)
+    function rex_i18n_msg(key, fallback = '') {
+        return fallback || key;
     }
 
     // Initialize tabs on load

@@ -151,7 +151,7 @@ class StructureWidget extends AbstractWidget
         return $content;
     }
 
-    private function buildStructureTree(int $clangId, int $parentId = 0, int $currentCategoryId = 0, int $currentArticleId = 0): array
+    private function buildStructureTree(int $clangId, int $parentId = 0, int $currentCategoryId = 0, int $currentArticleId = 0, bool $lazyLoad = true): array
     {
         $user = rex::getUser();
         $tree = [];
@@ -165,7 +165,7 @@ class StructureWidget extends AbstractWidget
                     $mountId = $domain->getMountId();
                     if ($category = rex_category::get($mountId, $clangId)) {
                         if ($user->getComplexPerm('structure')->hasCategoryPerm($category->getId())) {
-                            $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId);
+                            $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $lazyLoad);
                         }
                     }
                     return $tree;
@@ -177,14 +177,14 @@ class StructureWidget extends AbstractWidget
             if (!empty($mountpoints)) {
                 foreach ($mountpoints as $mpId) {
                     if ($category = rex_category::get($mpId, $clangId)) {
-                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId);
+                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $lazyLoad);
                     }
                 }
             } else {
                 $categories = rex_category::getRootCategories(false, $clangId);
                 foreach ($categories as $category) {
                     if ($user->getComplexPerm('structure')->hasCategoryPerm($category->getId())) {
-                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId);
+                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $lazyLoad);
                     }
                 }
                 
@@ -223,7 +223,7 @@ class StructureWidget extends AbstractWidget
                 $categories = $parentCategory->getChildren(false);
                 foreach ($categories as $category) {
                     if ($user->getComplexPerm('structure')->hasCategoryPerm($category->getId())) {
-                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId);
+                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $lazyLoad);
                     }
                 }
             }
@@ -232,11 +232,21 @@ class StructureWidget extends AbstractWidget
         return $tree;
     }
 
-    private function buildCategoryNode(rex_category $category, int $clangId, int $currentCategoryId = 0, int $currentArticleId = 0): array
+    private function buildCategoryNode(rex_category $category, int $clangId, int $currentCategoryId = 0, int $currentArticleId = 0, bool $lazyLoad = true): array
     {
         $user = rex::getUser();
         $categoryId = $category->getId();
-        $children = $this->buildStructureTree($clangId, $categoryId, $currentCategoryId, $currentArticleId);
+        
+        // Only load children if this category is in the path to current position
+        $isInPath = $this->isInPath($categoryId, $currentCategoryId, $currentArticleId, $clangId);
+        $isCurrent = ($categoryId == $currentCategoryId && $currentArticleId == 0) || 
+                     ($categoryId == $currentArticleId);
+        
+        // Load children only if in path or not lazy loading
+        $children = [];
+        if (!$lazyLoad || $isInPath || $isCurrent) {
+            $children = $this->buildStructureTree($clangId, $categoryId, $currentCategoryId, $currentArticleId, $lazyLoad);
+        }
         
         // Build clean backend URL
         $url = rex_url::backendPage('structure', [
@@ -266,33 +276,39 @@ class StructureWidget extends AbstractWidget
         }
         
         // Get articles in this category if user has permission
+        // Only load articles if we're loading children (not lazy loading or in path)
         $articles = [];
-        if ($user->getComplexPerm('structure')->hasCategoryPerm($categoryId)) {
-            // Get articles using category method (excludes start article automatically)
-            $articlesInCategory = $category->getArticles(false);
-            foreach ($articlesInCategory as $article) {
-                // getArticles() already excludes start article, so we don't need to check
-                // But also check if article ID matches a category ID (would be a start article of a subcategory)
-                $isStartArticleOfSubcategory = rex_category::get($article->getId(), $clangId) !== null;
-                
-                if (!$isStartArticleOfSubcategory) {
-                    $articleUrl = rex_url::backendPage('content/edit', [
-                        'category_id' => $categoryId,
-                        'article_id' => $article->getId(),
-                        'clang' => $clangId,
-                        'mode' => 'edit'
-                    ]);
+        if (!$lazyLoad || $isInPath || $isCurrent) {
+            if ($user->getComplexPerm('structure')->hasCategoryPerm($categoryId)) {
+                // Get articles using category method (excludes start article automatically)
+                $articlesInCategory = $category->getArticles(false);
+                foreach ($articlesInCategory as $article) {
+                    // getArticles() already excludes start article, so we don't need to check
+                    // But also check if article ID matches a category ID (would be a start article of a subcategory)
+                    $isStartArticleOfSubcategory = rex_category::get($article->getId(), $clangId) !== null;
                     
-                    $articles[] = [
-                        'id' => $article->getId(),
-                        'name' => $article->getName(),
-                        'status' => $article->getValue('status'),
-                        'url' => html_entity_decode($articleUrl, ENT_QUOTES | ENT_HTML5),
-                        'isCurrent' => $article->getId() == $currentArticleId,
-                    ];
+                    if (!$isStartArticleOfSubcategory) {
+                        $articleUrl = rex_url::backendPage('content/edit', [
+                            'category_id' => $categoryId,
+                            'article_id' => $article->getId(),
+                            'clang' => $clangId,
+                            'mode' => 'edit'
+                        ]);
+                        
+                        $articles[] = [
+                            'id' => $article->getId(),
+                            'name' => $article->getName(),
+                            'status' => $article->getValue('status'),
+                            'url' => html_entity_decode($articleUrl, ENT_QUOTES | ENT_HTML5),
+                            'isCurrent' => $article->getId() == $currentArticleId,
+                        ];
+                    }
                 }
             }
         }
+        
+        // Always check if category has potential children (even if not loaded yet)
+        $hasChildren = count($category->getChildren(false)) > 0 || count($category->getArticles(false)) > 0;
 
         return [
             'id' => $categoryId,
@@ -300,13 +316,14 @@ class StructureWidget extends AbstractWidget
             'status' => $category->getValue('status'),
             'url' => $url,
             'domain' => $domain,
-            'hasChildren' => count($children) > 0 || count($articles) > 0,
+            'hasChildren' => $hasChildren,
             'children' => $children,
             'articles' => $articles,
             'isInPath' => $isInPath,
             'isCurrent' => $isCurrent,
             'isStartArticle' => true, // Categories are always start articles
             'isArticle' => false,
+            'lazyLoaded' => count($children) > 0 || count($articles) > 0, // Mark if children are already loaded
         ];
     }
     
@@ -443,8 +460,13 @@ class StructureWidget extends AbstractWidget
                 
                 $itemTitle = $item['domain'] ? rex_i18n::msg('info_center_domain', 'Domain') . ': ' . rex_escape($item['domain']) . ' | ID: ' . $item['id'] : 'ID: ' . $item['id'];
                 
+                // Mark if children are already loaded or need lazy loading
+                $childrenLoadedAttr = ($item['lazyLoaded'] ?? false) ? 'data-children-loaded="true"' : '';
+                $hasChildrenAttr = $item['hasChildren'] ? 'data-has-children="true"' : '';
+                $clangAttr = 'data-clang="' . rex_clang::getCurrentId() . '"';
+                
                 $html .= sprintf(
-                    '<li class="info-center-tree-item%s%s%s%s" data-id="%d">
+                    '<li class="info-center-tree-item%s%s%s%s" data-id="%d" %s %s %s>
                         <div class="info-center-tree-node">
                             <a href="%s" class="info-center-tree-link" title="%s">
                                 <svg class="info-center-tree-folder-icon %s" viewBox="0 0 24 24" fill="currentColor">
@@ -475,6 +497,9 @@ class StructureWidget extends AbstractWidget
                     $expandedClass,
                     $currentClass,
                     $item['id'],
+                    $childrenLoadedAttr,
+                    $hasChildrenAttr,
+                    $clangAttr,
                     $item['url'],
                     $itemTitle,
                     $statusClass,
