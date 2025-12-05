@@ -1652,69 +1652,81 @@
     }
     
     function showHelpModal() {
+        // Detect dark mode
+        const isDarkMode = document.documentElement.classList.contains('rex-theme-dark') || 
+                          document.body.classList.contains('rex-theme-dark') ||
+                          window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        const bgColor = isDarkMode ? '#1e1e1e' : '#ffffff';
+        const textColor = isDarkMode ? '#e0e0e0' : '#2c3e50';
+        const headingColor = isDarkMode ? '#4a9eff' : '#3498db';
+        const boxBg = isDarkMode ? '#2d2d2d' : '#f8f9fa';
+        const codeBg = isDarkMode ? '#3d3d3d' : '#e9ecef';
+        const codeColor = isDarkMode ? '#e0e0e0' : '#333333';
+        
         const modal = document.createElement('div');
         modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:999999;overflow-y:auto;padding:20px;';
         
         const content = document.createElement('div');
-        content.style.cssText = 'background:white;padding:30px;border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow-y:auto;';
+        content.style.cssText = `background:${bgColor};color:${textColor};padding:30px;border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow-y:auto;`;
         
         content.innerHTML = `
-            <h2 style="margin-top:0;color:#2c3e50;">🔍 Search Widget - Hilfe</h2>
+            <h2 style="margin-top:0;color:${headingColor};">🔍 Search Widget - Hilfe</h2>
             
-            <h3 style="color:#3498db;margin-top:25px;">📊 Quick Actions</h3>
-            <div style="background:#f8f9fa;padding:15px;border-radius:5px;margin-bottom:20px;">
-                <p style="margin:5px 0;"><strong>🧮 Rechner:</strong> <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">2+2</code> oder <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">15*20%</code> - Ergebnis wird kopiert</p>
-                <p style="margin:5px 0;"><strong>📚 Wikipedia:</strong> <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">wiki REDAXO</code> - Live-Vorschau aus Wikipedia</p>
-                <p style="margin:5px 0;"><strong>📖 Wörterbuch:</strong> <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">define CMS</code> - Definition aus Wiktionary</p>
-                <p style="margin:5px 0;"><strong>📝 Blindtext:</strong> <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">blindtext 500</code> - Generiert deutschen Platzhaltertext</p>
-                <p style="margin:5px 0;"><strong>📱 QR Code:</strong> <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">qr https://example.com</code> - Erstellt QR Code als SVG/PNG</p>
-                <p style="margin:5px 0;"><strong>🔗 URL:</strong> URLs werden automatisch erkannt und können geöffnet werden</p>
+            <h3 style="color:${headingColor};margin-top:25px;">📊 Quick Actions</h3>
+            <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
+                <p style="margin:5px 0;color:${textColor};"><strong>🧮 Rechner:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">2+2</code> oder <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">15*20%</code> - Ergebnis wird kopiert</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>📚 Wikipedia:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">wiki REDAXO</code> - Live-Vorschau aus Wikipedia</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>📖 Wörterbuch:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">define CMS</code> - Definition aus Wiktionary</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>📝 Blindtext:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">blindtext 500</code> - Generiert deutschen Platzhaltertext</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>📱 QR Code:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">qr https://example.com</code> - Erstellt QR Code als SVG/PNG</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>🔗 URL:</strong> URLs werden automatisch erkannt und können geöffnet werden</p>
             </div>
             
-            <h3 style="color:#3498db;margin-top:25px;">🔎 Erweiterte Filter</h3>
-            <div style="background:#f8f9fa;padding:15px;border-radius:5px;margin-bottom:20px;">
-                <p style="margin:10px 0;"><strong>📅 Datum-Filter (geändert):</strong></p>
-                <ul style="margin:5px 0 10px 20px;">
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">modified:today</code> - Heute geändert</li>
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">modified:yesterday</code> - Gestern geändert</li>
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">modified:last-week</code> - Letzte 7 Tage</li>
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">modified:last-month</code> - Letzte 30 Tage</li>
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">modified:2025-12-05</code> - Exaktes Datum</li>
+            <h3 style="color:${headingColor};margin-top:25px;">🔎 Erweiterte Filter</h3>
+            <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
+                <p style="margin:10px 0;color:${textColor};"><strong>📅 Datum-Filter (geändert):</strong></p>
+                <ul style="margin:5px 0 10px 20px;color:${textColor};">
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:today</code> - Heute geändert</li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:yesterday</code> - Gestern geändert</li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:last-week</code> - Letzte 7 Tage</li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:last-month</code> - Letzte 30 Tage</li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:2025-12-05</code> - Exaktes Datum</li>
                 </ul>
                 
-                <p style="margin:10px 0;"><strong>📅 Datum-Filter (erstellt):</strong></p>
-                <ul style="margin:5px 0 10px 20px;">
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">created:today</code> - Heute erstellt</li>
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">created:last-week</code> - Letzte 7 Tage</li>
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">created:2025-12-01</code> - Exaktes Datum</li>
+                <p style="margin:10px 0;color:${textColor};"><strong>📅 Datum-Filter (erstellt):</strong></p>
+                <ul style="margin:5px 0 10px 20px;color:${textColor};">
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">created:today</code> - Heute erstellt</li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">created:last-week</code> - Letzte 7 Tage</li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">created:2025-12-01</code> - Exaktes Datum</li>
                 </ul>
                 
-                <p style="margin:10px 0;"><strong>👤 Benutzer-Filter:</strong></p>
-                <ul style="margin:5px 0 10px 20px;">
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">author:admin</code> - Erstellt von User "admin"</li>
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">editor:thomas</code> - Bearbeitet von User "thomas"</li>
+                <p style="margin:10px 0;color:${textColor};"><strong>👤 Benutzer-Filter:</strong></p>
+                <ul style="margin:5px 0 10px 20px;color:${textColor};">
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">author:admin</code> - Erstellt von User "admin"</li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">editor:thomas</code> - Bearbeitet von User "thomas"</li>
                 </ul>
                 
-                <p style="margin:10px 0;"><strong>🔗 Kombinationen:</strong></p>
-                <ul style="margin:5px 0 10px 20px;">
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">test modified:today</code></li>
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">artikel author:admin created:last-week</code></li>
-                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">news modified:yesterday editor:thomas</code></li>
+                <p style="margin:10px 0;color:${textColor};"><strong>🔗 Kombinationen:</strong></p>
+                <ul style="margin:5px 0 10px 20px;color:${textColor};">
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">test modified:today</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">artikel author:admin created:last-week</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">news modified:yesterday editor:thomas</code></li>
                 </ul>
             </div>
             
-            <h3 style="color:#3498db;margin-top:25px;">⌨️ Tastatur-Shortcuts</h3>
-            <div style="background:#f8f9fa;padding:15px;border-radius:5px;margin-bottom:20px;">
-                <p style="margin:5px 0;"><strong>⌘K</strong> oder <strong>Ctrl+K</strong> - Suche fokussieren</p>
-                <p style="margin:5px 0;"><strong>↑/↓</strong> - Durch Ergebnisse navigieren</p>
-                <p style="margin:5px 0;"><strong>Enter</strong> - Ausgewähltes Ergebnis öffnen</p>
-                <p style="margin:5px 0;"><strong>ESC</strong> - Suche schließen</p>
+            <h3 style="color:${headingColor};margin-top:25px;">⌨️ Tastatur-Shortcuts</h3>
+            <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
+                <p style="margin:5px 0;color:${textColor};"><strong>⌘K</strong> oder <strong>Ctrl+K</strong> - Suche fokussieren</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>↑/↓</strong> - Durch Ergebnisse navigieren</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>Enter</strong> - Ausgewähltes Ergebnis öffnen</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>ESC</strong> - Suche schließen</p>
             </div>
             
-            <h3 style="color:#3498db;margin-top:25px;">🔍 Normale Suche</h3>
-            <div style="background:#f8f9fa;padding:15px;border-radius:5px;margin-bottom:20px;">
-                <p style="margin:5px 0;">Durchsucht automatisch:</p>
-                <ul style="margin:5px 0 0 20px;">
+            <h3 style="color:${headingColor};margin-top:25px;">🔍 Normale Suche</h3>
+            <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
+                <p style="margin:5px 0;color:${textColor};">Durchsucht automatisch:</p>
+                <ul style="margin:5px 0 0 20px;color:${textColor};">
                     <li><strong>Artikel</strong> - Name, ID und alle Content-Felder (value1-20)</li>
                     <li><strong>Kategorien</strong> - Name und ID</li>
                     <li><strong>Module</strong> - Name und Code</li>
@@ -1735,14 +1747,22 @@
         
         document.body.appendChild(modal);
     }
-
-    // Initialize tabs on load
-    document.addEventListener('DOMContentLoaded', function() {
-        initTabs();
-        initSearchWidget();
-    });
-        if (Math.abs(y - 18) <= 2 && Math.abs(x - 18) <= 2) return true;
-        return false;
+                    <li><strong>Templates</strong> - Name und Code</li>
+                    <li><strong>Medien</strong> - Dateiname und Titel</li>
+                </ul>
+            </div>
+            
+            <div style="text-align:center;margin-top:25px;">
+                <button class="btn btn-primary" onclick="this.closest('div[style*=fixed]').remove()">
+                    Schließen
+                </button>
+            </div>
+        `;
+        
+        modal.appendChild(content);
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+        
+        document.body.appendChild(modal);
     }
 
     // Initialize tabs on load
