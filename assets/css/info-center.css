@@ -1152,10 +1152,10 @@ body.rex-theme-dark .info-center-widget:hover {
 
 .info-center-tree-toggle {
     position: absolute;
-    right: 32px;
+    right: 8px;
     flex-shrink: 0;
-    width: 20px;
-    height: 20px;
+    width: 24px;
+    height: 24px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1172,8 +1172,8 @@ body.rex-theme-dark .info-center-widget:hover {
 }
 
 .info-center-tree-toggle svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     transform: rotate(0deg);
 }
@@ -1339,18 +1339,19 @@ body.rex-theme-dark .info-center-widget:hover {
 
 /* Edit Button für Kategorien */
 .info-center-tree-edit {
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     width: 24px;
     height: 24px;
-    margin-left: 12px;
+    margin-left: 16px;
     padding: 4px;
     border-radius: 4px;
     color: var(--text-color-muted);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
     opacity: 0;
+    pointer-events: none;
 }
 
 .info-center-tree-edit:hover {
@@ -1360,8 +1361,8 @@ body.rex-theme-dark .info-center-widget:hover {
 }
 
 .info-center-tree-node:hover .info-center-tree-edit {
-    display: flex;
     opacity: 1;
+    pointer-events: auto;
 }
 
 .info-center-tree-edit svg {
