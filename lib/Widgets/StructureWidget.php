@@ -53,7 +53,15 @@ class StructureWidget extends AbstractWidget
         $domainSwitcher = '';
         if (rex_addon::get('yrewrite')->isAvailable()) {
             $domains = rex_yrewrite::getDomains();
-            if (count($domains) > 1) {
+            // Filter: Nur echte Domains zählen (nicht Default/Auto-Domains)
+            $validDomains = [];
+            foreach ($domains as $domain) {
+                if ($domain->getMountId() > 0) {
+                    $validDomains[] = $domain;
+                }
+            }
+            
+            if (count($validDomains) > 1) {
                 $selectedDomain = rex_request('info_center_domain', 'int', 0);
                 
                 $domainSwitcher = '
@@ -61,7 +69,7 @@ class StructureWidget extends AbstractWidget
                         <select id="info-center-domain-select" class="form-control">
                             <option value="0"' . ($selectedDomain == 0 ? ' selected' : '') . '>' . rex_i18n::msg('info_center_all_domains', 'Alle Domains') . '</option>';
                 
-                foreach ($domains as $domain) {
+                foreach ($validDomains as $domain) {
                     $domainSwitcher .= sprintf(
                         '<option value="%d"%s>%s</option>',
                         $domain->getId(),
@@ -316,13 +324,12 @@ class StructureWidget extends AbstractWidget
                     '<li class="info-center-tree-item info-center-tree-article%s%s" data-id="article-%d">
                         <div class="info-center-tree-node">
                             <span class="info-center-tree-spacer"></span>
-                            <a href="%s" class="info-center-tree-link">
+                            <a href="%s" class="info-center-tree-link" title="Artikel ID: %d">
                                 <svg class="info-center-tree-article-icon %s" viewBox="0 0 24 24" fill="currentColor">
                                     <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
                                     <path d="M14 2v6h6" fill="none" stroke="white" stroke-width="1" opacity="0.3"/>
                                 </svg>
                                 <span class="info-center-tree-name">%s</span>
-                                <span class="info-center-tree-id">#%d</span>
                             </a>
                         </div>
                     </li>',
@@ -330,9 +337,9 @@ class StructureWidget extends AbstractWidget
                     $currentClass,
                     $item['id'],
                     $item['url'],
+                    $item['id'],
                     $statusClass,
-                    rex_escape($item['name']),
-                    $item['id']
+                    rex_escape($item['name'])
                 );
             } else {
                 // Render as category with folder icon
@@ -351,6 +358,8 @@ class StructureWidget extends AbstractWidget
                     'mode' => 'edit'
                 ]);
                 
+                $itemTitle = $item['domain'] ? 'Domain: ' . rex_escape($item['domain']) . ' | ID: ' . $item['id'] : 'ID: ' . $item['id'];
+                
                 $html .= sprintf(
                     '<li class="info-center-tree-item%s%s%s%s" data-id="%d">
                         <div class="info-center-tree-node">
@@ -359,7 +368,6 @@ class StructureWidget extends AbstractWidget
                                     <path d="M3 5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
                                 </svg>
                                 <span class="info-center-tree-name">%s</span>
-                                <span class="info-center-tree-id">#%d</span>
                             </a>
                             <a href="%s" class="info-center-tree-edit" title="Kategorie bearbeiten">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -377,10 +385,9 @@ class StructureWidget extends AbstractWidget
                     $currentClass,
                     $item['id'],
                     $item['url'],
-                    $item['domain'] ? 'Domain: ' . rex_escape($item['domain']) : '',
+                    $itemTitle,
                     $statusClass,
                     rex_escape($item['name']),
-                    $item['id'],
                     $editUrl,
                     $item['hasChildren'] ? '<button class="info-center-tree-toggle" type="button">
                         <svg class="icon-toggle" viewBox="0 0 24 24" fill="none">
@@ -429,6 +436,8 @@ class StructureWidget extends AbstractWidget
                         'mode' => 'edit'
                     ]);
                     
+                    $childTitle = $child['domain'] ? 'Domain: ' . rex_escape($child['domain']) . ' | ID: ' . $child['id'] : 'ID: ' . $child['id'];
+                    
                     $html .= sprintf(
                         '<li class="info-center-tree-item%s%s%s%s" data-id="%d">
                             <div class="info-center-tree-node">
@@ -437,7 +446,6 @@ class StructureWidget extends AbstractWidget
                                         <path d="M3 5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
                                     </svg>
                                     <span class="info-center-tree-name">%s</span>
-                                    <span class="info-center-tree-id">#%d</span>
                                 </a>
                                 <a href="%s" class="info-center-tree-edit" title="Kategorie bearbeiten">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -455,10 +463,9 @@ class StructureWidget extends AbstractWidget
                         $currentClass,
                         $child['id'],
                         $child['url'],
-                        $child['domain'] ? 'Domain: ' . rex_escape($child['domain']) : '',
+                        $childTitle,
                         $childStatusClass,
                         rex_escape($child['name']),
-                        $child['id'],
                         $childEditUrl,
                         $child['hasChildren'] ? '<button class="info-center-tree-toggle" type="button">
                             <svg class="icon-toggle" viewBox="0 0 24 24" fill="none">
@@ -490,13 +497,12 @@ class StructureWidget extends AbstractWidget
                         '<li class="info-center-tree-item info-center-tree-article%s%s" data-id="article-%d">
                             <div class="info-center-tree-node">
                                 <span class="info-center-tree-spacer"></span>
-                                <a href="%s" class="info-center-tree-link">
+                                <a href="%s" class="info-center-tree-link" title="Artikel ID: %d">
                                     <svg class="info-center-tree-article-icon %s" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 0 002-2V8l-6-6z"/>
+                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
                                         <path d="M14 2v6h6" fill="none" stroke="white" stroke-width="1" opacity="0.3"/>
                                     </svg>
                                     <span class="info-center-tree-name">%s</span>
-                                    <span class="info-center-tree-id">#%d</span>
                                 </a>
                             </div>
                         </li>',
@@ -504,9 +510,9 @@ class StructureWidget extends AbstractWidget
                         $currentClass,
                         $article['id'],
                         rex_escape($article['url']),
+                        $article['id'],
                         $articleStatusClass,
-                        rex_escape($article['name']),
-                        $article['id']
+                        rex_escape($article['name'])
                     );
                 }
             }
