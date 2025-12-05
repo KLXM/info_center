@@ -418,6 +418,43 @@
                 }, 300);
             });
         }
+        
+        // Domain switcher functionality
+        const domainSelect = document.getElementById('info-center-domain-select');
+        if (domainSelect) {
+            const autoSwitch = domainSelect.dataset.autoSwitch === '1';
+            const autoDomainId = parseInt(domainSelect.dataset.autoDomain) || 0;
+            
+            // Auto-switch to detected domain if enabled and not manually selected before
+            if (autoSwitch && autoDomainId > 0) {
+                const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
+                if (!savedDomain) {
+                    domainSelect.value = autoDomainId;
+                    localStorage.setItem('infoCenterSelectedDomain', autoDomainId);
+                    // Trigger reload to show correct structure
+                    reloadStructureTree(autoDomainId);
+                }
+            }
+            
+            // Load saved domain selection
+            const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
+            if (savedDomain) {
+                domainSelect.value = savedDomain;
+            }
+            
+            domainSelect.addEventListener('change', function() {
+                const selectedDomain = this.value;
+                localStorage.setItem('infoCenterSelectedDomain', selectedDomain);
+                reloadStructureTree(selectedDomain);
+            });
+        }
+    }
+    
+    function reloadStructureTree(domainId) {
+        // Einfache Lösung: Page reload mit Domain-Parameter
+        const url = new URL(window.location.href);
+        url.searchParams.set('info_center_domain', domainId);
+        window.location.href = url.toString();
     }
 
     function searchStructure(query) {

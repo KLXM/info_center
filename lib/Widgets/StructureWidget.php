@@ -55,12 +55,12 @@ class StructureWidget extends AbstractWidget
         
         if (rex_addon::get('yrewrite')->isAvailable()) {
             $domains = rex_yrewrite::getDomains();
-            // Filter: Nur echte Domains zählen (nicht Default/Auto-Domains)
+            // Alle Domains verwenden - auch solche mit MountId 0 (Root-Ebene)
+            // Die Default-Domain und Domains mit Root-Mount sind beide gültig
             $validDomains = [];
             foreach ($domains as $domain) {
-                if ($domain->getMountId() > 0) {
-                    $validDomains[] = $domain;
-                }
+                // Alle Domains einschließen, auch wenn getMountId() == 0
+                $validDomains[] = $domain;
             }
             
             // Auto-detect domain based on current article/category
