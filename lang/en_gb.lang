@@ -2,6 +2,10 @@
 info_center_title = Info Center
 info_center_settings = Settings
 info_center_no_permission = No permission
+info_center_toggle = Open/close Info Center
+info_center_close = Close Info Center
+info_center_goto_backend = Switch to backend
+info_center_widgets_tab = Widgets
 
 # Position
 info_center_position = Position
