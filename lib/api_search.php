@@ -443,6 +443,15 @@ class rex_api_info_center_search extends rex_api_function
                     $filetype = $sql->getValue('filetype');
                     $isImage = $filetype && str_starts_with(strtolower($filetype), 'image/');
                     
+                    // Use Media Manager for thumbnail and full image
+                    $mediaSmallUrl = null;
+                    $mediaFullUrl = $media->getUrl();
+                    
+                    if ($isImage && rex_addon::get('media_manager')->isAvailable()) {
+                        $mediaSmallUrl = rex_media_manager::getUrl('rex_media_small', $media->getFileName());
+                        $mediaFullUrl = rex_media_manager::getUrl('rex_media_medium', $media->getFileName());
+                    }
+                    
                     $results[] = [
                         'id' => $sql->getValue('id'),
                         'filename' => $sql->getValue('filename'),
@@ -455,8 +464,8 @@ class rex_api_info_center_search extends rex_api_function
                         'url_backend' => rex_url::backendPage('mediapool/media', [
                             'file_id' => $sql->getValue('id')
                         ]),
-                        'url_media' => $media->getUrl(),
-                        'url_media_small' => $isImage ? rex_url::frontend('index.php', ['rex_media_type' => 'rex_media_small', 'rex_media_file' => $media->getFileName()]) : null
+                        'url_media' => $mediaFullUrl,
+                        'url_media_small' => $mediaSmallUrl
                     ];
                 }
             }
