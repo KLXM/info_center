@@ -158,7 +158,13 @@ class ArticleWidget extends AbstractWidget
         $html .= '<h4>' . rex_i18n::msg('info_center_recent_articles') . '</h4>';
         
         foreach ($recentArticles as $article) {
-            $statusClass = $article['status'] == 1 ? 'online' : 'offline';
+            // Status: 0 = offline (grau), 1 = online (blau), 2 = locked (rot)
+            $statusClass = 'status-online';
+            if ($article['status'] == 0) {
+                $statusClass = 'status-offline';
+            } elseif ($article['status'] == 2) {
+                $statusClass = 'status-locked';
+            }
             
             // Bessere Datumsformatierung - prüfe ob updatedate ein gültiger Timestamp ist
             $updatedate = (int)$article['updatedate'];
@@ -170,7 +176,7 @@ class ArticleWidget extends AbstractWidget
             }
             
             $html .= sprintf(
-                '<div class="info-center-recent-article status-%s">
+                '<div class="info-center-recent-article %s">
                     <div class="article-main">
                         <a href="%s" title="%s">
                             <span class="article-name">%s</span>

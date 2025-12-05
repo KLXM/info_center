@@ -587,11 +587,15 @@ body.rex-theme-dark .info-center-widget:hover {
 }
 
 .info-center-recent-article.status-online {
-    border-left-color: #4caf50;
+    border-left-color: #4b9ad9;
 }
 
 .info-center-recent-article.status-offline {
-    border-left-color: #f44336;
+    border-left-color: #6c757d;
+}
+
+.info-center-recent-article.status-locked {
+    border-left-color: #ef4444;
 }
 
 .info-center-recent-article .article-main a {
