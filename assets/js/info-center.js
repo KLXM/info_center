@@ -321,14 +321,15 @@
             const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
             
             // If auto-detected domain differs from saved, update localStorage
-            if (autoDomain && autoDomain !== '0' && autoDomain !== savedDomain) {
+            // This includes switching to '0' (all domains) when navigating to root categories
+            if (autoDomain !== undefined && autoDomain !== savedDomain) {
                 localStorage.setItem('infoCenterSelectedDomain', autoDomain);
                 
                 // Update select value if not already set correctly
                 if (domainSelect.value !== autoDomain) {
                     domainSelect.value = autoDomain;
                 }
-            } else if (savedDomain && savedDomain !== domainSelect.value) {
+            } else if (savedDomain && savedDomain !== domainSelect.value && autoDomain === undefined) {
                 // Restore saved domain selection only if no auto-domain detected
                 domainSelect.value = savedDomain;
                 

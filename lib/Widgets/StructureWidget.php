@@ -74,12 +74,22 @@ class StructureWidget extends AbstractWidget
                         $rootId = (int) $path[0];
                         
                         // Check if this root belongs to a domain
+                        $foundDomain = false;
                         foreach ($validDomains as $domain) {
                             if ($domain->getMountId() == $rootId) {
                                 $autoDomainId = $domain->getId();
+                                $foundDomain = true;
                                 break;
                             }
                         }
+                        
+                        // If root category is not assigned to any domain, set to 0 (all domains)
+                        if (!$foundDomain) {
+                            $autoDomainId = 0;
+                        }
+                    } else {
+                        // No path = root level without domain assignment
+                        $autoDomainId = 0;
                     }
                 }
             }
