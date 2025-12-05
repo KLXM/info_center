@@ -1135,7 +1135,7 @@ body.rex-theme-dark .info-center-widget:hover {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 12px;
+    padding: 8px 56px 8px 12px;
     background: var(--widget-bg);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
