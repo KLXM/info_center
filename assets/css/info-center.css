@@ -1148,7 +1148,6 @@ body.rex-theme-dark .info-center-widget:hover {
 .info-center-tree-node:hover {
     background: var(--hover-bg);
     border-color: var(--text-color);
-    transform: translateX(2px);
 }
 
 .info-center-tree-toggle {
