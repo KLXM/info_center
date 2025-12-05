@@ -20,7 +20,7 @@ class StructureWidget extends AbstractWidget
     public function __construct()
     {
         parent::__construct();
-        $this->title = '🏗️ ' . rex_i18n::msg('info_center_structure_title', 'Struktur');
+        $this->title = '🏗️ ' . rex_i18n::msg('info_center_structure_title');
     }
 
     public function render(): string
