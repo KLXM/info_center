@@ -1131,12 +1131,32 @@
         // Wikipedia
         if (trimmedQuery.toLowerCase().startsWith('wiki ') && trimmedQuery.length > 5) {
             const searchTerm = trimmedQuery.substring(5);
-            actions.push({
+            
+            // Create placeholder action that will be updated with API data
+            const wikiAction = {
                 type: 'wikipedia',
                 title: 'Wikipedia: ' + searchTerm,
-                subtitle: 'Suche in Wikipedia öffnen',
+                subtitle: 'Lade Vorschau...',
+                isLoading: true,
                 action: () => {
                     window.open('https://de.wikipedia.org/wiki/Special:Search?search=' + encodeURIComponent(searchTerm), '_blank');
+                }
+            };
+            
+            actions.push(wikiAction);
+            
+            // Fetch Wikipedia summary asynchronously
+            fetchWikipediaSummary(searchTerm).then(summary => {
+                if (summary) {
+                    wikiAction.subtitle = summary;
+                    wikiAction.isLoading = false;
+                    // Re-render the quick actions section
+                    const searchResults = document.getElementById('info-center-search-results');
+                    if (searchResults) {
+                        searchResults.innerHTML = '';
+                        const section = createQuickActionsSection([wikiAction]);
+                        searchResults.appendChild(section);
+                    }
                 }
             });
         }
@@ -1144,12 +1164,49 @@
         // Dictionary/Define
         if (trimmedQuery.toLowerCase().startsWith('define ') && trimmedQuery.length > 7) {
             const word = trimmedQuery.substring(7);
-            actions.push({
+            
+            // Create placeholder action that will be updated with API data
+            const dictAction = {
                 type: 'dictionary',
                 title: 'Definition: ' + word,
-                subtitle: 'Suche in Wiktionary öffnen',
+                subtitle: 'Lade Definition...',
+                isLoading: true,
                 action: () => {
                     window.open('https://de.wiktionary.org/wiki/' + encodeURIComponent(word), '_blank');
+                }
+            };
+            
+            actions.push(dictAction);
+            
+            // Fetch Wiktionary summary asynchronously
+            fetchWiktionarySummary(word).then(summary => {
+                if (summary) {
+                    dictAction.subtitle = summary;
+                    dictAction.isLoading = false;
+                    // Re-render the quick actions section
+                    const searchResults = document.getElementById('info-center-search-results');
+                    if (searchResults) {
+                        searchResults.innerHTML = '';
+                        const section = createQuickActionsSection([dictAction]);
+                        searchResults.appendChild(section);
+                    }
+                }
+            });
+        }
+        
+        // Blindtext Generator
+        if (trimmedQuery.toLowerCase().startsWith('blindtext')) {
+            const match = trimmedQuery.match(/blindtext\s+(\d+)/i);
+            const length = match ? parseInt(match[1]) : 300;
+            const blindtext = generateBlindtext(length);
+            
+            actions.push({
+                type: 'calculator', // Use calculator icon (clipboard)
+                title: 'Blindtext generiert (' + blindtext.length + ' Zeichen)',
+                subtitle: blindtext.substring(0, 200) + (blindtext.length > 200 ? '...' : ''),
+                action: () => {
+                    navigator.clipboard.writeText(blindtext);
+                    alert('Blindtext kopiert (' + blindtext.length + ' Zeichen)');
                 }
             });
         }
@@ -1167,6 +1224,117 @@
         }
         
         return actions;
+    }
+    
+    async function fetchWikipediaSummary(searchTerm) {
+        try {
+            const response = await fetch(`https://de.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
+            if (!response.ok) {
+                return 'Keine Wikipedia-Seite gefunden';
+            }
+            const data = await response.json();
+            
+            // Get extract (first paragraph)
+            let summary = data.extract || 'Keine Beschreibung verfügbar';
+            
+            // Limit length to 500 characters for better preview
+            if (summary.length > 500) {
+                summary = summary.substring(0, 500) + '...';
+            }
+            
+            return summary;
+        } catch (error) {
+            console.error('Wikipedia API error:', error);
+            return 'Wikipedia-Vorschau nicht verfügbar';
+        }
+    }
+    
+    async function fetchWiktionarySummary(word) {
+        try {
+            // Wiktionary has no official REST API, so we fetch the HTML page
+            const response = await fetch(`https://de.wiktionary.org/api/rest_v1/page/html/${encodeURIComponent(word)}`);
+            if (!response.ok) {
+                return 'Kein Wiktionary-Eintrag gefunden';
+            }
+            const html = await response.text();
+            
+            // Parse HTML to extract the first definition
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            
+            // Try to find the first definition (usually in <dd> tags)
+            const definitions = doc.querySelectorAll('dd');
+            if (definitions.length > 0) {
+                let definition = definitions[0].textContent.trim();
+                
+                // Limit length to 500 characters
+                if (definition.length > 500) {
+                    definition = definition.substring(0, 500) + '...';
+                }
+                
+                return definition;
+            }
+            
+            // Fallback: try to find any paragraph text
+            const paragraphs = doc.querySelectorAll('p');
+            for (let p of paragraphs) {
+                const text = p.textContent.trim();
+                if (text.length > 20) {
+                    let definition = text;
+                    if (definition.length > 500) {
+                        definition = definition.substring(0, 500) + '...';
+                    }
+                    return definition;
+                }
+            }
+            
+            return 'Definition nicht gefunden';
+        } catch (error) {
+            console.error('Wiktionary API error:', error);
+            return 'Wiktionary-Vorschau nicht verfügbar';
+        }
+    }
+    
+    function generateBlindtext(targetLength) {
+        const texts = [
+            "Dies ist ein Platzhaltertext, der zeigt, wie der echte Inhalt später aussehen wird. Er füllt den Raum und gibt einen Eindruck von Länge und Struktur. Perfekt zum Testen von Layouts und Designs.",
+            "Hier könnte Ihr Text stehen! Momentan bin ich nur ein bescheidener Blindtext, der darauf wartet, durch echten Content ersetzt zu werden. Ich mache meinen Job gut: Platz halten, Länge zeigen, Layout testen.",
+            "Dieser Text ist absichtlich bedeutungslos und dient nur dazu, das Design zu prüfen. Wie sieht die Schrift aus? Passt der Zeilenabstand? Funktioniert der Umbruch? All diese Fragen beantworte ich.",
+            "Ein Dummy-Text wie ich hat es nicht leicht. Ständig werde ich kopiert, eingefügt und wieder gelöscht. Aber ich beschwere mich nicht! Ich bin stolz darauf, Designern und Entwicklern zu helfen.",
+            "Wussten Sie schon? Ich bin ein Blindtext der modernen Art. Keine lateinischen Floskeln, sondern verständliches Deutsch. So können Sie wirklich sehen, wie Ihr deutscher Content später wirkt.",
+            "Als professioneller Platzhalter erfülle ich eine wichtige Funktion: Ich zeige, wo Text hingehört, ohne vom Design abzulenken. Neutral, unauffällig und doch präsent – das ist meine Mission.",
+            "Entwickler lieben mich, Designer brauchen mich. Ich bin der perfekte Testtext für Ihre Website, App oder Printprodukt. Kopieren Sie mich, nutzen Sie mich, und ersetzen Sie mich später!",
+            "Manchmal frage ich mich, ob echte Texte auch so ein erfülltes Leben haben wie ich. Jeden Tag helfe ich Menschen, großartige Designs zu erstellen. Was will man mehr?"
+        ];
+        
+        // Pick random starting text
+        let result = texts[Math.floor(Math.random() * texts.length)];
+        
+        // Add more random texts until we reach target length
+        while (result.length < targetLength) {
+            const randomText = texts[Math.floor(Math.random() * texts.length)];
+            result += ' ' + randomText;
+        }
+        
+        // Trim to exact length at sentence end if possible
+        if (result.length > targetLength) {
+            const trimmed = result.substring(0, targetLength);
+            const lastPeriod = trimmed.lastIndexOf('.');
+            const lastExclamation = trimmed.lastIndexOf('!');
+            const lastQuestion = trimmed.lastIndexOf('?');
+            const lastSentenceEnd = Math.max(lastPeriod, lastExclamation, lastQuestion);
+            
+            if (lastSentenceEnd > targetLength * 0.8) {
+                // If we find a sentence end in the last 20%, use it
+                result = trimmed.substring(0, lastSentenceEnd + 1);
+            } else {
+                // Otherwise just cut at word boundary
+                const lastSpace = trimmed.lastIndexOf(' ');
+                result = trimmed.substring(0, lastSpace) + '...';
+            }
+        }
+        
+        return result;
     }
 
     // Initialize tabs on load

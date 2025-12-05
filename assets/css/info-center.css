@@ -1989,3 +1989,23 @@ body.rex-theme-light .info-center-search-badge.offline {
 .info-center-code-preview:hover .info-center-code-preview-tooltip {
     opacity: 1;
 }
+
+/* Search Results Styling */
+.info-center-search-result-subtitle {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    line-height: 1.5 !important;
+    max-height: none !important;
+}
+
+.info-center-search-result-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.info-center-search-result-wrapper {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
