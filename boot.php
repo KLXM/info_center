@@ -62,7 +62,7 @@ if ($isWidgetEnabled('timetracker')) {
     $infoCenter->registerWidget($widget);
 }
 
-// Article Widget (prio: 1)
+// Article Widget (prio: 1) - Backend und Frontend
 if ($isWidgetEnabled('article')) {
     $widget = new Widgets\ArticleWidget();
     $widget->setPriority(1);

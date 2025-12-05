@@ -179,3 +179,9 @@ info_center_structure_search = Search in structure...
 info_center_all_domains = All Domains
 info_center_auto_switch_domain = Auto-switch domain
 info_center_auto_switch_domain_note = Automatically switches to the matching domain when navigating to a different domain structure
+
+# Recently Edited Widget
+info_center_recently_edited_title = Recently Edited
+info_center_not_logged_in = Not logged in
+info_center_no_recent_articles = No recently edited articles found
+info_center_no_permitted_articles = No articles with sufficient permissions found

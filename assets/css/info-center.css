@@ -1427,3 +1427,61 @@ body.rex-theme-dark .info-center-widget:hover {
 .info-center-tree-view svg {
     flex-shrink: 0;
 }
+
+
+/* Recently Edited Widget Styles */
+.info-center-recent-articles {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-center-recent-item {
+    padding: 10px;
+    background: var(--widget-bg);
+    border: 1px solid var(--widget-border);
+    border-radius: 6px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.info-center-recent-item:hover {
+    background: var(--hover-bg);
+    border-color: var(--border-color);
+    transform: translateX(2px);
+}
+
+.info-center-recent-name {
+    margin-bottom: 6px;
+}
+
+.info-center-recent-name a {
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: var(--font-size-base);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-center-recent-name a:hover {
+    color: #4b9ad9;
+}
+
+.info-center-recent-name i {
+    font-size: var(--font-size-small);
+    opacity: 0.6;
+}
+
+.info-center-recent-path {
+    color: var(--text-color-muted);
+    font-size: var(--font-size-small);
+    margin-bottom: 4px;
+    padding-left: 20px;
+}
+
+.info-center-recent-date {
+    color: var(--text-color-muted);
+    font-size: var(--font-size-tiny);
+    padding-left: 20px;
+}
