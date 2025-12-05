@@ -320,6 +320,14 @@ class StructureWidget extends AbstractWidget
                     $statusClass = 'status-locked';
                 }
                 
+                // Frontend URL für View-Button
+                $articleViewUrl = '';
+                if (rex_addon::get('yrewrite')->isAvailable()) {
+                    $articleViewUrl = rex_yrewrite::getFullUrlByArticleId($item['id'], rex_clang::getCurrentId());
+                } else {
+                    $articleViewUrl = rex_getUrl($item['id'], rex_clang::getCurrentId());
+                }
+                
                 $html .= sprintf(
                     '<li class="info-center-tree-item info-center-tree-article%s%s" data-id="article-%d">
                         <div class="info-center-tree-node">
@@ -331,6 +339,20 @@ class StructureWidget extends AbstractWidget
                                 </svg>
                                 <span class="info-center-tree-name">%s</span>
                             </a>
+                            <div class="info-center-tree-actions">
+                                <a href="%s" class="info-center-tree-view" title="Im Frontend ansehen" target="_blank">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </a>
+                                <a href="%s" class="info-center-tree-edit" title="Artikel bearbeiten">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </a>
+                            </div>
                         </div>
                     </li>',
                     $offlineClass,
@@ -339,7 +361,9 @@ class StructureWidget extends AbstractWidget
                     $item['url'],
                     $item['id'],
                     $statusClass,
-                    rex_escape($item['name'])
+                    rex_escape($item['name']),
+                    $articleViewUrl,
+                    $item['url']
                 );
             } else {
                 // Render as category with folder icon
@@ -358,6 +382,14 @@ class StructureWidget extends AbstractWidget
                     'mode' => 'edit'
                 ]);
                 
+                // Frontend URL für View-Button
+                $viewUrl = '';
+                if (rex_addon::get('yrewrite')->isAvailable()) {
+                    $viewUrl = rex_yrewrite::getFullUrlByArticleId($item['id'], rex_clang::getCurrentId());
+                } else {
+                    $viewUrl = rex_getUrl($item['id'], rex_clang::getCurrentId());
+                }
+                
                 $itemTitle = $item['domain'] ? 'Domain: ' . rex_escape($item['domain']) . ' | ID: ' . $item['id'] : 'ID: ' . $item['id'];
                 
                 $html .= sprintf(
@@ -369,12 +401,20 @@ class StructureWidget extends AbstractWidget
                                 </svg>
                                 <span class="info-center-tree-name">%s</span>
                             </a>
-                            <a href="%s" class="info-center-tree-edit" title="Kategorie bearbeiten">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                            </a>
+                            <div class="info-center-tree-actions">
+                                <a href="%s" class="info-center-tree-view" title="Im Frontend ansehen" target="_blank">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                    </svg>
+                                </a>
+                                <a href="%s" class="info-center-tree-edit" title="Kategorie bearbeiten">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                    </svg>
+                                </a>
+                            </div>
                             %s
                         </div>
                         %s
@@ -388,6 +428,7 @@ class StructureWidget extends AbstractWidget
                     $itemTitle,
                     $statusClass,
                     rex_escape($item['name']),
+                    $viewUrl,
                     $editUrl,
                     $item['hasChildren'] ? '<button class="info-center-tree-toggle" type="button">
                         <svg class="icon-toggle" viewBox="0 0 24 24" fill="none">
@@ -436,6 +477,14 @@ class StructureWidget extends AbstractWidget
                         'mode' => 'edit'
                     ]);
                     
+                    // Frontend URL für View-Button
+                    $childViewUrl = '';
+                    if (rex_addon::get('yrewrite')->isAvailable()) {
+                        $childViewUrl = rex_yrewrite::getFullUrlByArticleId($child['id'], rex_clang::getCurrentId());
+                    } else {
+                        $childViewUrl = rex_getUrl($child['id'], rex_clang::getCurrentId());
+                    }
+                    
                     $childTitle = $child['domain'] ? 'Domain: ' . rex_escape($child['domain']) . ' | ID: ' . $child['id'] : 'ID: ' . $child['id'];
                     
                     $html .= sprintf(
@@ -447,12 +496,20 @@ class StructureWidget extends AbstractWidget
                                     </svg>
                                     <span class="info-center-tree-name">%s</span>
                                 </a>
-                                <a href="%s" class="info-center-tree-edit" title="Kategorie bearbeiten">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                    </svg>
-                                </a>
+                                <div class="info-center-tree-actions">
+                                    <a href="%s" class="info-center-tree-view" title="Im Frontend ansehen" target="_blank">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </a>
+                                    <a href="%s" class="info-center-tree-edit" title="Kategorie bearbeiten">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                        </svg>
+                                    </a>
+                                </div>
                                 %s
                             </div>
                             %s
@@ -466,6 +523,7 @@ class StructureWidget extends AbstractWidget
                         $childTitle,
                         $childStatusClass,
                         rex_escape($child['name']),
+                        $childViewUrl,
                         $childEditUrl,
                         $child['hasChildren'] ? '<button class="info-center-tree-toggle" type="button">
                             <svg class="icon-toggle" viewBox="0 0 24 24" fill="none">
@@ -493,6 +551,14 @@ class StructureWidget extends AbstractWidget
                         $articleStatusClass = 'status-locked';
                     }
                     
+                    // Frontend URL für View-Button
+                    $articleViewUrl = '';
+                    if (rex_addon::get('yrewrite')->isAvailable()) {
+                        $articleViewUrl = rex_yrewrite::getFullUrlByArticleId($article['id'], rex_clang::getCurrentId());
+                    } else {
+                        $articleViewUrl = rex_getUrl($article['id'], rex_clang::getCurrentId());
+                    }
+                    
                     $html .= sprintf(
                         '<li class="info-center-tree-item info-center-tree-article%s%s" data-id="article-%d">
                             <div class="info-center-tree-node">
@@ -504,6 +570,20 @@ class StructureWidget extends AbstractWidget
                                     </svg>
                                     <span class="info-center-tree-name">%s</span>
                                 </a>
+                                <div class="info-center-tree-actions">
+                                    <a href="%s" class="info-center-tree-view" title="Im Frontend ansehen" target="_blank">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                            <circle cx="12" cy="12" r="3"></circle>
+                                        </svg>
+                                    </a>
+                                    <a href="%s" class="info-center-tree-edit" title="Artikel bearbeiten">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                        </svg>
+                                    </a>
+                                </div>
                             </div>
                         </li>',
                         $offlineClass,
@@ -512,7 +592,9 @@ class StructureWidget extends AbstractWidget
                         rex_escape($article['url']),
                         $article['id'],
                         $articleStatusClass,
-                        rex_escape($article['name'])
+                        rex_escape($article['name']),
+                        $articleViewUrl,
+                        rex_escape($article['url'])
                     );
                 }
             }

@@ -1166,7 +1166,7 @@ body.rex-theme-dark .info-center-widget:hover {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 8px 56px 8px 12px;
+    padding: 8px 64px 8px 12px;
     background: var(--widget-bg);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
@@ -1243,14 +1243,14 @@ body.rex-theme-dark .info-center-widget:hover {
     transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Online = Green */
+/* Online = REDAXO Blue */
 .info-center-tree-folder-icon.status-online {
-    color: #10b981;
+    color: #4b9ad9;
 }
 
-/* Offline = Orange */
+/* Offline = Gray */
 .info-center-tree-folder-icon.status-offline {
-    color: #f59e0b;
+    color: #6c757d;
 }
 
 /* Locked/Status 2 = Red */
@@ -1331,11 +1331,11 @@ body.rex-theme-dark .info-center-widget:hover {
 
 /* Article Icon Status Colors */
 .info-center-tree-article-icon.status-online {
-    color: #10b981;
+    color: #4b9ad9;
 }
 
 .info-center-tree-article-icon.status-offline {
-    color: #f59e0b;
+    color: #6c757d;
 }
 
 .info-center-tree-article-icon.status-locked {
@@ -1353,11 +1353,11 @@ body.rex-theme-dark .info-center-widget:hover {
 
 /* Icon Status für inline articles */
 .info-center-tree-icon.status-online {
-    color: #10b981;
+    color: #4b9ad9;
 }
 
 .info-center-tree-icon.status-offline {
-    color: #f59e0b;
+    color: #6c757d;
 }
 
 .info-center-tree-icon.status-locked {
@@ -1368,34 +1368,44 @@ body.rex-theme-dark .info-center-widget:hover {
     width: 0;
 }
 
-/* Edit Button für Kategorien */
-.info-center-tree-edit {
+/* Action Buttons (Edit + View) */
+.info-center-tree-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: 4px;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.info-center-tree-node:hover .info-center-tree-actions {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.info-center-tree-edit,
+.info-center-tree-view {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 24px;
     height: 24px;
-    margin-left: 16px;
     padding: 4px;
     border-radius: 4px;
     color: var(--text-color-muted);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
-    opacity: 0;
-    pointer-events: none;
 }
 
-.info-center-tree-edit:hover {
+.info-center-tree-edit:hover,
+.info-center-tree-view:hover {
     background: var(--hover-bg);
     color: var(--text-color);
     text-decoration: none;
 }
 
-.info-center-tree-node:hover .info-center-tree-edit {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.info-center-tree-edit svg {
+.info-center-tree-edit svg,
+.info-center-tree-view svg {
     flex-shrink: 0;
 }

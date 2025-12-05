@@ -11,6 +11,7 @@ Das **Info Center** ist ein intelligentes Dashboard-System für REDAXO CMS, das 
 ## ✨ Hauptfeatures
 
 ### 🚀 **Intelligente Widgets**
+- **🏗️ Struktur-Navigation** - Interaktiver Kategoriebaum mit Live-Suche, Domain-Filterung und direkten Frontend-Links
 - **📊 Performance Stats** - Ladezeiten, Speicherverbrauch, DB-Queries
 - **⏱️ TimeTracker** - Arbeitszeit-Tracking mit Pausen und Berichten
 - **📝 Artikel Widget** - Zuletzt bearbeitete Inhalte mit direkten Links
@@ -112,8 +113,81 @@ status = 1 AND email LIKE '%@company.com'
 
 ---
 
-## ⚙️ Konfiguration
+## 🏗️ Struktur-Navigation Widget - NEU in 2.0.0
 
+### 🎯 **Was ist die Struktur-Navigation?**
+Ein **interaktiver Kategoriebaum** direkt im Info Center - perfekt für schnelle Navigation durch komplexe REDAXO-Strukturen!
+
+### ✨ **Hauptfeatures**
+
+#### 📂 **Intelligenter Kategoriebaum**
+- **Hierarchische Darstellung** - Kategorien und Artikel in Baumstruktur
+- **Akkordeon-Navigation** - Ein-/Ausklappbare Kategorien
+- **Auto-Expansion** - Automatisches Öffnen zur aktuellen Position
+- **Sortierung** - Unterkategorien zuerst, dann Artikel
+- **Status-Indikatoren** - Farbcodierung (REDAXO Blau=Online, Grau=Offline, Rot=Gesperrt)
+
+#### 👁️ **Quick Actions auf Hover**
+- **Frontend-Preview** - Direkter Link zur Seite im Frontend (👁️ Auge-Icon)
+- **Backend-Edit** - Schneller Zugriff auf Bearbeitung (✏️ Stift-Icon)
+- **Target="_blank"** - Frontend-Links öffnen in neuem Tab
+- **Smooth Transitions** - Butterweiche Animationen beim Hover
+- **Kompaktes Layout** - Optimale Platznutzung
+- **Für alle Elemente** - Kategorien UND Artikel haben beide Buttons
+
+#### 🔍 **Live-Suche**
+- **Echtzeit-Filter** - 300ms Debounce für Performance
+- **Smart-Matching** - Suche in Namen und IDs
+- **Parent-Expansion** - Gefundene Elemente werden automatisch angezeigt
+- **Highlight-Effekt** - Suchergebnisse werden hervorgehoben
+
+#### 🌐 **Multi-Domain Support** (YRewrite)
+- **Domain-Switcher** - Automatisch bei > 1 Domain mit Mountpoint
+- **Filter nach Domain** - Zeige nur Struktur einer Domain
+- **"Alle Domains"** - Standard-Ansicht zeigt alles
+- **Intelligente Erkennung** - Nur echte Domains, keine Default-Entries
+
+#### 🎨 **Moderne UI**
+- **Glassmorphism Design** - Moderne Optik mit Backdrop-Blur
+- **Smooth Transitions** - Butterweiche Animationen (cubic-bezier)
+- **Hover-Effekte** - Action-Buttons erscheinen bei Hover
+- **Dark/Light Mode** - Automatische Theme-Anpassung
+- **Responsive** - Perfekt auf allen Bildschirmgrößen
+- **Keine IDs sichtbar** - Nur bei Hover im Tooltip (saubere UI)
+
+#### ⚡ **Performance**
+- **Lazy Loading** - API-basiertes Laden der Struktur
+- **Smart Caching** - Intelligente Refresh-Logik
+- **Debounced Search** - Optimierte Suche ohne Server-Last
+- **Permission-Check** - Respektiert REDAXO Benutzerrechte
+
+### 🎯 **Verwendung**
+
+#### Hover für Actions
+- **👁️ Frontend ansehen** - Linker Button öffnet Seite im neuen Tab
+- **✏️ Backend bearbeiten** - Rechter Button öffnet Editor
+- **Tooltips** - Zeigt Domain und ID bei Hover
+- **Für alle Elemente** - Kategorien UND Artikel haben beide Buttons
+
+#### Direkte Links
+- **Kategorie-Klick** - Öffnet Struktur-Seite
+- **Artikel-Klick** - Öffnet Artikel im Edit-Modus
+- **Frontend-Button** - Öffnet mit YRewrite oder rex_getUrl()
+
+#### Suche & Filter
+- **Suchfeld** - Live-Suche in Kategorien und Artikeln
+- **Domain-Dropdown** - Filter nach YRewrite-Domain (bei Multi-Domain)
+- **Status-Filter** - Visuell nach Online/Offline/Gesperrt
+
+### 🆕 **Statusfarben**
+- **REDAXO Blau (#4b9ad9)** - Online/Veröffentlicht
+- **Grau (#6c757d)** - Offline/Unveröffentlicht
+- **Rot (#ef4444)** - Gesperrt/Status 2
+
+---
+
+## ⚙️ Konfiguration
+````
 ### 🎛️ **Globale Einstellungen**
 ```yaml
 # Position des Info Centers
