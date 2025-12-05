@@ -127,13 +127,15 @@ class rex_api_info_center_search extends rex_api_function
             
             // Add user filters
             if (!empty($filters['author'])) {
-                $whereConditions[] = 'a.createuser LIKE :author';
+                $whereConditions[] = '(a.createuser LIKE :author OR a.createuser = :author_exact)';
                 $params['author'] = '%' . $filters['author'] . '%';
+                $params['author_exact'] = $filters['author'];
             }
             
             if (!empty($filters['editor'])) {
-                $whereConditions[] = 'a.updateuser LIKE :editor';
+                $whereConditions[] = '(a.updateuser LIKE :editor OR a.updateuser = :editor_exact)';
                 $params['editor'] = '%' . $filters['editor'] . '%';
+                $params['editor_exact'] = $filters['editor'];
             }
             
             $whereClause = implode(' AND ', $whereConditions);
@@ -226,13 +228,15 @@ class rex_api_info_center_search extends rex_api_function
             
             // Add user filters
             if (!empty($filters['author'])) {
-                $whereConditions[] = 'createuser LIKE :author';
+                $whereConditions[] = '(createuser LIKE :author OR createuser = :author_exact)';
                 $params['author'] = '%' . $filters['author'] . '%';
+                $params['author_exact'] = $filters['author'];
             }
             
             if (!empty($filters['editor'])) {
-                $whereConditions[] = 'updateuser LIKE :editor';
+                $whereConditions[] = '(updateuser LIKE :editor OR updateuser = :editor_exact)';
                 $params['editor'] = '%' . $filters['editor'] . '%';
+                $params['editor_exact'] = $filters['editor'];
             }
             
             $whereClause = implode(' AND ', $whereConditions);
