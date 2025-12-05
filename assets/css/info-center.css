@@ -1139,16 +1139,15 @@ body.rex-theme-dark .info-center-widget:hover {
     background: var(--widget-bg);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    border: 1px solid var(--widget-border);
     border-radius: 8px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
-    box-shadow: 0 0 0 0 transparent;
+    box-shadow: inset 0 0 0 1px var(--widget-border);
 }
 
 .info-center-tree-node:hover {
     background: var(--hover-bg);
-    box-shadow: 0 0 0 1px var(--text-color);
+    box-shadow: inset 0 0 0 1px var(--text-color);
 }
 
 .info-center-tree-toggle {
