@@ -421,7 +421,9 @@
         
         // Domain switcher functionality
         const domainSelect = document.getElementById('info-center-domain-select');
-        if (domainSelect) {
+        if (domainSelect && !domainSelect.dataset.initialized) {
+            domainSelect.dataset.initialized = 'true';
+            
             const autoSwitch = domainSelect.dataset.autoSwitch === '1';
             const autoDomainId = parseInt(domainSelect.dataset.autoDomain) || 0;
             
