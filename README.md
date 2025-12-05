@@ -11,7 +11,8 @@ Das **Info Center** ist ein intelligentes Dashboard-System für REDAXO CMS, das 
 ## ✨ Hauptfeatures
 
 ### 🚀 **Intelligente Widgets**
-- **🏗️ Struktur-Navigation** - Interaktiver Kategoriebaum mit Live-Suche, Domain-Filterung und direkten Frontend-Links
+- **🔍 Search Widget** - Spotlight-ähnliche Suche mit Quick Actions (NEU!)
+- **🏗️ Struktur-Navigation** - Interaktiver Kategoriebaum mit Lazy Loading, Domain-Filterung und direkten Frontend-Links
 - **📊 Performance Stats** - Ladezeiten, Speicherverbrauch, DB-Queries
 - **⏱️ TimeTracker** - Arbeitszeit-Tracking mit Pausen und Berichten
 - **📝 Artikel Widget** - Zuletzt bearbeitete Inhalte mit direkten Links
@@ -113,7 +114,7 @@ status = 1 AND email LIKE '%@company.com'
 
 ---
 
-## 🏗️ Struktur-Navigation Widget - NEU in 2.0.0
+## 🏗️ Struktur-Navigation Widget
 
 ### 🎯 **Was ist die Struktur-Navigation?**
 Ein **interaktiver Kategoriebaum** direkt im Info Center - perfekt für schnelle Navigation durch komplexe REDAXO-Strukturen!
@@ -156,10 +157,11 @@ Ein **interaktiver Kategoriebaum** direkt im Info Center - perfekt für schnelle
 - **Keine IDs sichtbar** - Nur bei Hover im Tooltip (saubere UI)
 
 #### ⚡ **Performance**
-- **Lazy Loading** - API-basiertes Laden der Struktur
+- **Lazy Loading** - API-basiertes Laden großer Strukturen (ab 100 Kategorien)
 - **Smart Caching** - Intelligente Refresh-Logik
 - **Debounced Search** - Optimierte Suche ohne Server-Last
 - **Permission-Check** - Respektiert REDAXO Benutzerrechte
+- **Progressive Enhancement** - Lädt nur sichtbare Elemente bei Bedarf
 
 ### 🎯 **Verwendung**
 
@@ -186,6 +188,105 @@ Ein **interaktiver Kategoriebaum** direkt im Info Center - perfekt für schnelle
 
 ---
 
+## 🔍 Search Widget
+
+### 🎯 **Was ist das Search Widget?**
+Eine **Spotlight-ähnliche Universalsuche** direkt im Info Center - durchsuche alle wichtigen REDAXO-Inhalte mit einer Eingabe!
+
+### ✨ **Hauptfeatures**
+
+#### 🔎 **Intelligente Suche**
+- **Artikel** - Durchsucht Namen, Titel und alle Content-Felder (value1-20)
+- **Kategorien** - Findet Kategorien in der Struktur
+- **Module** - Sucht in Modul-Namen und Code
+- **Templates** - Durchsucht Template-Namen und Code
+- **Medien** - Findet Bilder, Videos und andere Dateien im Mediapool
+
+#### 🚀 **Quick Actions wie Spotlight/Alfred**
+- **🧮 Rechner** - Direkte Berechnung (z.B. `2+2`, `15*20%`, `(100+50)/2`)
+  - Automatisches Kopieren des Ergebnisses in die Zwischenablage
+- **📚 Wikipedia** - Suche mit Live-Vorschau (z.B. `wiki REDAXO`)
+  - REST API Integration mit 500 Zeichen Vorschau
+  - Öffnet vollständigen Artikel bei Klick
+- **📖 Wörterbuch** - Definition nachschlagen (z.B. `define CMS`)
+  - Wiktionary HTML API Integration mit echter Definition
+  - Zeigt erste Definition mit 500 Zeichen Vorschau
+- **📝 Blindtext** - Generator für Platzhaltertexte (z.B. `blindtext 500`)
+  - 8 verschiedene lustige deutsche Texte (kein Lorem Ipsum!)
+  - Automatisches Kopieren in Zwischenablage
+  - Intelligenter Schnitt am Satzende
+- **🔗 URL-Erkennung** - URLs werden automatisch erkannt und sind direkt öffenbar
+
+#### 🔍 **Erweiterte Filter mit #-Prefix**
+- **📅 Datum-Filter**
+  - `#modified:today` - Heute geändert
+  - `#modified:yesterday` - Gestern geändert
+  - `#modified:last-week` - Letzte Woche geändert
+  - `#modified:last-month` - Letzter Monat geändert
+  - `#modified:2024-12-05` - An bestimmtem Datum geändert
+  - `#created:today` - Heute erstellt
+  - `#created:last-week` - Letzte Woche erstellt
+- **👤 User-Filter**
+  - `#author:username` - Erstellt von User
+  - `#editor:username` - Bearbeitet von User
+- **🎯 Kombinationen**
+  - `Startseite #modified:today` - "Startseite" heute geändert
+  - `#author:admin #created:last-week` - Von Admin letzte Woche erstellt
+  - `#modified:yesterday #editor:admin` - Gestern von Admin bearbeitet
+
+#### 🎨 **Rich Previews**
+- **Bild-Thumbnails** - 32x32px Vorschau, 200x200px bei Hover
+- **Video-Vorschau** - Tooltip mit Autoplay bei Hover
+- **Code-Snippets** - Zeigt Treffer-Kontext bei Modulen/Templates
+- **Optimierte Bilder** - Nutzt Media Manager (rex_media_small)
+
+#### ⚡ **Performance & UX**
+- **Berechtigungsprüfung** - Respektiert User-Rechte für Struktur/Medien
+- **Extension Point** - `INFO_CENTER_SEARCH` für AddOn-Integration
+- **Keyboard-Navigation** - ↑↓ für Navigation, Enter zum Öffnen, ESC zum Schließen
+- **⌘K Shortcut** - Schneller Zugriff via Tastenkombination
+- **Live-Suche** - Sofortige Ergebnisse ohne Reload
+
+### 🎯 **Verwendung**
+
+#### Normale Suche
+```
+REDAXO         → Findet alle Inhalte mit "REDAXO"
+template       → Sucht in Templates und Modulen
+logo.png       → Findet Mediendateien
+```
+
+#### Quick Actions
+```
+2+2                      → Rechner: = 4 (kopiert in Zwischenablage)
+15*20%                   → Rechner: = 3
+wiki Berlin              → Wikipedia mit Live-Vorschau
+define CMS               → Wörterbuch-Definition aus Wiktionary
+blindtext 500            → Generiert 500 Zeichen deutschen Blindtext
+https://...              → URL wird erkannt und kann geöffnet werden
+```
+
+#### Erweiterte Filter
+```
+#modified:today          → Heute geänderte Inhalte
+#created:yesterday       → Gestern erstellte Inhalte
+#author:admin            → Von Admin erstellte Inhalte
+#editor:username         → Von User bearbeitete Inhalte
+Startseite #modified:today  → "Startseite" heute geändert
+#author:admin #created:last-week  → Von Admin letzte Woche erstellt
+```
+
+#### Keyboard Shortcuts
+- **⌘K** oder **Ctrl+K** - Search Widget fokussieren
+- **↑/↓** - Durch Ergebnisse navigieren
+- **Enter** - Ausgewähltes Ergebnis öffnen
+- **ESC** - Suche schließen
+
+### ⚙️ **Konfiguration**
+Das Search Widget kann in den Einstellungen aktiviert/deaktiviert werden und unterstützt alle Standard-Widget-Optionen.
+
+---
+
 ## ⚙️ Konfiguration
 ````
 ### 🎛️ **Globale Einstellungen**
@@ -198,9 +299,11 @@ darkmode: auto   # 'auto', 'light', 'dark'
 
 # Widget-Aktivierung
 widgets:
+  search: { enabled: true, prio: -10 }     # Search Widget (NEU!)
   article: { enabled: true, prio: 1 }
   timetracker: { enabled: true, prio: 0 }
   stats: { enabled: true, prio: 5 }
+  structure: { enabled: true, prio: 2 }
   # ... weitere Widgets
 ```
 

@@ -179,6 +179,25 @@ info_center_view_frontend = Im Frontend ansehen
 info_center_edit_article = Artikel bearbeiten
 info_center_edit_category = Kategorie bearbeiten
 info_center_domain = Domain
+info_center_last_updated = Zuletzt geändert
+
+# Search Widget
+info_center_search_title = Suche
+info_center_search_placeholder = Suche nach Artikeln, Modulen, Templates, Medien...
+info_center_search_navigate = Navigieren
+info_center_search_open = Öffnen
+info_center_search_focus = Fokussieren
+info_center_search_no_results = Keine Ergebnisse gefunden
+info_center_search_loading = Suche läuft...
+info_center_search_error = Fehler beim Suchen
+info_center_search_categories = Kategorien
+info_center_search_articles = Artikel
+info_center_search_modules = Module
+info_center_search_templates = Templates
+info_center_search_media = Medien
+info_center_search_preview = Vorschau
+info_center_search_offline = Offline
+info_center_search_inactive = Inaktiv
 
 # Recently Edited Widget
 info_center_recently_edited_title = Zuletzt bearbeitet
