@@ -97,6 +97,9 @@ class ArticleWidget extends AbstractWidget
     {
         $html = '';
 
+        // Zuletzt bearbeitete Artikel auch im Frontend anzeigen
+        $html .= $this->renderRecentArticles();
+
         // Basic article information
         $html .= $this->renderBasicInfo();
         
