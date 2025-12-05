@@ -939,9 +939,10 @@
                 const isImage = filetype.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(filetype);
                 const isVideo = filetype.startsWith('video/') || ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(filetype);
                 
-                if (isImage && item.url_media) {
-                    icon = `<div class="info-center-image-preview" style="--preview-image: url('${item.url_media}');">
-                        <img src="${item.url_media}" alt="${escapeAttr(item.filename)}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" />
+                if (isImage && item.url_media_small) {
+                    // Use rex_media_small for thumbnail and original for hover preview
+                    icon = `<div class="info-center-image-preview" style="--preview-image: url('${item.url_media_small}');">
+                        <img src="${item.url_media_small}" alt="${escapeAttr(item.filename)}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" />
                     </div>`;
                 } else if (isVideo && item.url_media) {
                     icon = `<div class="info-center-video-preview" data-video-url="${item.url_media}">

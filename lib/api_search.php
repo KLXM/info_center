@@ -352,19 +352,23 @@ class rex_api_info_center_search extends rex_api_function
                 $media = rex_media::get($sql->getValue('filename'));
                 
                 if ($media) {
+                    $filetype = $sql->getValue('filetype');
+                    $isImage = $filetype && str_starts_with(strtolower($filetype), 'image/');
+                    
                     $results[] = [
                         'id' => $sql->getValue('id'),
                         'filename' => $sql->getValue('filename'),
                         'title' => $sql->getValue('title') ?: $sql->getValue('filename'),
                         'category_id' => $categoryId,
-                        'filetype' => $sql->getValue('filetype'),
+                        'filetype' => $filetype,
                         'filesize' => $sql->getValue('filesize'),
                         'updateuser' => $sql->getValue('updateuser'),
                         'updatedate' => $sql->getValue('updatedate'),
                         'url_backend' => rex_url::backendPage('mediapool/media', [
                             'file_id' => $sql->getValue('id')
                         ]),
-                        'url_media' => $media->getUrl()
+                        'url_media' => $media->getUrl(),
+                        'url_media_small' => $isImage ? rex_url::frontend('index.php', ['rex_media_type' => 'rex_media_small', 'rex_media_file' => $media->getFileName()]) : null
                     ];
                 }
             }

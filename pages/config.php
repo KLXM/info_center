@@ -24,7 +24,7 @@ if (rex_post('formsubmit', 'string') == '1') {
     
     // Widget-Einstellungen pro User speichern
     $widgetConfig = [];
-    $widgets = ['url', 'timetracker', 'article', 'upkeep', 'stats', 'system'];
+    $widgets = ['search', 'url', 'timetracker', 'article', 'upkeep', 'stats', 'system'];
     $globalConfig = $package->getConfig('widgets', []);
     
     foreach ($widgets as $widget) {
@@ -75,6 +75,7 @@ $content .= '<fieldset><legend>' . $package->i18n('info_center_widget_settings')
 
 // Widget-Checkboxen
 $widgets = [
+    'search' => 'Search Widget',
     'url' => 'URL Widget',
     'timetracker' => 'Time Tracker Widget',
     'article' => 'Article Widget'
