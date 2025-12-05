@@ -427,23 +427,15 @@
                 
                 const autoSwitch = domainSelect.dataset.autoSwitch === '1';
                 const autoDomainId = parseInt(domainSelect.dataset.autoDomain) || 0;
+                const selectedDomain = parseInt(domainSelect.dataset.selectedDomain) || 0;
                 
-                // Auto-switch to detected domain if enabled and not manually selected before
-                if (autoSwitch && autoDomainId > 0) {
-                    const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
-                    if (!savedDomain) {
-                        domainSelect.value = autoDomainId;
-                        localStorage.setItem('infoCenterSelectedDomain', autoDomainId);
-                        // Trigger reload to show correct structure
-                        reloadStructureTree(autoDomainId);
-                    }
-                }
-                
-                // Load saved domain selection
+                // Use selected domain from PHP (already set via selected attribute)
+                // Only use localStorage if explicitly saved by user
                 const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
-                if (savedDomain) {
+                if (savedDomain !== null) {
                     domainSelect.value = savedDomain;
                 }
+                // Otherwise use the PHP-selected value (already set via selected attribute)
                 
                 domainSelect.addEventListener('change', function() {
                     const selectedDomain = this.value;

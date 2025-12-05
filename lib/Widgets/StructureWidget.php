@@ -110,10 +110,15 @@ class StructureWidget extends AbstractWidget
                 
                 $domainSwitcher = '
                     <div class="info-center-domain-switcher">
-                        <select id="info-center-domain-select" class="form-control" data-auto-domain="' . $autoDomainId . '" data-auto-switch="' . ($autoSwitchEnabled ? '1' : '0') . '">
+                        <select id="info-center-domain-select" class="form-control" data-auto-domain="' . $autoDomainId . '" data-auto-switch="' . ($autoSwitchEnabled ? '1' : '0') . '" data-selected-domain="' . $selectedDomain . '">
                             <option value="0"' . ($selectedDomain == 0 ? ' selected' : '') . '>' . rex_i18n::msg('info_center_all_domains', 'Alle Domains') . '</option>';
                 
                 foreach ($validDomains as $domain) {
+                    // Filtere "default" Domain heraus wenn sie ID 0 hat
+                    if ($domain->getId() == 0 && strtolower($domain->getName()) === 'default') {
+                        continue;
+                    }
+                    
                     $domainSwitcher .= sprintf(
                         '<option value="%d"%s>%s</option>',
                         $domain->getId(),
