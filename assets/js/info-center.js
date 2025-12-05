@@ -764,6 +764,13 @@
         if (!searchResults) return;
 
         searchResults.innerHTML = '<div class="info-center-search-loading">Suche läuft...</div>';
+        
+        // Check for quick actions first
+        const quickActions = getQuickActions(query);
+        if (quickActions.length > 0) {
+            renderSearchResults({ quickActions: quickActions });
+            return;
+        }
 
         fetch('index.php?rex-api-call=info_center_search&query=' + encodeURIComponent(query))
             .then(response => response.json())
@@ -789,6 +796,13 @@
         searchSelectedIndex = -1;
 
         let totalResults = 0;
+        
+        // Render Quick Actions first
+        if (results.quickActions && results.quickActions.length > 0) {
+            const section = createQuickActionsSection(results.quickActions);
+            searchResults.appendChild(section);
+            return; // Only show quick actions, no regular results
+        }
         
         // Count total results
         Object.values(results).forEach(items => {
@@ -839,6 +853,46 @@
                 searchResults.appendChild(section);
             }
         });
+    }
+    
+    function createQuickActionsSection(actions) {
+        const section = document.createElement('div');
+        section.className = 'info-center-search-section';
+
+        const header = document.createElement('div');
+        header.className = 'info-center-search-section-header';
+        header.textContent = 'Quick Actions';
+        section.appendChild(header);
+
+        actions.forEach(action => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'info-center-search-result-item';
+            resultItem.style.cursor = 'pointer';
+            
+            const iconMap = {
+                'calculator': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg>',
+                'wikipedia': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+                'dictionary': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
+                'url': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+            };
+            
+            const icon = iconMap[action.type] || iconMap['url'];
+            
+            resultItem.innerHTML = `
+                <div class="info-center-search-result-wrapper">
+                    <div class="info-center-search-result-icon">${icon}</div>
+                    <div class="info-center-search-result-content">
+                        <div class="info-center-search-result-title">${escapeHtml(action.title)}</div>
+                        <div class="info-center-search-result-subtitle">${escapeHtml(action.subtitle)}</div>
+                    </div>
+                </div>
+            `;
+            
+            resultItem.addEventListener('click', action.action);
+            section.appendChild(resultItem);
+        });
+
+        return section;
     }
 
     function createSearchSection(title, items, type) {
@@ -1048,6 +1102,71 @@
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+    
+    function getQuickActions(query) {
+        const actions = [];
+        const trimmedQuery = query.trim();
+        
+        // Calculator
+        if (/^[\d\s+\-*\/().%]+$/.test(trimmedQuery) && /[\d]/.test(trimmedQuery)) {
+            try {
+                const result = eval(trimmedQuery);
+                if (!isNaN(result) && isFinite(result)) {
+                    actions.push({
+                        type: 'calculator',
+                        title: '= ' + result,
+                        subtitle: trimmedQuery,
+                        action: () => {
+                            navigator.clipboard.writeText(result.toString());
+                            alert('Ergebnis kopiert: ' + result);
+                        }
+                    });
+                }
+            } catch (e) {
+                // Invalid expression, ignore
+            }
+        }
+        
+        // Wikipedia
+        if (trimmedQuery.toLowerCase().startsWith('wiki ') && trimmedQuery.length > 5) {
+            const searchTerm = trimmedQuery.substring(5);
+            actions.push({
+                type: 'wikipedia',
+                title: 'Wikipedia: ' + searchTerm,
+                subtitle: 'Suche in Wikipedia öffnen',
+                action: () => {
+                    window.open('https://de.wikipedia.org/wiki/Special:Search?search=' + encodeURIComponent(searchTerm), '_blank');
+                }
+            });
+        }
+        
+        // Dictionary/Define
+        if (trimmedQuery.toLowerCase().startsWith('define ') && trimmedQuery.length > 7) {
+            const word = trimmedQuery.substring(7);
+            actions.push({
+                type: 'dictionary',
+                title: 'Definition: ' + word,
+                subtitle: 'Suche in Wiktionary öffnen',
+                action: () => {
+                    window.open('https://de.wiktionary.org/wiki/' + encodeURIComponent(word), '_blank');
+                }
+            });
+        }
+        
+        // URL Detection
+        if (/^https?:\/\/.+/.test(trimmedQuery)) {
+            actions.push({
+                type: 'url',
+                title: 'URL öffnen',
+                subtitle: trimmedQuery,
+                action: () => {
+                    window.open(trimmedQuery, '_blank');
+                }
+            });
+        }
+        
+        return actions;
     }
 
     // Initialize tabs on load
