@@ -1141,7 +1141,7 @@ body.rex-theme-dark .info-center-widget:hover {
     backdrop-filter: blur(10px);
     border: 1px solid var(--widget-border);
     border-radius: 8px;
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
 }
 
@@ -1198,6 +1198,7 @@ body.rex-theme-dark .info-center-widget:hover {
     font-size: var(--font-size-base);
     font-weight: 500;
     overflow: hidden;
+    transition: color 0.2s ease;
 }
 
 .info-center-tree-link:hover {
@@ -1209,7 +1210,7 @@ body.rex-theme-dark .info-center-widget:hover {
     width: 15px;
     height: 15px;
     flex-shrink: 0;
-    transition: color 0.2s ease;
+    transition: color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Online = Green */
@@ -1236,6 +1237,7 @@ body.rex-theme-dark .info-center-widget:hover {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    transition: color 0.2s ease;
 }
 
 .info-center-tree-id {
@@ -1243,6 +1245,7 @@ body.rex-theme-dark .info-center-widget:hover {
     font-size: var(--font-size-tiny);
     color: var(--text-color-muted);
     font-family: 'Courier New', monospace;
+    transition: color 0.2s ease;
 }
 
 /* Tree filtering during search */
@@ -1346,8 +1349,9 @@ body.rex-theme-dark .info-center-widget:hover {
     padding: 4px;
     border-radius: 4px;
     color: var(--text-color-muted);
-    transition: all 0.2s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     text-decoration: none;
+    opacity: 0;
 }
 
 .info-center-tree-edit:hover {
@@ -1358,6 +1362,7 @@ body.rex-theme-dark .info-center-widget:hover {
 
 .info-center-tree-node:hover .info-center-tree-edit {
     display: flex;
+    opacity: 1;
 }
 
 .info-center-tree-edit svg {
