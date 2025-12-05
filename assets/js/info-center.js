@@ -286,8 +286,17 @@
         // Always reload to ensure current category is correct
         container.innerHTML = '<div class="info-center-loading">Lade Struktur...</div>';
         
+        // Get saved domain selection
+        const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
+        const currentUrl = new URL(window.location.href);
+        
+        // Apply saved domain to URL if exists
+        if (savedDomain && savedDomain !== '0') {
+            currentUrl.searchParams.set('info_center_domain', savedDomain);
+        }
+        
         // Fetch structure via API
-        fetch(window.location.pathname + window.location.search + '&rex-api-call=info_center_structure')
+        fetch(currentUrl.pathname + currentUrl.search + '&rex-api-call=info_center_structure')
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -308,8 +317,40 @@
         // Domain Switcher
         const domainSelect = document.getElementById('info-center-domain-select');
         if (domainSelect) {
+            // Restore saved domain selection
+            const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
+            if (savedDomain && savedDomain !== domainSelect.value) {
+                domainSelect.value = savedDomain;
+                // Trigger reload with saved domain
+                const container = document.getElementById('info-center-structure-container');
+                if (container && container.dataset.loaded === 'true') {
+                    container.dataset.loaded = 'false';
+                    const currentUrl = new URL(window.location.href);
+                    if (savedDomain === '0') {
+                        currentUrl.searchParams.delete('info_center_domain');
+                    } else {
+                        currentUrl.searchParams.set('info_center_domain', savedDomain);
+                    }
+                    
+                    container.innerHTML = '<div class="info-center-loading">Lade Struktur...</div>';
+                    fetch(currentUrl.pathname + currentUrl.search + '&rex-api-call=info_center_structure')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                container.innerHTML = data.html;
+                                container.dataset.loaded = 'true';
+                                initStructureTree();
+                            }
+                        });
+                }
+            }
+            
             domainSelect.addEventListener('change', function() {
                 const selectedDomain = this.value;
+                
+                // Save domain selection to localStorage
+                localStorage.setItem('infoCenterSelectedDomain', selectedDomain);
+                
                 const currentUrl = new URL(window.location.href);
                 
                 if (selectedDomain === '0') {
