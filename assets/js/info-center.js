@@ -670,9 +670,389 @@
         return fallback || key;
     }
 
+    // ========================================
+    // SEARCH WIDGET
+    // ========================================
+    
+    let searchDebounceTimer = null;
+    let searchSelectedIndex = -1;
+    let searchResults = [];
+
+    function initSearchWidget() {
+        const searchInput = document.getElementById('info-center-search-input');
+        const searchResults = document.getElementById('info-center-search-results');
+        const clearButton = document.getElementById('info-center-search-clear');
+        
+        if (!searchInput || !searchResults) {
+            return;
+        }
+
+        // Focus on Cmd/Ctrl + K
+        document.addEventListener('keydown', function(e) {
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        });
+
+        // Input handler with debounce
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            if (clearButton) {
+                clearButton.style.display = query ? 'block' : 'none';
+            }
+            
+            if (query.length < 2) {
+                searchResults.innerHTML = '';
+                searchSelectedIndex = -1;
+                return;
+            }
+
+            clearTimeout(searchDebounceTimer);
+            searchDebounceTimer = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        });
+
+        // Clear button
+        if (clearButton) {
+            clearButton.addEventListener('click', function() {
+                searchInput.value = '';
+                searchResults.innerHTML = '';
+                clearButton.style.display = 'none';
+                searchSelectedIndex = -1;
+                searchInput.focus();
+            });
+        }
+
+        // Keyboard navigation
+        searchInput.addEventListener('keydown', function(e) {
+            const items = searchResults.querySelectorAll('.info-center-search-result-item');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                searchSelectedIndex = Math.min(searchSelectedIndex + 1, items.length - 1);
+                updateSearchSelection(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                searchSelectedIndex = Math.max(searchSelectedIndex - 1, -1);
+                updateSearchSelection(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (searchSelectedIndex >= 0 && items[searchSelectedIndex]) {
+                    const link = items[searchSelectedIndex].querySelector('a');
+                    if (link) {
+                        // Check if Cmd/Ctrl is pressed for new tab
+                        if (e.metaKey || e.ctrlKey) {
+                            window.open(link.href, '_blank');
+                        } else {
+                            window.location.href = link.href;
+                        }
+                    }
+                }
+            } else if (e.key === 'Escape') {
+                searchInput.blur();
+                searchResults.innerHTML = '';
+                searchSelectedIndex = -1;
+            }
+        });
+    }
+
+    function performSearch(query) {
+        const searchResults = document.getElementById('info-center-search-results');
+        if (!searchResults) return;
+
+        searchResults.innerHTML = '<div class="info-center-search-loading">Suche läuft...</div>';
+
+        fetch('index.php?rex-api-call=info_center_search&query=' + encodeURIComponent(query))
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    searchResults.innerHTML = '<div class="info-center-search-error">' + data.error + '</div>';
+                    return;
+                }
+
+                renderSearchResults(data.results);
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                searchResults.innerHTML = '<div class="info-center-search-error">Fehler beim Suchen</div>';
+            });
+    }
+
+    function renderSearchResults(results) {
+        const searchResults = document.getElementById('info-center-search-results');
+        if (!searchResults) return;
+
+        searchResults.innerHTML = '';
+        searchSelectedIndex = -1;
+
+        let totalResults = 0;
+        
+        // Count total results
+        Object.values(results).forEach(items => {
+            if (Array.isArray(items)) {
+                totalResults += items.length;
+            }
+        });
+
+        if (totalResults === 0) {
+            searchResults.innerHTML = '<div class="info-center-search-empty">Keine Ergebnisse gefunden</div>';
+            return;
+        }
+
+        // Render Categories
+        if (results.categories && results.categories.length > 0) {
+            const section = createSearchSection('Kategorien', results.categories, 'category');
+            searchResults.appendChild(section);
+        }
+
+        // Render Articles
+        if (results.articles && results.articles.length > 0) {
+            const section = createSearchSection('Artikel', results.articles, 'article');
+            searchResults.appendChild(section);
+        }
+
+        // Render Modules
+        if (results.modules && results.modules.length > 0) {
+            const section = createSearchSection('Module', results.modules, 'module');
+            searchResults.appendChild(section);
+        }
+
+        // Render Templates
+        if (results.templates && results.templates.length > 0) {
+            const section = createSearchSection('Templates', results.templates, 'template');
+            searchResults.appendChild(section);
+        }
+
+        // Render Media
+        if (results.media && results.media.length > 0) {
+            const section = createSearchSection('Medien', results.media, 'media');
+            searchResults.appendChild(section);
+        }
+
+        // Render custom addon results
+        Object.keys(results).forEach(key => {
+            if (!['categories', 'articles', 'modules', 'templates', 'media'].includes(key)) {
+                const section = createSearchSection(key, results[key], 'custom');
+                searchResults.appendChild(section);
+            }
+        });
+    }
+
+    function createSearchSection(title, items, type) {
+        const section = document.createElement('div');
+        section.className = 'info-center-search-section';
+
+        const header = document.createElement('div');
+        header.className = 'info-center-search-section-header';
+        header.textContent = title + ' (' + items.length + ')';
+        section.appendChild(header);
+
+        items.forEach(item => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'info-center-search-result-item';
+
+            let html = '';
+            let url = item.url_backend || '#';
+            let icon = getIconForType(type);
+            let subtitle = '';
+            let badge = '';
+            let actions = '';
+
+            switch(type) {
+                case 'category':
+                    subtitle = item.path ? item.path : 'ID: ' + item.id;
+                    if (item.clang_name) {
+                        badge = '<span class="info-center-search-badge">' + item.clang_name + '</span>';
+                    }
+                    if (item.status == 0) {
+                        badge += '<span class="info-center-search-badge offline">Offline</span>';
+                    }
+                    if (item.url_frontend) {
+                        actions = '<a href="' + item.url_frontend + '" target="_blank" class="info-center-search-action" title="Frontend-Vorschau" onclick="event.stopPropagation();"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>';
+                    }
+                    break;
+
+                case 'article':
+                    subtitle = item.path ? item.path : 'ID: ' + item.id;
+                    if (item.clang_name) {
+                        badge = '<span class="info-center-search-badge">' + item.clang_name + '</span>';
+                    }
+                    if (item.status == 0) {
+                        badge += '<span class="info-center-search-badge offline">Offline</span>';
+                    }
+                    if (item.url_frontend) {
+                        actions = '<a href="' + item.url_frontend + '" target="_blank" class="info-center-search-action" title="Frontend-Vorschau" onclick="event.stopPropagation();"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>';
+                    }
+                    break;
+
+                case 'module':
+                    subtitle = 'ID: ' + item.id;
+                    if (item.code_snippet) {
+                        icon = `<div class="info-center-code-preview" data-code-snippet="${escapeAttr(item.code_snippet)}">
+                            ${icon}
+                        </div>`;
+                    }
+                    break;
+
+                case 'template':
+                    subtitle = 'ID: ' + item.id;
+                    if (item.active == 0) {
+                        badge = '<span class="info-center-search-badge offline">Inaktiv</span>';
+                    }
+                    if (item.code_snippet) {
+                        icon = `<div class="info-center-code-preview" data-code-snippet="${escapeAttr(item.code_snippet)}">
+                            ${icon}
+                        </div>`;
+                    }
+                    break;
+
+                case 'media':
+                    subtitle = item.filetype + ' • ' + formatFileSize(item.filesize);
+                    break;
+            }
+
+            // Add update info if available
+            if (item.updatedate && item.updateuser) {
+                const timestamp = parseInt(item.updatedate, 10);
+                const updateDate = new Date(timestamp * 1000);
+                const formattedDate = updateDate.toLocaleString('de-DE', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                subtitle += ' • ' + formattedDate + ' (' + item.updateuser + ')';
+            }
+
+            // Special handling for media - open in popup
+            let linkOnClick = '';
+            
+            if (type === 'media') {
+                linkOnClick = `onclick="event.preventDefault(); openMediapoolPopup('${url}'); return false;"`;
+                
+                // Replace icon with thumbnail for images and videos
+                const filetype = item.filetype ? item.filetype.toLowerCase() : '';
+                const isImage = filetype.startsWith('image/') || ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'].includes(filetype);
+                const isVideo = filetype.startsWith('video/') || ['mp4', 'webm', 'ogg', 'mov', 'avi', 'mkv'].includes(filetype);
+                
+                if (isImage && item.url_media) {
+                    icon = `<div class="info-center-image-preview" style="--preview-image: url('${item.url_media}');">
+                        <img src="${item.url_media}" alt="${escapeAttr(item.filename)}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" />
+                    </div>`;
+                } else if (isVideo && item.url_media) {
+                    icon = `<div class="info-center-video-preview" data-video-url="${item.url_media}">
+                        ${getIconForType('media')}
+                    </div>`;
+                }
+            }
+
+            html = `
+                <div class="info-center-search-result-wrapper">
+                    <div class="info-center-search-result-icon">${icon}</div>
+                    <a href="${url}" ${linkOnClick} class="info-center-search-result-link">
+                        <div class="info-center-search-result-content">
+                            <div class="info-center-search-result-title">
+                                ${escapeHtml(item.name || item.title || item.filename)}
+                                ${badge}
+                            </div>
+                            <div class="info-center-search-result-subtitle">${escapeHtml(subtitle)}</div>
+                        </div>
+                    </a>
+                </div>
+            `;
+
+            resultItem.innerHTML = html;
+            section.appendChild(resultItem);
+        });
+
+        // Add video preview tooltips
+        section.querySelectorAll('.info-center-video-preview').forEach(videoPreview => {
+            const videoUrl = videoPreview.getAttribute('data-video-url');
+            if (videoUrl) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'info-center-video-preview-tooltip';
+                tooltip.innerHTML = `<video src="${videoUrl}" muted loop autoplay></video>`;
+                videoPreview.appendChild(tooltip);
+            }
+        });
+        
+        // Add code preview tooltips
+        section.querySelectorAll('.info-center-code-preview').forEach(codePreview => {
+            const codeSnippet = codePreview.getAttribute('data-code-snippet');
+            if (codeSnippet) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'info-center-code-preview-tooltip';
+                tooltip.innerHTML = `<pre><code>${escapeHtml(codeSnippet)}</code></pre>`;
+                codePreview.appendChild(tooltip);
+            }
+        });
+
+        return section;
+    }
+
+    // Open mediapool in popup
+    window.openMediapoolPopup = function(url) {
+        // Extract file_id from URL
+        const urlParams = new URLSearchParams(url.split('?')[1]);
+        const fileId = urlParams.get('file_id');
+        
+        if (fileId && typeof newPoolWindow === 'function') {
+            return newPoolWindow('index.php?page=mediapool/media&file_id=' + fileId + '&opener_input_field=');
+        } else {
+            // Fallback: open in new window
+            window.open(url, 'mediapool', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+        }
+    };
+
+    function escapeAttr(text) {
+        return text.replace(/'/g, '\\\'').replace(/"/g, '&quot;');
+    }
+
+    function updateSearchSelection(items) {
+        items.forEach((item, index) => {
+            if (index === searchSelectedIndex) {
+                item.classList.add('selected');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('selected');
+            }
+        });
+    }
+
+    function getIconForType(type) {
+        const icons = {
+            'category': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2Z"/></svg>',
+            'article': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>',
+            'module': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>',
+            'template': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+            'media': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
+            'custom': '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>'
+        };
+        return icons[type] || icons.custom;
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     // Initialize tabs on load
     document.addEventListener('DOMContentLoaded', function() {
         initTabs();
+        initSearchWidget();
     });
 
 })(); // Self-executing anonymous function without jQuery dependency

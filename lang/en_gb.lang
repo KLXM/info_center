@@ -189,6 +189,24 @@ info_center_edit_category = Edit category
 info_center_domain = Domain
 info_center_last_updated = Last updated
 
+# Search Widget
+info_center_search_title = Search
+info_center_search_placeholder = Search for articles, modules, templates, media...
+info_center_search_navigate = Navigate
+info_center_search_open = Open
+info_center_search_focus = Focus
+info_center_search_no_results = No results found
+info_center_search_loading = Searching...
+info_center_search_error = Error while searching
+info_center_search_categories = Categories
+info_center_search_articles = Articles
+info_center_search_modules = Modules
+info_center_search_templates = Templates
+info_center_search_media = Media
+info_center_search_preview = Preview
+info_center_search_offline = Offline
+info_center_search_inactive = Inactive
+
 # Recently Edited Widget
 info_center_recently_edited_title = Recently Edited
 info_center_not_logged_in = Not logged in

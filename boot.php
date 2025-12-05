@@ -48,6 +48,13 @@ $isWidgetEnabled = function($widgetId) use ($addon, $userWidgetConfig) {
 };
 
 // Registriere Widgets mit korrekten Prioritäten (niedrigste zuerst)
+// Search Widget (prio: -10) - Always on top
+if ($isWidgetEnabled('search')) {
+    $widget = new Widgets\SearchWidget();
+    $widget->setPriority(-10);
+    $infoCenter->registerWidget($widget);
+}
+
 // URL Widget (prio: -1)
 if ($isWidgetEnabled('url')) {
     $widget = new Widgets\UrlWidget();
