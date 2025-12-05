@@ -102,7 +102,18 @@ class InfoCenter
                 </div>';
         }
 
-        // Tab Navigation
+        // Tab Navigation - Struktur-Tab nur im Backend
+        $structureTab = '';
+        if (rex::isBackend()) {
+            $structureTab = '
+                <button class="info-center-tab" data-tab="structure">
+                    <svg class="info-center-icon" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 2.83L18 12v6h-4v-4H10v4H6v-6l6-6.17z" fill="currentColor"/>
+                    </svg>
+                    <span>Struktur</span>
+                </button>';
+        }
+        
         $tabNav = '
             <div class="info-center-tabs">
                 <button class="info-center-tab active" data-tab="widgets">
@@ -111,13 +122,16 @@ class InfoCenter
                     </svg>
                     <span>Widgets</span>
                 </button>
-                <button class="info-center-tab" data-tab="structure">
-                    <svg class="info-center-icon" viewBox="0 0 24 24" fill="none">
-                        <path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 2.83L18 12v6h-4v-4H10v4H6v-6l6-6.17z" fill="currentColor"/>
-                    </svg>
-                    <span>Struktur</span>
-                </button>
+                ' . $structureTab . '
             </div>';
+
+        // Structure Content nur im Backend rendern
+        $structureContent = '';
+        if (rex::isBackend()) {
+            $structureContent = '<div class="info-center-tab-content" data-content="structure">
+                        <div id="info-center-structure-container"></div>
+                    </div>';
+        }
 
         // Das komplette Info Center HTML mit Tab-System
         return sprintf(
@@ -131,15 +145,14 @@ class InfoCenter
                     <div class="info-center-tab-content active" data-content="widgets">
                         %s
                     </div>
-                    <div class="info-center-tab-content" data-content="structure">
-                        <div id="info-center-structure-container"></div>
-                    </div>
+                    %s
                 </div>
             </div>',
             implode(' ', $containerClasses),
             $headerButtons,
             $tabNav,
-            $widgetsOutput
+            $widgetsOutput,
+            $structureContent
         );
     }
 

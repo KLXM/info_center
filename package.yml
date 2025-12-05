@@ -11,7 +11,6 @@ requires:
         version: '>=8.1'
     packages:
         structure: '^2.0.0'
-        quick_navigation: '*'
 
 page:
     title: 'translate:info_center_title'
