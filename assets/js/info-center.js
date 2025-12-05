@@ -317,10 +317,21 @@
         // Domain Switcher
         const domainSelect = document.getElementById('info-center-domain-select');
         if (domainSelect) {
-            // Restore saved domain selection
+            const autoDomain = domainSelect.dataset.autoDomain;
             const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
-            if (savedDomain && savedDomain !== domainSelect.value) {
+            
+            // If auto-detected domain differs from saved, update localStorage
+            if (autoDomain && autoDomain !== '0' && autoDomain !== savedDomain) {
+                localStorage.setItem('infoCenterSelectedDomain', autoDomain);
+                
+                // Update select value if not already set correctly
+                if (domainSelect.value !== autoDomain) {
+                    domainSelect.value = autoDomain;
+                }
+            } else if (savedDomain && savedDomain !== domainSelect.value) {
+                // Restore saved domain selection only if no auto-domain detected
                 domainSelect.value = savedDomain;
+                
                 // Trigger reload with saved domain
                 const container = document.getElementById('info-center-structure-container');
                 if (container && container.dataset.loaded === 'true') {

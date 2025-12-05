@@ -51,6 +51,8 @@ class StructureWidget extends AbstractWidget
         
         // Domain Switcher für YRewrite (nur wenn mehrere Domains vorhanden)
         $domainSwitcher = '';
+        $autoDomainId = 0;
+        
         if (rex_addon::get('yrewrite')->isAvailable()) {
             $domains = rex_yrewrite::getDomains();
             // Filter: Nur echte Domains zählen (nicht Default/Auto-Domains)
@@ -61,12 +63,38 @@ class StructureWidget extends AbstractWidget
                 }
             }
             
+            // Auto-detect domain based on current article/category
+            if ($currentArticleId > 0 || $currentCategoryId > 0) {
+                $checkId = $currentArticleId > 0 ? $currentArticleId : $currentCategoryId;
+                $checkArticle = rex_article::get($checkId, $clangId);
+                
+                if ($checkArticle) {
+                    $path = explode('|', trim($checkArticle->getPath(), '|'));
+                    if (!empty($path)) {
+                        $rootId = (int) $path[0];
+                        
+                        // Check if this root belongs to a domain
+                        foreach ($validDomains as $domain) {
+                            if ($domain->getMountId() == $rootId) {
+                                $autoDomainId = $domain->getId();
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
             if (count($validDomains) > 1) {
                 $selectedDomain = rex_request('info_center_domain', 'int', 0);
                 
+                // Use auto-detected domain if no manual selection
+                if ($selectedDomain == 0 && $autoDomainId > 0) {
+                    $selectedDomain = $autoDomainId;
+                }
+                
                 $domainSwitcher = '
                     <div class="info-center-domain-switcher">
-                        <select id="info-center-domain-select" class="form-control">
+                        <select id="info-center-domain-select" class="form-control" data-auto-domain="' . $autoDomainId . '">
                             <option value="0"' . ($selectedDomain == 0 ? ' selected' : '') . '>' . rex_i18n::msg('info_center_all_domains', 'Alle Domains') . '</option>';
                 
                 foreach ($validDomains as $domain) {
