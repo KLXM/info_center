@@ -179,6 +179,10 @@ info_center_structure_search = Search in structure...
 info_center_all_domains = All Domains
 info_center_auto_switch_domain = Auto-switch domain
 info_center_auto_switch_domain_note = Automatically switches to the matching domain when navigating to a different domain structure
+info_center_view_frontend = View in frontend
+info_center_edit_article = Edit article
+info_center_edit_category = Edit category
+info_center_domain = Domain
 
 # Recently Edited Widget
 info_center_recently_edited_title = Recently Edited
