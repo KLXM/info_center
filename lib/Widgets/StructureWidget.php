@@ -204,7 +204,7 @@ class StructureWidget extends AbstractWidget
                                 'id' => $article->getId(),
                                 'name' => $article->getName(),
                                 'status' => $article->getValue('status'),
-                                'url' => $articleUrl,
+                                'url' => html_entity_decode($articleUrl, ENT_QUOTES | ENT_HTML5),
                                 'domain' => '',
                                 'hasChildren' => false,
                                 'children' => [],
@@ -244,6 +244,7 @@ class StructureWidget extends AbstractWidget
             'article_id' => $categoryId,
             'clang' => $clangId
         ]);
+        $url = html_entity_decode($url, ENT_QUOTES | ENT_HTML5);
         
         $domain = '';
         if (rex_addon::get('yrewrite')->isAvailable()) {
@@ -286,7 +287,7 @@ class StructureWidget extends AbstractWidget
                         'id' => $article->getId(),
                         'name' => $article->getName(),
                         'status' => $article->getValue('status'),
-                        'url' => $articleUrl,
+                        'url' => html_entity_decode($articleUrl, ENT_QUOTES | ENT_HTML5),
                         'isCurrent' => $article->getId() == $currentArticleId,
                     ];
                 }
@@ -430,6 +431,7 @@ class StructureWidget extends AbstractWidget
                     'clang' => rex_clang::getCurrentId(),
                     'mode' => 'edit'
                 ]);
+                $editUrl = html_entity_decode($editUrl, ENT_QUOTES | ENT_HTML5);
                 
                 // Frontend URL für View-Button
                 $viewUrl = '';
