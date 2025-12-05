@@ -102,7 +102,24 @@ class InfoCenter
                 </div>';
         }
 
-        // Das komplette Info Center HTML mit neuer Sidebar-Struktur
+        // Tab Navigation
+        $tabNav = '
+            <div class="info-center-tabs">
+                <button class="info-center-tab active" data-tab="widgets">
+                    <svg class="info-center-icon" viewBox="0 0 24 24" fill="none">
+                        <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z" fill="currentColor"/>
+                    </svg>
+                    <span>Widgets</span>
+                </button>
+                <button class="info-center-tab" data-tab="structure">
+                    <svg class="info-center-icon" viewBox="0 0 24 24" fill="none">
+                        <path d="M12 3L2 12h3v8h14v-8h3L12 3zm0 2.83L18 12v6h-4v-4H10v4H6v-6l6-6.17z" fill="currentColor"/>
+                    </svg>
+                    <span>Struktur</span>
+                </button>
+            </div>';
+
+        // Das komplette Info Center HTML mit Tab-System
         return sprintf(
             '<div class="%s">
                 <button class="info-center-toggle" type="button" title="Info Center öffnen/schließen">
@@ -110,13 +127,18 @@ class InfoCenter
                 </button>
                 <div class="info-center-sidebar">
                     %s
-                    <div class="info-center-content">
+                    %s
+                    <div class="info-center-tab-content active" data-content="widgets">
                         %s
+                    </div>
+                    <div class="info-center-tab-content" data-content="structure">
+                        <div id="info-center-structure-container"></div>
                     </div>
                 </div>
             </div>',
             implode(' ', $containerClasses),
             $headerButtons,
+            $tabNav,
             $widgetsOutput
         );
     }

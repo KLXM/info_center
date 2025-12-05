@@ -51,6 +51,16 @@
             
             // URL Widget nach PJAX-Updates aktualisieren  
             refreshUrlWidget(viewRoot);
+            
+            // Refresh structure tree if on structure tab
+            const structureContainer = document.getElementById('info-center-structure-container');
+            if (structureContainer && structureContainer.dataset.loaded === 'true') {
+                structureContainer.dataset.loaded = 'false';
+                const activeTab = document.querySelector('.info-center-tab.active');
+                if (activeTab && activeTab.dataset.tab === 'structure') {
+                    loadStructure();
+                }
+            }
         });
     }
 
@@ -114,10 +124,26 @@
         
         const sidebar = document.querySelector('.info-center-sidebar');
         if (sidebar) {
+            const isOpening = !sidebar.classList.contains('active');
             sidebar.classList.toggle('active');
             
             // Toggle button state
             this.classList.toggle('active');
+            
+            // Save state
+            localStorage.setItem('infoCenterOpen', sidebar.classList.contains('active') ? '1' : '0');
+            
+            // If opening and on structure tab, refresh structure
+            if (isOpening) {
+                const activeTab = document.querySelector('.info-center-tab.active');
+                if (activeTab && activeTab.dataset.tab === 'structure') {
+                    const structureContainer = document.getElementById('info-center-structure-container');
+                    if (structureContainer && structureContainer.dataset.loaded === 'true') {
+                        structureContainer.dataset.loaded = 'false';
+                        setTimeout(() => loadStructure(), 100);
+                    }
+                }
+            }
             
             // Store state in localStorage
             const isOpen = sidebar.classList.contains('active');
@@ -197,5 +223,190 @@
         container.classList.add('position-' + position);
         
     }
+
+    // Tab System
+    function initTabs() {
+        const tabs = document.querySelectorAll('.info-center-tab');
+        const tabContents = document.querySelectorAll('.info-center-tab-content');
+        
+        // Check if on structure page
+        const isStructurePage = window.location.href.includes('page=structure') || 
+                                window.location.href.includes('page=content');
+        
+        // Get last active tab from localStorage or default based on page
+        let activeTab = localStorage.getItem('infoCenterActiveTab');
+        if (!activeTab) {
+            activeTab = isStructurePage ? 'structure' : 'widgets';
+        }
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const targetTab = this.dataset.tab;
+                
+                // If switching to structure tab, refresh it
+                if (targetTab === 'structure') {
+                    const structureContainer = document.getElementById('info-center-structure-container');
+                    if (structureContainer && structureContainer.dataset.loaded === 'true') {
+                        structureContainer.dataset.loaded = 'false';
+                    }
+                }
+                
+                // Remove active from all tabs
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(tc => tc.classList.remove('active'));
+                
+                // Add active to clicked tab
+                this.classList.add('active');
+                const targetContent = document.querySelector(`[data-content="${targetTab}"]`);
+                if (targetContent) {
+                    targetContent.classList.add('active');
+                    
+                    // Save active tab to localStorage
+                    localStorage.setItem('infoCenterActiveTab', targetTab);
+                    
+                    // Load structure if structure tab is clicked
+                    if (targetTab === 'structure') {
+                        loadStructure();
+                    }
+                }
+            });
+            
+            // Activate saved/default tab
+            if (tab.dataset.tab === activeTab) {
+                tab.click();
+            }
+        });
+    }
+
+    // Structure Tree
+    function loadStructure() {
+        const container = document.getElementById('info-center-structure-container');
+        if (!container) return;
+        
+        // Always reload to ensure current category is correct
+        container.innerHTML = '<div class="info-center-loading">Lade Struktur...</div>';
+        
+        // Fetch structure via API
+        fetch(window.location.pathname + window.location.search + '&rex-api-call=info_center_structure')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    container.innerHTML = data.html;
+                    container.dataset.loaded = 'true';
+                    initStructureTree();
+                } else {
+                    container.innerHTML = '<div class="info-center-error">Fehler beim Laden der Struktur</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading structure:', error);
+                container.innerHTML = '<div class="info-center-error">Fehler beim Laden der Struktur</div>';
+            });
+    }
+
+    function initStructureTree() {
+        // Domain Switcher
+        const domainSelect = document.getElementById('info-center-domain-select');
+        if (domainSelect) {
+            domainSelect.addEventListener('change', function() {
+                const selectedDomain = this.value;
+                const currentUrl = new URL(window.location.href);
+                
+                if (selectedDomain === '0') {
+                    currentUrl.searchParams.delete('info_center_domain');
+                } else {
+                    currentUrl.searchParams.set('info_center_domain', selectedDomain);
+                }
+                
+                // Reload structure
+                const container = document.getElementById('info-center-structure-container');
+                if (container) {
+                    container.dataset.loaded = 'false';
+                    container.innerHTML = '<div class="info-center-loading">Lade Struktur...</div>';
+                    
+                    fetch(currentUrl.pathname + currentUrl.search + '&rex-api-call=info_center_structure')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                container.innerHTML = data.html;
+                                container.dataset.loaded = 'true';
+                                initStructureTree();
+                            }
+                        });
+                }
+            });
+        }
+        
+        // Toggle für Akkordeon
+        const toggles = document.querySelectorAll('.info-center-tree-toggle');
+        toggles.forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const item = this.closest('.info-center-tree-item');
+                if (item) {
+                    item.classList.toggle('expanded');
+                }
+            });
+        });
+        
+        // Search functionality
+        const searchInput = document.getElementById('structure-search');
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    searchStructure(this.value);
+                }, 300);
+            });
+        }
+    }
+
+    function searchStructure(query) {
+        const items = document.querySelectorAll('.info-center-tree-item');
+        const normalizedQuery = query.toLowerCase().trim();
+        
+        if (!normalizedQuery) {
+            // Reset search
+            items.forEach(item => {
+                item.classList.remove('search-hidden', 'search-match');
+            });
+            return;
+        }
+        
+        items.forEach(item => {
+            const name = item.querySelector('.info-center-tree-name');
+            const id = item.querySelector('.info-center-tree-id');
+            const nameText = name ? name.textContent.toLowerCase() : '';
+            const idText = id ? id.textContent.toLowerCase() : '';
+            
+            const matches = nameText.includes(normalizedQuery) || idText.includes(normalizedQuery);
+            
+            if (matches) {
+                item.classList.remove('search-hidden');
+                item.classList.add('search-match');
+                // Expand parent items
+                expandParents(item);
+            } else {
+                item.classList.add('search-hidden');
+                item.classList.remove('search-match');
+            }
+        });
+    }
+
+    function expandParents(item) {
+        let parent = item.parentElement?.closest('.info-center-tree-item');
+        while (parent) {
+            parent.classList.add('expanded');
+            parent.classList.remove('search-hidden');
+            parent = parent.parentElement?.closest('.info-center-tree-item');
+        }
+    }
+
+    // Initialize tabs on load
+    document.addEventListener('DOMContentLoaded', function() {
+        initTabs();
+    });
 
 })(); // Self-executing anonymous function without jQuery dependency

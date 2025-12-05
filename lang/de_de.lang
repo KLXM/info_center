@@ -164,3 +164,8 @@ info_center_widget_yrewrite_help = Verwendet YRewrite für strukturierte URLs
 info_center_widget_visibility_both_help = Widget wird in beiden Bereichen angezeigt
 info_center_widget_visibility_backend_help = Widget wird nur im REDAXO Backend angezeigt
 info_center_widget_visibility_frontend_help = Widget wird nur im Frontend für eingeloggte Backend-Benutzer angezeigt
+
+# Structure Widget
+info_center_structure_title = Struktur
+info_center_structure_search = Suche in Struktur...
+info_center_all_domains = Alle Domains

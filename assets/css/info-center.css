@@ -1067,6 +1067,37 @@ body.rex-theme-dark .info-center-widget:hover {
 }
 
 /* Structure Search */
+/* Domain Switcher */
+.info-center-domain-switcher {
+    margin-bottom: 12px;
+}
+
+.info-center-domain-switcher select {
+    width: 100%;
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: var(--text-color);
+    font-size: var(--font-size-base);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.info-center-domain-switcher select:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(59, 181, 148, 0.5);
+    box-shadow: 0 0 0 3px rgba(59, 181, 148, 0.15);
+}
+
+.info-center-domain-switcher select:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+/* Structure Search */
 .info-center-structure-search {
     margin-bottom: 16px;
     position: sticky;

@@ -49,6 +49,33 @@ class StructureWidget extends AbstractWidget
         // If we only have category_id (structure page), that's our current category
         // currentCategoryId is already set from rex_request
         
+        // Domain Switcher für YRewrite (nur wenn mehrere Domains vorhanden)
+        $domainSwitcher = '';
+        if (rex_addon::get('yrewrite')->isAvailable()) {
+            $domains = rex_yrewrite::getDomains();
+            if (count($domains) > 1) {
+                $selectedDomain = rex_request('info_center_domain', 'int', 0);
+                
+                $domainSwitcher = '
+                    <div class="info-center-domain-switcher">
+                        <select id="info-center-domain-select" class="form-control">
+                            <option value="0"' . ($selectedDomain == 0 ? ' selected' : '') . '>' . rex_i18n::msg('info_center_all_domains', 'Alle Domains') . '</option>';
+                
+                foreach ($domains as $domain) {
+                    $domainSwitcher .= sprintf(
+                        '<option value="%d"%s>%s</option>',
+                        $domain->getId(),
+                        $selectedDomain == $domain->getId() ? ' selected' : '',
+                        $domain->getName()
+                    );
+                }
+                
+                $domainSwitcher .= '
+                        </select>
+                    </div>';
+            }
+        }
+        
         $structure = $this->buildStructureTree($clangId, 0, $currentCategoryId, $currentArticleId);
         
         $searchbar = '
@@ -59,7 +86,7 @@ class StructureWidget extends AbstractWidget
                     placeholder="' . rex_i18n::msg('info_center_structure_search', 'Suche in Struktur...') . '">
             </div>';
 
-        $content = $searchbar . '
+        $content = $domainSwitcher . $searchbar . '
             <div class="info-center-structure-tree">
                 ' . $this->renderTree($structure, 0) . '
             </div>';
@@ -71,8 +98,23 @@ class StructureWidget extends AbstractWidget
     {
         $user = rex::getUser();
         $tree = [];
+        $selectedDomain = rex_request('info_center_domain', 'int', 0);
 
         if ($parentId === 0) {
+            // Wenn Domain ausgewählt und YRewrite verfügbar, filtere nach Domain-Mountpoint
+            if ($selectedDomain > 0 && rex_addon::get('yrewrite')->isAvailable()) {
+                $domain = rex_yrewrite::getDomainById($selectedDomain);
+                if ($domain && $domain->getMountId() > 0) {
+                    $mountId = $domain->getMountId();
+                    if ($category = rex_category::get($mountId, $clangId)) {
+                        if ($user->getComplexPerm('structure')->hasCategoryPerm($category->getId())) {
+                            $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId);
+                        }
+                    }
+                    return $tree;
+                }
+            }
+            
             // Root-Level Kategorien oder Mountpoints
             $mountpoints = $user->getComplexPerm('structure')->getMountpoints();
             if (!empty($mountpoints)) {
