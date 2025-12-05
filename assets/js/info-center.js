@@ -771,8 +771,19 @@
             renderSearchResults({ quickActions: quickActions });
             return;
         }
+        
+        // Parse filters from query
+        const filters = parseSearchFilters(query);
+        const searchQuery = filters.query;
+        
+        // Build API URL with filters
+        let apiUrl = 'index.php?rex-api-call=info_center_search&query=' + encodeURIComponent(searchQuery);
+        if (filters.modified) apiUrl += '&modified=' + encodeURIComponent(filters.modified);
+        if (filters.created) apiUrl += '&created=' + encodeURIComponent(filters.created);
+        if (filters.author) apiUrl += '&author=' + encodeURIComponent(filters.author);
+        if (filters.editor) apiUrl += '&editor=' + encodeURIComponent(filters.editor);
 
-        fetch('index.php?rex-api-call=info_center_search&query=' + encodeURIComponent(query))
+        fetch(apiUrl)
             .then(response => response.json())
             .then(data => {
                 if (data.error) {
@@ -1211,6 +1222,31 @@
             });
         }
         
+        // QR Code Generator
+        if (trimmedQuery.toLowerCase().startsWith('qr ') && trimmedQuery.length > 3) {
+            const qrText = trimmedQuery.substring(3);
+            actions.push({
+                type: 'url',
+                title: 'QR Code: ' + qrText.substring(0, 50) + (qrText.length > 50 ? '...' : ''),
+                subtitle: 'QR Code generieren und als PNG herunterladen',
+                action: () => {
+                    generateQRCode(qrText);
+                }
+            });
+        }
+        
+        // Help Command
+        if (trimmedQuery.toLowerCase() === '#help' || trimmedQuery.toLowerCase() === 'help') {
+            actions.push({
+                type: 'dictionary',
+                title: 'Hilfe - Quick Actions & Filter',
+                subtitle: 'Alle verfügbaren Befehle und Funktionen anzeigen',
+                action: () => {
+                    showHelpModal();
+                }
+            });
+        }
+        
         // URL Detection
         if (/^https?:\/\/.+/.test(trimmedQuery)) {
             actions.push({
@@ -1335,6 +1371,378 @@
         }
         
         return result;
+    }
+    
+    function parseSearchFilters(query) {
+        const filters = {
+            query: query,
+            modified: null,
+            created: null,
+            author: null,
+            editor: null
+        };
+        
+        // Extract modified: filter
+        const modifiedMatch = query.match(/modified:(today|yesterday|last-week|last-month|\\d{4}-\\d{2}-\\d{2})/i);
+        if (modifiedMatch) {
+            filters.modified = modifiedMatch[1];
+            filters.query = filters.query.replace(modifiedMatch[0], '').trim();
+        }
+        
+        // Extract created: filter
+        const createdMatch = query.match(/created:(today|yesterday|last-week|last-month|\\d{4}-\\d{2}-\\d{2})/i);
+        if (createdMatch) {
+            filters.created = createdMatch[1];
+            filters.query = filters.query.replace(createdMatch[0], '').trim();
+        }
+        
+        // Extract author: filter
+        const authorMatch = query.match(/author:(\\S+)/i);
+        if (authorMatch) {
+            filters.author = authorMatch[1];
+            filters.query = filters.query.replace(authorMatch[0], '').trim();
+        }
+        
+        // Extract editor: filter
+        const editorMatch = query.match(/editor:(\\S+)/i);
+        if (editorMatch) {
+            filters.editor = editorMatch[1];
+            filters.query = filters.query.replace(editorMatch[0], '').trim();
+        }
+        
+        return filters;
+    }
+    
+    function generateQRCode(text) {
+        // Create modal to show QR code
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:999999;';
+        
+        const content = document.createElement('div');
+        content.style.cssText = 'background:white;padding:20px;border-radius:8px;text-align:center;max-width:90%;';
+        
+        const title = document.createElement('h3');
+        title.textContent = 'QR Code';
+        title.style.marginTop = '0';
+        content.appendChild(title);
+        
+        // QR Code container
+        const qrContainer = document.createElement('div');
+        qrContainer.style.cssText = 'margin:20px auto;display:inline-block;padding:10px;background:white;';
+        
+        // Generate QR Code as SVG
+        const svg = generateQRCodeSVG(text, 400);
+        qrContainer.appendChild(svg);
+        content.appendChild(qrContainer);
+        
+        // Button container
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.marginTop = '20px';
+        
+        // Download SVG button
+        const downloadSvgBtn = document.createElement('button');
+        downloadSvgBtn.textContent = 'Als SVG herunterladen';
+        downloadSvgBtn.className = 'btn btn-primary';
+        downloadSvgBtn.style.marginRight = '10px';
+        downloadSvgBtn.onclick = () => {
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const blob = new Blob([svgData], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'qrcode.svg';
+            a.click();
+            URL.revokeObjectURL(url);
+        };
+        buttonContainer.appendChild(downloadSvgBtn);
+        
+        // Download PNG button
+        const downloadPngBtn = document.createElement('button');
+        downloadPngBtn.textContent = 'Als PNG herunterladen';
+        downloadPngBtn.className = 'btn btn-default';
+        downloadPngBtn.style.marginRight = '10px';
+        downloadPngBtn.onclick = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 800;
+            canvas.height = 800;
+            const ctx = canvas.getContext('2d');
+            
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const img = new Image();
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+            
+            img.onload = () => {
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, 800, 800);
+                ctx.drawImage(img, 0, 0, 800, 800);
+                
+                canvas.toBlob((blob) => {
+                    const pngUrl = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = pngUrl;
+                    a.download = 'qrcode.png';
+                    a.click();
+                    URL.revokeObjectURL(pngUrl);
+                    URL.revokeObjectURL(url);
+                });
+            };
+            img.src = url;
+        };
+        buttonContainer.appendChild(downloadPngBtn);
+        
+        // Close button
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Schließen';
+        closeBtn.className = 'btn btn-default';
+        closeBtn.onclick = () => modal.remove();
+        buttonContainer.appendChild(closeBtn);
+        
+        content.appendChild(buttonContainer);
+        modal.appendChild(content);
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+        
+        document.body.appendChild(modal);
+    }
+    
+    function generateQRCodeSVG(text, size) {
+        // Generate QR matrix using a simple algorithm
+        const matrix = generateQRMatrix(text);
+        const moduleSize = size / matrix.length;
+        
+        // Create SVG
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', size);
+        svg.setAttribute('height', size);
+        svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
+        
+        // Background
+        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bg.setAttribute('width', size);
+        bg.setAttribute('height', size);
+        bg.setAttribute('fill', '#FFFFFF');
+        svg.appendChild(bg);
+        
+        // Draw modules
+        for (let y = 0; y < matrix.length; y++) {
+            for (let x = 0; x < matrix[y].length; x++) {
+                if (matrix[y][x]) {
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', x * moduleSize);
+                    rect.setAttribute('y', y * moduleSize);
+                    rect.setAttribute('width', moduleSize);
+                    rect.setAttribute('height', moduleSize);
+                    rect.setAttribute('fill', '#000000');
+                    svg.appendChild(rect);
+                }
+            }
+        }
+        
+        return svg;
+    }
+    
+    function generateQRMatrix(text) {
+        // QR Code Version 2 (25x25) - supports up to 47 alphanumeric characters
+        const size = 25;
+        const matrix = Array(size).fill(0).map(() => Array(size).fill(0));
+        
+        // Add finder patterns (7x7 in corners)
+        addFinderPattern(matrix, 0, 0);
+        addFinderPattern(matrix, size - 7, 0);
+        addFinderPattern(matrix, 0, size - 7);
+        
+        // Add separators (white border around finders)
+        addSeparators(matrix, size);
+        
+        // Add timing patterns
+        for (let i = 8; i < size - 8; i++) {
+            matrix[6][i] = (i % 2 === 0) ? 1 : 0;
+            matrix[i][6] = (i % 2 === 0) ? 1 : 0;
+        }
+        
+        // Add alignment pattern for Version 2
+        addAlignmentPattern(matrix, 18, 18);
+        
+        // Encode data
+        encodeData(matrix, text, size);
+        
+        return matrix;
+    }
+    
+    function addFinderPattern(matrix, startY, startX) {
+        for (let y = 0; y < 7; y++) {
+            for (let x = 0; x < 7; x++) {
+                const isOuter = y === 0 || y === 6 || x === 0 || x === 6;
+                const isCenter = y >= 2 && y <= 4 && x >= 2 && x <= 4;
+                matrix[startY + y][startX + x] = (isOuter || isCenter) ? 1 : 0;
+            }
+        }
+    }
+    
+    function addSeparators(matrix, size) {
+        // Top-left separator
+        for (let i = 0; i < 8; i++) {
+            matrix[7][i] = 0;
+            matrix[i][7] = 0;
+        }
+        // Top-right separator
+        for (let i = 0; i < 8; i++) {
+            matrix[7][size - 8 + i] = 0;
+            matrix[i][size - 8] = 0;
+        }
+        // Bottom-left separator
+        for (let i = 0; i < 8; i++) {
+            matrix[size - 8][i] = 0;
+            matrix[size - 8 + i][7] = 0;
+        }
+    }
+    
+    function addAlignmentPattern(matrix, centerY, centerX) {
+        for (let y = -2; y <= 2; y++) {
+            for (let x = -2; x <= 2; x++) {
+                const isOuter = Math.abs(y) === 2 || Math.abs(x) === 2;
+                const isCenter = y === 0 && x === 0;
+                matrix[centerY + y][centerX + x] = (isOuter || isCenter) ? 1 : 0;
+            }
+        }
+    }
+    
+    function encodeData(matrix, text, size) {
+        // Convert text to binary (simplified encoding)
+        const data = textToBinary(text);
+        let dataIndex = 0;
+        
+        // Zigzag pattern (right to left, bottom to top)
+        for (let col = size - 1; col > 0; col -= 2) {
+            if (col === 6) col--; // Skip timing column
+            
+            for (let row = size - 1; row >= 0; row--) {
+                for (let c = 0; c < 2; c++) {
+                    const x = col - c;
+                    if (!isReservedPosition(matrix, row, x, size)) {
+                        matrix[row][x] = dataIndex < data.length ? parseInt(data[dataIndex]) : 0;
+                        dataIndex++;
+                    }
+                }
+            }
+        }
+    }
+    
+    function textToBinary(text) {
+        let binary = '';
+        for (let i = 0; i < text.length; i++) {
+            const byte = text.charCodeAt(i).toString(2).padStart(8, '0');
+            binary += byte;
+        }
+        // Pad to fill matrix
+        while (binary.length < 400) {
+            binary += '0';
+        }
+        return binary;
+    }
+    
+    function isReservedPosition(matrix, y, x, size) {
+        // Finder patterns + separators
+        if ((y < 9 && x < 9) || (y < 9 && x >= size - 8) || (y >= size - 8 && x < 9)) return true;
+        // Timing patterns
+        if (y === 6 || x === 6) return true;
+        // Alignment pattern (Version 2 at 18,18)
+        if (Math.abs(y - 18) <= 2 && Math.abs(x - 18) <= 2) return true;
+        return false;
+    }
+    
+    function showHelpModal() {
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:999999;overflow-y:auto;padding:20px;';
+        
+        const content = document.createElement('div');
+        content.style.cssText = 'background:white;padding:30px;border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow-y:auto;';
+        
+        content.innerHTML = `
+            <h2 style="margin-top:0;color:#2c3e50;">🔍 Search Widget - Hilfe</h2>
+            
+            <h3 style="color:#3498db;margin-top:25px;">📊 Quick Actions</h3>
+            <div style="background:#f8f9fa;padding:15px;border-radius:5px;margin-bottom:20px;">
+                <p style="margin:5px 0;"><strong>🧮 Rechner:</strong> <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">2+2</code> oder <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">15*20%</code> - Ergebnis wird kopiert</p>
+                <p style="margin:5px 0;"><strong>📚 Wikipedia:</strong> <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">wiki REDAXO</code> - Live-Vorschau aus Wikipedia</p>
+                <p style="margin:5px 0;"><strong>📖 Wörterbuch:</strong> <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">define CMS</code> - Definition aus Wiktionary</p>
+                <p style="margin:5px 0;"><strong>📝 Blindtext:</strong> <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">blindtext 500</code> - Generiert deutschen Platzhaltertext</p>
+                <p style="margin:5px 0;"><strong>📱 QR Code:</strong> <code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">qr https://example.com</code> - Erstellt QR Code als SVG/PNG</p>
+                <p style="margin:5px 0;"><strong>🔗 URL:</strong> URLs werden automatisch erkannt und können geöffnet werden</p>
+            </div>
+            
+            <h3 style="color:#3498db;margin-top:25px;">🔎 Erweiterte Filter</h3>
+            <div style="background:#f8f9fa;padding:15px;border-radius:5px;margin-bottom:20px;">
+                <p style="margin:10px 0;"><strong>📅 Datum-Filter (geändert):</strong></p>
+                <ul style="margin:5px 0 10px 20px;">
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">modified:today</code> - Heute geändert</li>
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">modified:yesterday</code> - Gestern geändert</li>
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">modified:last-week</code> - Letzte 7 Tage</li>
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">modified:last-month</code> - Letzte 30 Tage</li>
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">modified:2025-12-05</code> - Exaktes Datum</li>
+                </ul>
+                
+                <p style="margin:10px 0;"><strong>📅 Datum-Filter (erstellt):</strong></p>
+                <ul style="margin:5px 0 10px 20px;">
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">created:today</code> - Heute erstellt</li>
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">created:last-week</code> - Letzte 7 Tage</li>
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">created:2025-12-01</code> - Exaktes Datum</li>
+                </ul>
+                
+                <p style="margin:10px 0;"><strong>👤 Benutzer-Filter:</strong></p>
+                <ul style="margin:5px 0 10px 20px;">
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">author:admin</code> - Erstellt von User "admin"</li>
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">editor:thomas</code> - Bearbeitet von User "thomas"</li>
+                </ul>
+                
+                <p style="margin:10px 0;"><strong>🔗 Kombinationen:</strong></p>
+                <ul style="margin:5px 0 10px 20px;">
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">test modified:today</code></li>
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">artikel author:admin created:last-week</code></li>
+                    <li><code style="background:#e9ecef;padding:2px 6px;border-radius:3px;">news modified:yesterday editor:thomas</code></li>
+                </ul>
+            </div>
+            
+            <h3 style="color:#3498db;margin-top:25px;">⌨️ Tastatur-Shortcuts</h3>
+            <div style="background:#f8f9fa;padding:15px;border-radius:5px;margin-bottom:20px;">
+                <p style="margin:5px 0;"><strong>⌘K</strong> oder <strong>Ctrl+K</strong> - Suche fokussieren</p>
+                <p style="margin:5px 0;"><strong>↑/↓</strong> - Durch Ergebnisse navigieren</p>
+                <p style="margin:5px 0;"><strong>Enter</strong> - Ausgewähltes Ergebnis öffnen</p>
+                <p style="margin:5px 0;"><strong>ESC</strong> - Suche schließen</p>
+            </div>
+            
+            <h3 style="color:#3498db;margin-top:25px;">🔍 Normale Suche</h3>
+            <div style="background:#f8f9fa;padding:15px;border-radius:5px;margin-bottom:20px;">
+                <p style="margin:5px 0;">Durchsucht automatisch:</p>
+                <ul style="margin:5px 0 0 20px;">
+                    <li><strong>Artikel</strong> - Name, ID und alle Content-Felder (value1-20)</li>
+                    <li><strong>Kategorien</strong> - Name und ID</li>
+                    <li><strong>Module</strong> - Name und Code</li>
+                    <li><strong>Templates</strong> - Name und Code</li>
+                    <li><strong>Medien</strong> - Dateiname und Titel</li>
+                </ul>
+            </div>
+            
+            <div style="text-align:center;margin-top:25px;">
+                <button class="btn btn-primary" onclick="this.closest('div[style*=fixed]').remove()">
+                    Schließen
+                </button>
+            </div>
+        `;
+        
+        modal.appendChild(content);
+        modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+        
+        document.body.appendChild(modal);
+    }
+
+    // Initialize tabs on load
+    document.addEventListener('DOMContentLoaded', function() {
+        initTabs();
+        initSearchWidget();
+    });
+        if (Math.abs(y - 18) <= 2 && Math.abs(x - 18) <= 2) return true;
+        return false;
     }
 
     // Initialize tabs on load

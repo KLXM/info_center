@@ -34,6 +34,14 @@ class rex_api_info_center_search extends rex_api_function
         $query = trim(rex_request('query', 'string', ''));
         $types = rex_request('types', 'array', ['articles', 'categories', 'modules', 'templates', 'media']);
         
+        // Get filter parameters
+        $filters = [
+            'modified' => rex_request('modified', 'string', ''),
+            'created' => rex_request('created', 'string', ''),
+            'author' => rex_request('author', 'string', ''),
+            'editor' => rex_request('editor', 'string', ''),
+        ];
+        
         if (!is_array($types)) {
             $types = ['articles', 'categories', 'modules', 'templates', 'media'];
         }
@@ -47,12 +55,12 @@ class rex_api_info_center_search extends rex_api_function
 
         // Search Articles
         if (in_array('articles', $types) && $user->getComplexPerm('clang')) {
-            $results['articles'] = $this->searchArticles($query, $user);
+            $results['articles'] = $this->searchArticles($query, $user, $filters);
         }
 
         // Search Categories
         if (in_array('categories', $types) && $user->getComplexPerm('clang')) {
-            $results['categories'] = $this->searchCategories($query, $user);
+            $results['categories'] = $this->searchCategories($query, $user, $filters);
         }
 
         // Search Modules
@@ -81,13 +89,54 @@ class rex_api_info_center_search extends rex_api_function
         exit;
     }
 
-    protected function searchArticles(string $query, rex_user $user): array
+    protected function searchArticles(string $query, rex_user $user, array $filters = []): array
     {
         $results = [];
         $clangs = $user->getComplexPerm('clang')->getClangs();
         
         foreach ($clangs as $clangId) {
             $sql = rex_sql::factory();
+            
+            // Build WHERE conditions
+            $whereConditions = [
+                'a.clang_id = :clang_id',
+                '(a.name LIKE :query OR a.id LIKE :query_exact OR CONCAT_WS(" ", s.value1, s.value2, s.value3, s.value4, s.value5, s.value6, s.value7, s.value8, s.value9, s.value10, s.value11, s.value12, s.value13, s.value14, s.value15, s.value16, s.value17, s.value18, s.value19, s.value20) LIKE :query)',
+                'a.startarticle = 0'
+            ];
+            
+            $params = [
+                'clang_id' => $clangId,
+                'query' => '%' . $query . '%',
+                'query_exact' => $query . '%'
+            ];
+            
+            // Add date filters
+            if (!empty($filters['modified'])) {
+                $dateCondition = $this->buildDateCondition('a.updatedate', $filters['modified']);
+                if ($dateCondition) {
+                    $whereConditions[] = $dateCondition;
+                }
+            }
+            
+            if (!empty($filters['created'])) {
+                $dateCondition = $this->buildDateCondition('a.createdate', $filters['created']);
+                if ($dateCondition) {
+                    $whereConditions[] = $dateCondition;
+                }
+            }
+            
+            // Add user filters
+            if (!empty($filters['author'])) {
+                $whereConditions[] = 'a.createuser LIKE :author';
+                $params['author'] = '%' . $filters['author'] . '%';
+            }
+            
+            if (!empty($filters['editor'])) {
+                $whereConditions[] = 'a.updateuser LIKE :editor';
+                $params['editor'] = '%' . $filters['editor'] . '%';
+            }
+            
+            $whereClause = implode(' AND ', $whereConditions);
             
             // @psalm-suppress TaintedSql - User input is properly escaped by rex_sql
             $sql->setQuery('
@@ -102,20 +151,10 @@ class rex_api_info_center_search extends rex_api_function
                     a.status
                 FROM ' . rex::getTable('article') . ' a
                 LEFT JOIN ' . rex::getTable('article_slice') . ' s ON a.id = s.article_id AND a.clang_id = s.clang_id
-                WHERE a.clang_id = :clang_id
-                AND (
-                    a.name LIKE :query
-                    OR a.id LIKE :query_exact
-                    OR CONCAT_WS(" ", s.value1, s.value2, s.value3, s.value4, s.value5, s.value6, s.value7, s.value8, s.value9, s.value10, s.value11, s.value12, s.value13, s.value14, s.value15, s.value16, s.value17, s.value18, s.value19, s.value20) LIKE :query
-                )
-                AND a.startarticle = 0
+                WHERE ' . $whereClause . '
                 ORDER BY a.name ASC
                 LIMIT 20
-            ', [
-                'clang_id' => $clangId,
-                'query' => '%' . $query . '%',
-                'query_exact' => $query . '%'
-            ]);
+            ', $params);
 
             while ($sql->hasNext()) {
                 $article = rex_article::get($sql->getValue('id'), $sql->getValue('clang_id'));
@@ -149,13 +188,55 @@ class rex_api_info_center_search extends rex_api_function
         return $results;
     }
 
-    protected function searchCategories(string $query, rex_user $user): array
+    protected function searchCategories(string $query, rex_user $user, array $filters = []): array
     {
         $results = [];
         $clangs = $user->getComplexPerm('clang')->getClangs();
         
         foreach ($clangs as $clangId) {
             $sql = rex_sql::factory();
+            
+            // Build WHERE conditions
+            $whereConditions = [
+                'clang_id = :clang_id',
+                '(name LIKE :query OR id LIKE :query_exact)',
+                'startarticle = 1'
+            ];
+            
+            $params = [
+                'clang_id' => $clangId,
+                'query' => '%' . $query . '%',
+                'query_exact' => $query . '%'
+            ];
+            
+            // Add date filters
+            if (!empty($filters['modified'])) {
+                $dateCondition = $this->buildDateCondition('updatedate', $filters['modified']);
+                if ($dateCondition) {
+                    $whereConditions[] = $dateCondition;
+                }
+            }
+            
+            if (!empty($filters['created'])) {
+                $dateCondition = $this->buildDateCondition('createdate', $filters['created']);
+                if ($dateCondition) {
+                    $whereConditions[] = $dateCondition;
+                }
+            }
+            
+            // Add user filters
+            if (!empty($filters['author'])) {
+                $whereConditions[] = 'createuser LIKE :author';
+                $params['author'] = '%' . $filters['author'] . '%';
+            }
+            
+            if (!empty($filters['editor'])) {
+                $whereConditions[] = 'updateuser LIKE :editor';
+                $params['editor'] = '%' . $filters['editor'] . '%';
+            }
+            
+            $whereClause = implode(' AND ', $whereConditions);
+            
             // @psalm-suppress TaintedSql - User input is properly escaped by rex_sql
             $sql->setQuery('
                 SELECT 
@@ -168,19 +249,10 @@ class rex_api_info_center_search extends rex_api_function
                     updatedate,
                     status
                 FROM ' . rex::getTable('article') . '
-                WHERE clang_id = :clang_id
-                AND (
-                    name LIKE :query
-                    OR id LIKE :query_exact
-                )
-                AND startarticle = 1
+                WHERE ' . $whereClause . '
                 ORDER BY name ASC
                 LIMIT 20
-            ', [
-                'clang_id' => $clangId,
-                'query' => '%' . $query . '%',
-                'query_exact' => $query . '%'
-            ]);
+            ', $params);
 
             while ($sql->hasNext()) {
                 $category = rex_category::get($sql->getValue('id'), $sql->getValue('clang_id'));
@@ -396,6 +468,33 @@ class rex_api_info_center_search extends rex_api_function
         }
 
         return implode(' › ', $pathNames);
+    }
+    
+    protected function buildDateCondition(string $field, string $filter): ?string
+    {
+        $condition = null;
+        
+        switch (strtolower($filter)) {
+            case 'today':
+                $condition = $field . ' >= CURDATE()';
+                break;
+            case 'yesterday':
+                $condition = $field . ' >= CURDATE() - INTERVAL 1 DAY AND ' . $field . ' < CURDATE()';
+                break;
+            case 'last-week':
+                $condition = $field . ' >= CURDATE() - INTERVAL 7 DAY';
+                break;
+            case 'last-month':
+                $condition = $field . ' >= CURDATE() - INTERVAL 30 DAY';
+                break;
+            default:
+                // Check if it's a specific date (YYYY-MM-DD)
+                if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $filter)) {
+                    $condition = 'DATE(' . $field . ') = \'' . $filter . '\'';
+                }
+        }
+        
+        return $condition;
     }
     
     protected function findCodeSnippet(string $query, string ...$contents): string
