@@ -11,7 +11,8 @@ Das **Info Center** ist ein intelligentes Dashboard-System für REDAXO CMS, das 
 ## ✨ Hauptfeatures
 
 ### 🚀 **Intelligente Widgets**
-- **🏗️ Struktur-Navigation** - Interaktiver Kategoriebaum mit Live-Suche, Domain-Filterung und direkten Frontend-Links
+- **🔍 Search Widget** - Spotlight-ähnliche Suche mit Quick Actions (NEU!)
+- **🏗️ Struktur-Navigation** - Interaktiver Kategoriebaum mit Lazy Loading, Domain-Filterung und direkten Frontend-Links
 - **📊 Performance Stats** - Ladezeiten, Speicherverbrauch, DB-Queries
 - **⏱️ TimeTracker** - Arbeitszeit-Tracking mit Pausen und Berichten
 - **📝 Artikel Widget** - Zuletzt bearbeitete Inhalte mit direkten Links
@@ -156,10 +157,11 @@ Ein **interaktiver Kategoriebaum** direkt im Info Center - perfekt für schnelle
 - **Keine IDs sichtbar** - Nur bei Hover im Tooltip (saubere UI)
 
 #### ⚡ **Performance**
-- **Lazy Loading** - API-basiertes Laden der Struktur
+- **Lazy Loading** - API-basiertes Laden großer Strukturen (ab 100 Kategorien)
 - **Smart Caching** - Intelligente Refresh-Logik
 - **Debounced Search** - Optimierte Suche ohne Server-Last
 - **Permission-Check** - Respektiert REDAXO Benutzerrechte
+- **Progressive Enhancement** - Lädt nur sichtbare Elemente bei Bedarf
 
 ### 🎯 **Verwendung**
 
@@ -186,6 +188,78 @@ Ein **interaktiver Kategoriebaum** direkt im Info Center - perfekt für schnelle
 
 ---
 
+## 🔍 Search Widget - NEU in 2.2.0
+
+### 🎯 **Was ist das Search Widget?**
+Eine **Spotlight-ähnliche Universalsuche** direkt im Info Center - durchsuche alle wichtigen REDAXO-Inhalte mit einer Eingabe!
+
+### ✨ **Hauptfeatures**
+
+#### 🔎 **Intelligente Suche**
+- **Artikel** - Durchsucht Namen, Titel und alle Content-Felder (value1-20)
+- **Kategorien** - Findet Kategorien in der Struktur
+- **Module** - Sucht in Modul-Namen und Code
+- **Templates** - Durchsucht Template-Namen und Code
+- **Medien** - Findet Bilder, Videos und andere Dateien im Mediapool
+
+#### 🚀 **Quick Actions wie Spotlight/Alfred**
+- **🧮 Rechner** - Direkte Berechnung (z.B. `2+2`, `15*20%`, `(100+50)/2`)
+  - Automatisches Kopieren des Ergebnisses in die Zwischenablage
+- **📚 Wikipedia** - Suche mit Live-Vorschau (z.B. `wiki REDAXO`)
+  - REST API Integration mit 500 Zeichen Vorschau
+  - Öffnet vollständigen Artikel bei Klick
+- **📖 Wörterbuch** - Definition nachschlagen (z.B. `define CMS`)
+  - Wiktionary HTML API Integration mit echter Definition
+  - Zeigt erste Definition mit 500 Zeichen Vorschau
+- **📝 Blindtext** - Generator für Platzhaltertexte (z.B. `blindtext 500`)
+  - 8 verschiedene lustige deutsche Texte (kein Lorem Ipsum!)
+  - Automatisches Kopieren in Zwischenablage
+  - Intelligenter Schnitt am Satzende
+- **🔗 URL-Erkennung** - URLs werden automatisch erkannt und sind direkt öffenbar
+
+#### 🎨 **Rich Previews**
+- **Bild-Thumbnails** - 32x32px Vorschau, 200x200px bei Hover
+- **Video-Vorschau** - Tooltip mit Autoplay bei Hover
+- **Code-Snippets** - Zeigt Treffer-Kontext bei Modulen/Templates
+- **Optimierte Bilder** - Nutzt Media Manager (rex_media_small)
+
+#### ⚡ **Performance & UX**
+- **Berechtigungsprüfung** - Respektiert User-Rechte für Struktur/Medien
+- **Extension Point** - `INFO_CENTER_SEARCH` für AddOn-Integration
+- **Keyboard-Navigation** - ↑↓ für Navigation, Enter zum Öffnen, ESC zum Schließen
+- **⌘K Shortcut** - Schneller Zugriff via Tastenkombination
+- **Live-Suche** - Sofortige Ergebnisse ohne Reload
+
+### 🎯 **Verwendung**
+
+#### Normale Suche
+```
+REDAXO         → Findet alle Inhalte mit "REDAXO"
+template       → Sucht in Templates und Modulen
+logo.png       → Findet Mediendateien
+```
+
+#### Quick Actions
+```
+2+2            → Rechner: = 4 (kopiert in Zwischenablage)
+15*20%         → Rechner: = 3
+wiki Berlin    → Wikipedia mit Live-Vorschau
+define CMS     → Wörterbuch-Definition aus Wiktionary
+blindtext 500  → Generiert 500 Zeichen deutschen Blindtext
+https://...    → URL wird erkannt und kann geöffnet werden
+```
+
+#### Keyboard Shortcuts
+- **⌘K** oder **Ctrl+K** - Search Widget fokussieren
+- **↑/↓** - Durch Ergebnisse navigieren
+- **Enter** - Ausgewähltes Ergebnis öffnen
+- **ESC** - Suche schließen
+
+### ⚙️ **Konfiguration**
+Das Search Widget kann in den Einstellungen aktiviert/deaktiviert werden und unterstützt alle Standard-Widget-Optionen.
+
+---
+
 ## ⚙️ Konfiguration
 ````
 ### 🎛️ **Globale Einstellungen**
@@ -198,9 +272,11 @@ darkmode: auto   # 'auto', 'light', 'dark'
 
 # Widget-Aktivierung
 widgets:
+  search: { enabled: true, prio: -10 }     # Search Widget (NEU!)
   article: { enabled: true, prio: 1 }
   timetracker: { enabled: true, prio: 0 }
   stats: { enabled: true, prio: 5 }
+  structure: { enabled: true, prio: 2 }
   # ... weitere Widgets
 ```
 
@@ -1026,6 +1102,68 @@ Thomas Skerbis
 
 **[KLXM Crossmedia GmbH](https://klxm.de )**  
 Entwickelt für REDAXO CMS - Das intelligente Dashboard-System für moderne Webentwicklung.
+
+---
+
+## 📝 Changelog
+
+### Version 2.2.0 (Dezember 2025) - Search & Quick Actions
+
+#### 🔍 **Search Widget** (NEU!)
+- **Spotlight-ähnliche Universalsuche** für alle REDAXO-Inhalte
+- Durchsucht Artikel (inkl. alle value1-20 Felder), Kategorien, Module, Templates und Medien
+- Extension Point `INFO_CENTER_SEARCH` für AddOn-Integration
+- Keyboard-Navigation (↑↓/Enter/ESC/⌘K)
+- Berechtigungsprüfung für Struktur/Medien/Sprachen
+
+#### 🚀 **Quick Actions** (NEU!)
+- **Rechner**: Direkte Berechnungen mit Zwischenablage-Kopie (`2+2`, `15*20%`)
+- **Wikipedia**: Live-Vorschau mit REST API Integration (500 Zeichen, `wiki Begriff`)
+- **Wörterbuch**: Wiktionary-Definitionen mit HTML API Parsing (`define Wort`)
+- **Blindtext-Generator**: 8 lustige deutsche Texte, kein Lorem Ipsum (`blindtext 500`)
+- **URL-Erkennung**: Automatische Erkennung und direktes Öffnen
+
+#### 🎨 **Rich Previews**
+- Bild-Thumbnails mit Hover-Vorschau (32x32px → 200x200px)
+- Video-Tooltips mit Autoplay bei Hover (300x200px)
+- Code-Snippets zeigen Treffer-Kontext bei Modulen/Templates
+- Optimierte Thumbnails via Media Manager (rex_media_small)
+
+#### 🏗️ **Struktur-Widget Verbesserungen**
+- **Lazy Loading** für große Strukturen (ab 100 Kategorien)
+- Tooltip zeigt Datum und User der letzten Bearbeitung
+- Toggle-Button nur bei Kategorien mit echten Kindern
+- Progressive Enhancement für bessere Performance
+
+#### 🌍 **i18n-Verbesserungen**
+- Tab-Buttons und Tooltips vollständig internationalisiert
+- Hardcodierte deutsche Texte durch i18n-Keys ersetzt
+- HTML-Entities in Backend-URLs korrekt dekodiert
+
+#### 🐛 **Bugfixes**
+- Domain-Select: Default-Domain wird korrekt gefiltert
+- Domain-Switcher zeigt alle YRewrite Domains (auch mit MountId 0)
+- IIFE wrapping verhindert const-Konflikte
+- Doppelte Initialisierung des Domain-Selects verhindert
+
+### Version 2.1.0 (November 2025)
+
+#### 🏗️ **Struktur-Navigation** (NEU!)
+- Interaktiver Kategoriebaum mit Akkordeon-Navigation
+- Quick Actions auf Hover (Frontend-Preview & Backend-Edit)
+- Live-Suche mit Smart-Matching
+- Multi-Domain Support mit Domain-Switcher (YRewrite)
+- Status-Indikatoren (Online/Offline/Gesperrt)
+- Moderne UI mit Glassmorphism Design
+
+### Version 2.0.0 (Oktober 2025)
+
+#### 🎨 **Widget Builder** (NEU!)
+- No-Code Tool für Custom Widgets
+- YForm Integration mit automatischer Feldauswahl
+- Flexible Verlinkungsoptionen (YForm/URL/YRewrite/Custom)
+- Erweiterte SQL-Filter
+- Vollständige Mehrsprachigkeit (DE/EN)
 
 ---
 
