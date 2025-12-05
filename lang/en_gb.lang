@@ -177,3 +177,5 @@ info_center_widget_visibility_frontend_help = Widget will only be displayed in f
 info_center_structure_title = Structure
 info_center_structure_search = Search in structure...
 info_center_all_domains = All Domains
+info_center_auto_switch_domain = Auto-switch domain
+info_center_auto_switch_domain_note = Automatically switches to the matching domain when navigating to a different domain structure

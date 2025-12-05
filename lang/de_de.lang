@@ -169,3 +169,5 @@ info_center_widget_visibility_frontend_help = Widget wird nur im Frontend für e
 info_center_structure_title = Struktur
 info_center_structure_search = Suche in Struktur...
 info_center_all_domains = Alle Domains
+info_center_auto_switch_domain = Domain automatisch wechseln
+info_center_auto_switch_domain_note = Wechselt automatisch zur passenden Domain wenn du in eine andere Domain-Struktur navigierst

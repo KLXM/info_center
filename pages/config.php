@@ -55,6 +55,9 @@ if (rex_post('formsubmit', 'string') == '1') {
     if (isset($config['toggle_position'])) {
         $uiSettings['toggle_position'] = $config['toggle_position'];
     }
+    if (isset($config['auto_switch_domain'])) {
+        $uiSettings['auto_switch_domain'] = (bool) $config['auto_switch_domain'];
+    }
     
     if (!empty($uiSettings)) {
         $package->setConfig('ui_settings_user_' . $user, $uiSettings);
@@ -173,6 +176,22 @@ $formElements[] = $n;
 $fragment = new rex_fragment();
 $fragment->setVar('elements', $formElements, false);
 $content .= $fragment->parse('core/form/container.php');
+
+// Auto-Switch Domain Setting
+$formElements = [];
+$n = [];
+$autoSwitchDomain = $uiSettings['auto_switch_domain'] ?? true; // Default: aktiviert
+
+$n['label'] = '<label for="auto_switch_domain">' . $package->i18n('info_center_auto_switch_domain') . '</label>';
+$n['field'] = '<input type="checkbox" id="auto_switch_domain" name="config[auto_switch_domain]"' . 
+              ($autoSwitchDomain ? ' checked="checked"' : '') . 
+              ' value="1" />';
+$n['note'] = '<small class="text-muted">' . $package->i18n('info_center_auto_switch_domain_note') . '</small>';
+
+$formElements[] = $n;
+$fragment = new rex_fragment();
+$fragment->setVar('elements', $formElements, false);
+$content .= $fragment->parse('core/form/checkbox.php');
 
 $content .= '</fieldset>';
 

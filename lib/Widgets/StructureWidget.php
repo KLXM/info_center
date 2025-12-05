@@ -102,9 +102,15 @@ class StructureWidget extends AbstractWidget
                     $selectedDomain = $autoDomainId;
                 }
                 
+                // Check if auto-switch is enabled in user settings
+                $package = rex_addon::get('info_center');
+                $userId = rex::getUser()->getId();
+                $uiSettings = $package->getConfig('ui_settings_user_' . $userId, []);
+                $autoSwitchEnabled = $uiSettings['auto_switch_domain'] ?? true;
+                
                 $domainSwitcher = '
                     <div class="info-center-domain-switcher">
-                        <select id="info-center-domain-select" class="form-control" data-auto-domain="' . $autoDomainId . '">
+                        <select id="info-center-domain-select" class="form-control" data-auto-domain="' . $autoDomainId . '" data-auto-switch="' . ($autoSwitchEnabled ? '1' : '0') . '">
                             <option value="0"' . ($selectedDomain == 0 ? ' selected' : '') . '>' . rex_i18n::msg('info_center_all_domains', 'Alle Domains') . '</option>';
                 
                 foreach ($validDomains as $domain) {
