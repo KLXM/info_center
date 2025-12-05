@@ -288,7 +288,7 @@ Das Search Widget kann in den Einstellungen aktiviert/deaktiviert werden und unt
 ---
 
 ## ⚙️ Konfiguration
-````
+
 ### 🎛️ **Globale Einstellungen**
 ```yaml
 # Position des Info Centers
