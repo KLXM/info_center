@@ -828,37 +828,47 @@
         });
 
         if (totalResults === 0) {
-            searchResults.innerHTML = '<div class="info-center-search-empty">Keine Ergebnisse gefunden</div>';
+            const i18n = rex.info_center_search_i18n || {};
+            searchResults.innerHTML = '<div class="info-center-search-empty">' + (i18n.no_results || 'No results found') + '</div>';
             return;
         }
 
+        // Get i18n translations
+        const i18n = rex.info_center_search_i18n || {
+            categories: 'Categories',
+            articles: 'Articles',
+            modules: 'Modules',
+            templates: 'Templates',
+            media: 'Media'
+        };
+
         // Render Categories
         if (results.categories && results.categories.length > 0) {
-            const section = createSearchSection('Kategorien', results.categories, 'category');
+            const section = createSearchSection(i18n.categories, results.categories, 'category');
             searchResults.appendChild(section);
         }
 
         // Render Articles
         if (results.articles && results.articles.length > 0) {
-            const section = createSearchSection('Artikel', results.articles, 'article');
+            const section = createSearchSection(i18n.articles, results.articles, 'article');
             searchResults.appendChild(section);
         }
 
         // Render Modules
         if (results.modules && results.modules.length > 0) {
-            const section = createSearchSection('Module', results.modules, 'module');
+            const section = createSearchSection(i18n.modules, results.modules, 'module');
             searchResults.appendChild(section);
         }
 
         // Render Templates
         if (results.templates && results.templates.length > 0) {
-            const section = createSearchSection('Templates', results.templates, 'template');
+            const section = createSearchSection(i18n.templates, results.templates, 'template');
             searchResults.appendChild(section);
         }
 
         // Render Media
         if (results.media && results.media.length > 0) {
-            const section = createSearchSection('Medien', results.media, 'media');
+            const section = createSearchSection(i18n.media, results.media, 'media');
             searchResults.appendChild(section);
         }
 
@@ -920,6 +930,12 @@
         header.textContent = title + ' (' + items.length + ')';
         section.appendChild(header);
 
+        // Get i18n translations
+        const i18n = rex.info_center_search_i18n || {
+            offline: 'Offline',
+            inactive: 'Inactive'
+        };
+
         items.forEach(item => {
             const resultItem = document.createElement('div');
             resultItem.className = 'info-center-search-result-item';
@@ -938,7 +954,7 @@
                         badge = '<span class="info-center-search-badge">' + item.clang_name + '</span>';
                     }
                     if (item.status == 0) {
-                        badge += '<span class="info-center-search-badge offline">Offline</span>';
+                        badge += '<span class="info-center-search-badge offline">' + i18n.offline + '</span>';
                     }
                     if (item.url_frontend) {
                         actions = '<a href="' + item.url_frontend + '" target="_blank" class="info-center-search-action" title="Frontend-Vorschau" onclick="event.stopPropagation();"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>';
@@ -951,7 +967,7 @@
                         badge = '<span class="info-center-search-badge">' + item.clang_name + '</span>';
                     }
                     if (item.status == 0) {
-                        badge += '<span class="info-center-search-badge offline">Offline</span>';
+                        badge += '<span class="info-center-search-badge offline">' + i18n.offline + '</span>';
                     }
                     if (item.url_frontend) {
                         actions = '<a href="' + item.url_frontend + '" target="_blank" class="info-center-search-action" title="Frontend-Vorschau" onclick="event.stopPropagation();"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg></a>';
@@ -970,7 +986,7 @@
                 case 'template':
                     subtitle = 'ID: ' + item.id;
                     if (item.active == 0) {
-                        badge = '<span class="info-center-search-badge offline">Inaktiv</span>';
+                        badge = '<span class="info-center-search-badge offline">' + i18n.inactive + '</span>';
                     }
                     if (item.code_snippet) {
                         icon = `<div class="info-center-code-preview" data-code-snippet="${escapeAttr(item.code_snippet)}">
