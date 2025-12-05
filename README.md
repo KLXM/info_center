@@ -114,7 +114,7 @@ status = 1 AND email LIKE '%@company.com'
 
 ---
 
-## 🏗️ Struktur-Navigation Widget - NEU in 2.0.0
+## 🏗️ Struktur-Navigation Widget
 
 ### 🎯 **Was ist die Struktur-Navigation?**
 Ein **interaktiver Kategoriebaum** direkt im Info Center - perfekt für schnelle Navigation durch komplexe REDAXO-Strukturen!
@@ -188,7 +188,7 @@ Ein **interaktiver Kategoriebaum** direkt im Info Center - perfekt für schnelle
 
 ---
 
-## 🔍 Search Widget - NEU in 2.2.0
+## 🔍 Search Widget
 
 ### 🎯 **Was ist das Search Widget?**
 Eine **Spotlight-ähnliche Universalsuche** direkt im Info Center - durchsuche alle wichtigen REDAXO-Inhalte mit einer Eingabe!
@@ -1129,68 +1129,6 @@ Thomas Skerbis
 
 **[KLXM Crossmedia GmbH](https://klxm.de )**  
 Entwickelt für REDAXO CMS - Das intelligente Dashboard-System für moderne Webentwicklung.
-
----
-
-## 📝 Changelog
-
-### Version 2.2.0 (Dezember 2025) - Search & Quick Actions
-
-#### 🔍 **Search Widget** (NEU!)
-- **Spotlight-ähnliche Universalsuche** für alle REDAXO-Inhalte
-- Durchsucht Artikel (inkl. alle value1-20 Felder), Kategorien, Module, Templates und Medien
-- Extension Point `INFO_CENTER_SEARCH` für AddOn-Integration
-- Keyboard-Navigation (↑↓/Enter/ESC/⌘K)
-- Berechtigungsprüfung für Struktur/Medien/Sprachen
-
-#### 🚀 **Quick Actions** (NEU!)
-- **Rechner**: Direkte Berechnungen mit Zwischenablage-Kopie (`2+2`, `15*20%`)
-- **Wikipedia**: Live-Vorschau mit REST API Integration (500 Zeichen, `wiki Begriff`)
-- **Wörterbuch**: Wiktionary-Definitionen mit HTML API Parsing (`define Wort`)
-- **Blindtext-Generator**: 8 lustige deutsche Texte, kein Lorem Ipsum (`blindtext 500`)
-- **URL-Erkennung**: Automatische Erkennung und direktes Öffnen
-
-#### 🎨 **Rich Previews**
-- Bild-Thumbnails mit Hover-Vorschau (32x32px → 200x200px)
-- Video-Tooltips mit Autoplay bei Hover (300x200px)
-- Code-Snippets zeigen Treffer-Kontext bei Modulen/Templates
-- Optimierte Thumbnails via Media Manager (rex_media_small)
-
-#### 🏗️ **Struktur-Widget Verbesserungen**
-- **Lazy Loading** für große Strukturen (ab 100 Kategorien)
-- Tooltip zeigt Datum und User der letzten Bearbeitung
-- Toggle-Button nur bei Kategorien mit echten Kindern
-- Progressive Enhancement für bessere Performance
-
-#### 🌍 **i18n-Verbesserungen**
-- Tab-Buttons und Tooltips vollständig internationalisiert
-- Hardcodierte deutsche Texte durch i18n-Keys ersetzt
-- HTML-Entities in Backend-URLs korrekt dekodiert
-
-#### 🐛 **Bugfixes**
-- Domain-Select: Default-Domain wird korrekt gefiltert
-- Domain-Switcher zeigt alle YRewrite Domains (auch mit MountId 0)
-- IIFE wrapping verhindert const-Konflikte
-- Doppelte Initialisierung des Domain-Selects verhindert
-
-### Version 2.1.0 (November 2025)
-
-#### 🏗️ **Struktur-Navigation** (NEU!)
-- Interaktiver Kategoriebaum mit Akkordeon-Navigation
-- Quick Actions auf Hover (Frontend-Preview & Backend-Edit)
-- Live-Suche mit Smart-Matching
-- Multi-Domain Support mit Domain-Switcher (YRewrite)
-- Status-Indikatoren (Online/Offline/Gesperrt)
-- Moderne UI mit Glassmorphism Design
-
-### Version 2.0.0 (Oktober 2025)
-
-#### 🎨 **Widget Builder** (NEU!)
-- No-Code Tool für Custom Widgets
-- YForm Integration mit automatischer Feldauswahl
-- Flexible Verlinkungsoptionen (YForm/URL/YRewrite/Custom)
-- Erweiterte SQL-Filter
-- Vollständige Mehrsprachigkeit (DE/EN)
 
 ---
 
