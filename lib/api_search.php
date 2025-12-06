@@ -499,18 +499,23 @@ class rex_api_info_center_search extends rex_api_function
     {
         $condition = null;
         
+        // REDAXO stores dates as DATETIME strings (e.g. '2025-08-29 12:51:52')
         switch (strtolower($filter)) {
             case 'today':
-                $condition = $field . ' >= CURDATE()';
+                $today = date('Y-m-d');
+                $condition = 'DATE(' . $field . ') = \'' . $today . '\'';
                 break;
             case 'yesterday':
-                $condition = $field . ' >= CURDATE() - INTERVAL 1 DAY AND ' . $field . ' < CURDATE()';
+                $yesterday = date('Y-m-d', strtotime('-1 day'));
+                $condition = 'DATE(' . $field . ') = \'' . $yesterday . '\'';
                 break;
             case 'last-week':
-                $condition = $field . ' >= CURDATE() - INTERVAL 7 DAY';
+                $weekAgo = date('Y-m-d', strtotime('-7 days'));
+                $condition = 'DATE(' . $field . ') >= \'' . $weekAgo . '\'';
                 break;
             case 'last-month':
-                $condition = $field . ' >= CURDATE() - INTERVAL 30 DAY';
+                $monthAgo = date('Y-m-d', strtotime('-30 days'));
+                $condition = 'DATE(' . $field . ') >= \'' . $monthAgo . '\'';
                 break;
             default:
                 // Check if it's a specific date (YYYY-MM-DD)

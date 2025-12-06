@@ -555,6 +555,7 @@
                 // Build title with update info
                 let categoryTitle = (child.domain ? rex_i18n_msg('info_center_domain') + ': ' + child.domain + ' | ' : '') + 'ID: ' + child.id;
                 if (child.updatedate) {
+                    // REDAXO stores dates as DATETIME strings (e.g. '2025-08-29 12:51:52')
                     const updateDate = new Date(child.updatedate).toLocaleString('de-DE', {
                         year: 'numeric',
                         month: '2-digit',
@@ -602,6 +603,7 @@
                 // Build title with update info
                 let articleTitle = rex_i18n_msg('info_center_article_id') + ': ' + child.id;
                 if (child.updatedate) {
+                    // REDAXO stores dates as DATETIME strings (e.g. '2025-08-29 12:51:52')
                     const updateDate = new Date(child.updatedate).toLocaleString('de-DE', {
                         year: 'numeric',
                         month: '2-digit',
@@ -1002,8 +1004,8 @@
 
             // Add update info if available
             if (item.updatedate && item.updateuser) {
-                const timestamp = parseInt(item.updatedate, 10);
-                const updateDate = new Date(timestamp * 1000);
+                // REDAXO stores dates as DATETIME strings (e.g. '2025-08-29 12:51:52')
+                const updateDate = new Date(item.updatedate);
                 const formattedDate = updateDate.toLocaleString('de-DE', {
                     year: 'numeric',
                     month: '2-digit',

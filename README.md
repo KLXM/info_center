@@ -11,7 +11,7 @@ Das **Info Center** ist ein intelligentes Dashboard-System für REDAXO CMS, das 
 ## ✨ Hauptfeatures
 
 ### 🚀 **Intelligente Widgets**
-- **🔍 Search Widget** - Spotlight-ähnliche Suche mit Quick Actions (NEU!)
+- **🔍 Search Widget** - Livr-Suche mit Quick Actions
 - **🏗️ Struktur-Navigation** - Interaktiver Kategoriebaum mit Lazy Loading, Domain-Filterung und direkten Frontend-Links
 - **📊 Performance Stats** - Ladezeiten, Speicherverbrauch, DB-Queries
 - **⏱️ TimeTracker** - Arbeitszeit-Tracking mit Pausen und Berichten
@@ -20,7 +20,7 @@ Das **Info Center** ist ein intelligentes Dashboard-System für REDAXO CMS, das 
 - **🛠️ Upkeep Integration** - Wartungs-Status auf einen Blick
 - **⚙️ System-Informationen** - Server-Status und PHP-Infos
 
-### 🎨 **Revolutionärer Widget Builder**
+### 🎨 **Widget Builder**
 - **🔧 No-Code Widgets** - Erstelle eigene Widgets ohne Programmierung
 - **📊 YForm Integration** - Beliebige YForm-Tabellen als Widgets
 - **🎯 Feldauswahl** - Wähle spezifische Felder oder lass das System entscheiden
@@ -264,6 +264,7 @@ wiki Berlin              → Wikipedia mit Live-Vorschau
 define CMS               → Wörterbuch-Definition aus Wiktionary
 blindtext 500            → Generiert 500 Zeichen deutschen Blindtext
 https://...              → URL wird erkannt und kann geöffnet werden
+qr  https://             → QRCODE in PNG oder SVG
 ```
 
 #### Erweiterte Filter
