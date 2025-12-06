@@ -8,6 +8,7 @@ use rex_extension_point;
 use rex_view;
 use rex_url;
 use rex_addon;
+use rex_i18n;
 use rex_backend_login;
 use rex_be_controller;
 
@@ -19,6 +20,22 @@ if (rex::isFrontend()) {
 
 // Get addon instance
 $addon = rex_addon::get('info_center');
+
+// Add i18n translations to JavaScript for Search Widget
+if (rex::isBackend()) {
+    rex_view::addJsProperty('info_center_search_i18n', [
+        'categories' => rex_i18n::msg('info_center_search_categories'),
+        'articles' => rex_i18n::msg('info_center_search_articles'),
+        'modules' => rex_i18n::msg('info_center_search_modules'),
+        'templates' => rex_i18n::msg('info_center_search_templates'),
+        'media' => rex_i18n::msg('info_center_search_media'),
+        'no_results' => rex_i18n::msg('info_center_search_no_results'),
+        'loading' => rex_i18n::msg('info_center_search_loading'),
+        'error' => rex_i18n::msg('info_center_search_error'),
+        'offline' => rex_i18n::msg('info_center_search_offline'),
+        'inactive' => rex_i18n::msg('info_center_search_inactive'),
+    ]);
+}
 
 // Initialisiere das Info Center
 $infoCenter = InfoCenter::getInstance();

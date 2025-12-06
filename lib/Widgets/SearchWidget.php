@@ -17,20 +17,6 @@ class SearchWidget extends AbstractWidget
         parent::__construct();
         $this->title = rex_i18n::msg('info_center_search_title');
         $this->priority = -10; // Show at top
-        
-        // Add i18n translations to JavaScript
-        rex_view::addJsProperty('info_center_search_i18n', [
-            'categories' => rex_i18n::msg('info_center_search_categories'),
-            'articles' => rex_i18n::msg('info_center_search_articles'),
-            'modules' => rex_i18n::msg('info_center_search_modules'),
-            'templates' => rex_i18n::msg('info_center_search_templates'),
-            'media' => rex_i18n::msg('info_center_search_media'),
-            'no_results' => rex_i18n::msg('info_center_search_no_results'),
-            'loading' => rex_i18n::msg('info_center_search_loading'),
-            'error' => rex_i18n::msg('info_center_search_error'),
-            'offline' => rex_i18n::msg('info_center_search_offline'),
-            'inactive' => rex_i18n::msg('info_center_search_inactive'),
-        ]);
     }
 
     public function render(): string
@@ -39,6 +25,8 @@ class SearchWidget extends AbstractWidget
         if (!$user) {
             return '';
         }
+
+        // Add i18n translations to JavaScript
 
         $content = '
         <div class="info-center-widget info-center-search-widget" id="info-center-search-widget">
