@@ -784,7 +784,9 @@
         }
         
         // Build API URL with filters
-        let apiUrl = 'index.php?rex-api-call=info_center_search&query=' + encodeURIComponent(searchQuery);
+        const isBackend = window.location.pathname.includes('/redaxo/');
+        const backendPath = isBackend ? '' : 'redaxo/';
+        let apiUrl = backendPath + 'index.php?rex-api-call=info_center_search&query=' + encodeURIComponent(searchQuery);
         if (filters.modified) apiUrl += '&modified=' + encodeURIComponent(filters.modified);
         if (filters.created) apiUrl += '&created=' + encodeURIComponent(filters.created);
         if (filters.author) apiUrl += '&author=' + encodeURIComponent(filters.author);
