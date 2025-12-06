@@ -3,11 +3,13 @@
 namespace KLXM\InfoCenter\Widgets;
 
 use KLXM\InfoCenter\AbstractWidget;
+use IntlDateFormatter;
 use rex;
 use rex_article;
 use rex_category;
 use rex_clang;
 use rex_context;
+use rex_formatter;
 use rex_i18n;
 use rex_url;
 use rex_addon;
@@ -420,8 +422,8 @@ class StructureWidget extends AbstractWidget
                 
                 // Build title with update info
                 $articleTitle = rex_i18n::msg('info_center_article_id') . ': ' . $item['id'];
-                if (!empty($item['updatedate'])) {
-                    $updateDate = date('d.m.Y H:i', strtotime($item['updatedate']));
+                if (!empty($item['updatedate']) && $item['updatedate'] !== '0000-00-00 00:00:00') {
+                    $updateDate = rex_formatter::intlDateTime($item['updatedate'], [IntlDateFormatter::SHORT, IntlDateFormatter::SHORT]);
                     $updateUser = $item['updateuser'] ?? '';
                     $articleTitle .= ' | ' . rex_i18n::msg('info_center_last_updated', 'Zuletzt geändert') . ': ' . $updateDate;
                     if ($updateUser) {
@@ -494,8 +496,8 @@ class StructureWidget extends AbstractWidget
                 
                 // Build title with update info
                 $itemTitle = $item['domain'] ? rex_i18n::msg('info_center_domain', 'Domain') . ': ' . rex_escape($item['domain']) . ' | ID: ' . $item['id'] : 'ID: ' . $item['id'];
-                if (!empty($item['updatedate'])) {
-                    $updateDate = date('d.m.Y H:i', strtotime($item['updatedate']));
+                if (!empty($item['updatedate']) && $item['updatedate'] !== '0000-00-00 00:00:00') {
+                    $updateDate = rex_formatter::intlDateTime($item['updatedate'], [IntlDateFormatter::SHORT, IntlDateFormatter::SHORT]);
                     $updateUser = $item['updateuser'] ?? '';
                     $itemTitle .= ' | ' . rex_i18n::msg('info_center_last_updated', 'Zuletzt geändert') . ': ' . $updateDate;
                     if ($updateUser) {
