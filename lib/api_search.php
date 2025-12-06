@@ -69,17 +69,17 @@ class rex_api_info_center_search extends rex_api_function
 
         // Search Modules
         if (in_array('modules', $types) && $user->hasPerm('module[]')) {
-            $results['modules'] = $this->searchModules($query, $user);
+            $results['modules'] = $this->searchModules($query, $user, $filters);
         }
 
         // Search Templates
         if (in_array('templates', $types) && $user->hasPerm('template[]')) {
-            $results['templates'] = $this->searchTemplates($query, $user);
+            $results['templates'] = $this->searchTemplates($query, $user, $filters);
         }
 
         // Search Media
         if (in_array('media', $types) && $user->getComplexPerm('media')) {
-            $results['media'] = $this->searchMedia($query, $user);
+            $results['media'] = $this->searchMedia($query, $user, $filters);
         }
 
         // Allow addons to register custom search providers
@@ -301,9 +301,50 @@ class rex_api_info_center_search extends rex_api_function
         return $results;
     }
 
-    protected function searchModules(string $query, rex_user $user): array
+    protected function searchModules(string $query, rex_user $user, array $filters = []): array
     {
         $results = [];
+        
+        // Build WHERE conditions
+        $whereConditions = [];
+        $params = [];
+        
+        // Only add query condition if query is not empty
+        if (!empty($query)) {
+            $whereConditions[] = '(name LIKE :query OR input LIKE :query OR output LIKE :query OR id LIKE :query_exact)';
+            $params['query'] = '%' . $query . '%';
+            $params['query_exact'] = $query . '%';
+        }
+        
+        // Add date filters
+        if (!empty($filters['modified'])) {
+            $dateCondition = $this->buildDateCondition('updatedate', $filters['modified']);
+            if ($dateCondition) {
+                $whereConditions[] = $dateCondition;
+            }
+        }
+        
+        if (!empty($filters['created'])) {
+            $dateCondition = $this->buildDateCondition('createdate', $filters['created']);
+            if ($dateCondition) {
+                $whereConditions[] = $dateCondition;
+            }
+        }
+        
+        // Add user filters
+        if (!empty($filters['author'])) {
+            $whereConditions[] = '(createuser LIKE :author OR createuser = :author_exact)';
+            $params['author'] = '%' . $filters['author'] . '%';
+            $params['author_exact'] = $filters['author'];
+        }
+        
+        if (!empty($filters['editor'])) {
+            $whereConditions[] = '(updateuser LIKE :editor OR updateuser = :editor_exact)';
+            $params['editor'] = '%' . $filters['editor'] . '%';
+            $params['editor_exact'] = $filters['editor'];
+        }
+        
+        $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
         
         $sql = rex_sql::factory();
         // @psalm-suppress TaintedSql - User input is properly escaped by rex_sql
@@ -313,20 +354,15 @@ class rex_api_info_center_search extends rex_api_function
                 name,
                 input,
                 output,
+                createuser,
+                createdate,
                 updateuser,
                 updatedate
             FROM ' . rex::getTable('module') . '
-            WHERE 
-                name LIKE :query
-                OR input LIKE :query
-                OR output LIKE :query
-                OR id LIKE :query_exact
+            ' . $whereClause . '
             ORDER BY name ASC
             LIMIT 10
-        ', [
-            'query' => '%' . $query . '%',
-            'query_exact' => $query . '%'
-        ]);
+        ', $params);
 
         while ($sql->hasNext()) {
             $input = $sql->getValue('input');
@@ -353,9 +389,50 @@ class rex_api_info_center_search extends rex_api_function
         return $results;
     }
 
-    protected function searchTemplates(string $query, rex_user $user): array
+    protected function searchTemplates(string $query, rex_user $user, array $filters = []): array
     {
         $results = [];
+        
+        // Build WHERE conditions
+        $whereConditions = [];
+        $params = [];
+        
+        // Only add query condition if query is not empty
+        if (!empty($query)) {
+            $whereConditions[] = '(name LIKE :query OR content LIKE :query OR id LIKE :query_exact)';
+            $params['query'] = '%' . $query . '%';
+            $params['query_exact'] = $query . '%';
+        }
+        
+        // Add date filters
+        if (!empty($filters['modified'])) {
+            $dateCondition = $this->buildDateCondition('updatedate', $filters['modified']);
+            if ($dateCondition) {
+                $whereConditions[] = $dateCondition;
+            }
+        }
+        
+        if (!empty($filters['created'])) {
+            $dateCondition = $this->buildDateCondition('createdate', $filters['created']);
+            if ($dateCondition) {
+                $whereConditions[] = $dateCondition;
+            }
+        }
+        
+        // Add user filters
+        if (!empty($filters['author'])) {
+            $whereConditions[] = '(createuser LIKE :author OR createuser = :author_exact)';
+            $params['author'] = '%' . $filters['author'] . '%';
+            $params['author_exact'] = $filters['author'];
+        }
+        
+        if (!empty($filters['editor'])) {
+            $whereConditions[] = '(updateuser LIKE :editor OR updateuser = :editor_exact)';
+            $params['editor'] = '%' . $filters['editor'] . '%';
+            $params['editor_exact'] = $filters['editor'];
+        }
+        
+        $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
         
         $sql = rex_sql::factory();
         // @psalm-suppress TaintedSql - User input is properly escaped by rex_sql
@@ -364,20 +441,16 @@ class rex_api_info_center_search extends rex_api_function
                 id,
                 name,
                 content,
+                createuser,
+                createdate,
                 updateuser,
                 updatedate,
                 active
             FROM ' . rex::getTable('template') . '
-            WHERE 
-                name LIKE :query
-                OR content LIKE :query
-                OR id LIKE :query_exact
+            ' . $whereClause . '
             ORDER BY name ASC
             LIMIT 10
-        ', [
-            'query' => '%' . $query . '%',
-            'query_exact' => $query . '%'
-        ]);
+        ', $params);
 
         while ($sql->hasNext()) {
             $content = $sql->getValue('content');
@@ -404,10 +477,50 @@ class rex_api_info_center_search extends rex_api_function
         return $results;
     }
 
-    protected function searchMedia(string $query, rex_user $user): array
+    protected function searchMedia(string $query, rex_user $user, array $filters = []): array
     {
         $results = [];
         $mediapool = $user->getComplexPerm('media');
+        
+        // Build WHERE conditions
+        $whereConditions = [];
+        $params = [];
+        
+        // Only add query condition if query is not empty
+        if (!empty($query)) {
+            $whereConditions[] = '(filename LIKE :query OR title LIKE :query OR originalname LIKE :query)';
+            $params['query'] = '%' . $query . '%';
+        }
+        
+        // Add date filters
+        if (!empty($filters['modified'])) {
+            $dateCondition = $this->buildDateCondition('updatedate', $filters['modified']);
+            if ($dateCondition) {
+                $whereConditions[] = $dateCondition;
+            }
+        }
+        
+        if (!empty($filters['created'])) {
+            $dateCondition = $this->buildDateCondition('createdate', $filters['created']);
+            if ($dateCondition) {
+                $whereConditions[] = $dateCondition;
+            }
+        }
+        
+        // Add user filters
+        if (!empty($filters['author'])) {
+            $whereConditions[] = '(createuser LIKE :author OR createuser = :author_exact)';
+            $params['author'] = '%' . $filters['author'] . '%';
+            $params['author_exact'] = $filters['author'];
+        }
+        
+        if (!empty($filters['editor'])) {
+            $whereConditions[] = '(updateuser LIKE :editor OR updateuser = :editor_exact)';
+            $params['editor'] = '%' . $filters['editor'] . '%';
+            $params['editor_exact'] = $filters['editor'];
+        }
+        
+        $whereClause = !empty($whereConditions) ? 'WHERE ' . implode(' AND ', $whereConditions) : '';
         
         $sql = rex_sql::factory();
         // @psalm-suppress TaintedSql - User input is properly escaped by rex_sql
@@ -419,18 +532,15 @@ class rex_api_info_center_search extends rex_api_function
                 category_id,
                 filetype,
                 filesize,
+                createuser,
+                createdate,
                 updateuser,
                 updatedate
             FROM ' . rex::getTable('media') . '
-            WHERE 
-                filename LIKE :query
-                OR title LIKE :query
-                OR originalname LIKE :query
+            ' . $whereClause . '
             ORDER BY filename ASC
             LIMIT 20
-        ', [
-            'query' => '%' . $query . '%'
-        ]);
+        ', $params);
 
         while ($sql->hasNext()) {
             $categoryId = $sql->getValue('category_id');
