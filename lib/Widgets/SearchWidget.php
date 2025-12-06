@@ -21,6 +21,11 @@ class SearchWidget extends AbstractWidget
 
     public function render(): string
     {
+        // Search Widget only works in backend (requires rex API)
+        if (!rex::isBackend()) {
+            return '';
+        }
+        
         $user = rex::getUser();
         if (!$user) {
             return '';
