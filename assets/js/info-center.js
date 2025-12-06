@@ -507,10 +507,10 @@
         // Mark as loading
         item.classList.add('loading');
         
-        // API URL
-        const apiUrl = typeof rex !== 'undefined' && rex.backend_url 
-            ? rex.backend_url + 'index.php?rex-api-call=info_center_structure_children'
-            : '../redaxo/index.php?rex-api-call=info_center_structure_children';
+        // Build API URL - try to detect backend path
+        const isBackend = window.location.pathname.includes('/redaxo/');
+        const backendPath = isBackend ? '' : 'redaxo/';
+        const apiUrl = backendPath + 'index.php?rex-api-call=info_center_structure_children';
         
         fetch(apiUrl + '&category_id=' + categoryId + '&clang=' + clang)
             .then(response => response.json())
@@ -830,13 +830,13 @@
         });
 
         if (totalResults === 0) {
-            const i18n = rex.info_center_search_i18n || {};
+            const i18n = (typeof window.rex !== 'undefined' && window.rex.info_center_search_i18n) || {};
             searchResults.innerHTML = '<div class="info-center-search-empty">' + (i18n.no_results || 'No results found') + '</div>';
             return;
         }
 
         // Get i18n translations
-        const i18n = rex.info_center_search_i18n || {
+        const i18n = (typeof window.rex !== 'undefined' && window.rex.info_center_search_i18n) || {
             categories: 'Categories',
             articles: 'Articles',
             modules: 'Modules',
@@ -933,7 +933,7 @@
         section.appendChild(header);
 
         // Get i18n translations
-        const i18n = rex.info_center_search_i18n || {
+        const i18n = (typeof window.rex !== 'undefined' && window.rex.info_center_search_i18n) || {
             offline: 'Offline',
             inactive: 'Inactive'
         };
