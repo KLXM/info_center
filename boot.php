@@ -23,7 +23,7 @@ $addon = rex_addon::get('info_center');
 
 // Add i18n translations to JavaScript for Search Widget
 if (rex::isBackend()) {
-    rex_view::addJsProperty('info_center_search_i18n', [
+    rex_view::setJsProperty('info_center_search_i18n', [
         'categories' => rex_i18n::msg('info_center_search_categories'),
         'articles' => rex_i18n::msg('info_center_search_articles'),
         'modules' => rex_i18n::msg('info_center_search_modules'),
