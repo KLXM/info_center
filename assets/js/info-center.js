@@ -1450,68 +1450,54 @@
         
         // QR Code container
         const qrContainer = document.createElement('div');
-        qrContainer.style.cssText = 'margin:20px auto;display:inline-block;padding:10px;background:white;';
+        qrContainer.style.cssText = 'margin:20px auto;display:inline-block;padding:20px;background:white;';
         
-        // Generate QR Code as SVG
-        const svg = generateQRCodeSVG(text, 400);
-        qrContainer.appendChild(svg);
+        // Use QR Server API for reliable QR code generation
+        const qrSize = 400;
+        const encodedText = encodeURIComponent(text);
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodedText}&format=svg`;
+        
+        const img = document.createElement('img');
+        img.src = qrUrl;
+        img.style.cssText = 'width:400px;height:400px;display:block;';
+        img.alt = 'QR Code';
+        qrContainer.appendChild(img);
         content.appendChild(qrContainer);
         
         // Button container
         const buttonContainer = document.createElement('div');
         buttonContainer.style.marginTop = '20px';
         
-        // Download SVG button
-        const downloadSvgBtn = document.createElement('button');
-        downloadSvgBtn.textContent = 'Als SVG herunterladen';
-        downloadSvgBtn.className = 'btn btn-primary';
-        downloadSvgBtn.style.marginRight = '10px';
-        downloadSvgBtn.onclick = () => {
-            const svgData = new XMLSerializer().serializeToString(svg);
-            const blob = new Blob([svgData], { type: 'image/svg+xml' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'qrcode.svg';
-            a.click();
-            URL.revokeObjectURL(url);
-        };
-        buttonContainer.appendChild(downloadSvgBtn);
-        
         // Download PNG button
         const downloadPngBtn = document.createElement('button');
         downloadPngBtn.textContent = 'Als PNG herunterladen';
-        downloadPngBtn.className = 'btn btn-default';
+        downloadPngBtn.className = 'btn btn-primary';
         downloadPngBtn.style.marginRight = '10px';
         downloadPngBtn.onclick = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = 800;
-            canvas.height = 800;
-            const ctx = canvas.getContext('2d');
-            
-            const svgData = new XMLSerializer().serializeToString(svg);
-            const img = new Image();
-            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-            const url = URL.createObjectURL(svgBlob);
-            
-            img.onload = () => {
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillRect(0, 0, 800, 800);
-                ctx.drawImage(img, 0, 0, 800, 800);
-                
-                canvas.toBlob((blob) => {
-                    const pngUrl = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = pngUrl;
-                    a.download = 'qrcode.png';
-                    a.click();
-                    URL.revokeObjectURL(pngUrl);
-                    URL.revokeObjectURL(url);
-                });
-            };
-            img.src = url;
+            // Download as PNG from API
+            const pngUrl = `https://api.qrserver.com/v1/create-qr-code/?size=800x800&data=${encodedText}&format=png`;
+            const a = document.createElement('a');
+            a.href = pngUrl;
+            a.download = 'qrcode.png';
+            a.target = '_blank';
+            a.click();
         };
         buttonContainer.appendChild(downloadPngBtn);
+        
+        // Download SVG button
+        const downloadSvgBtn = document.createElement('button');
+        downloadSvgBtn.textContent = 'Als SVG herunterladen';
+        downloadSvgBtn.className = 'btn btn-default';
+        downloadSvgBtn.style.marginRight = '10px';
+        downloadSvgBtn.onclick = () => {
+            // Download as SVG from API
+            const a = document.createElement('a');
+            a.href = qrUrl;
+            a.download = 'qrcode.svg';
+            a.target = '_blank';
+            a.click();
+        };
+        buttonContainer.appendChild(downloadSvgBtn);
         
         // Close button
         const closeBtn = document.createElement('button');
@@ -1525,152 +1511,6 @@
         modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
         
         document.body.appendChild(modal);
-    }
-    
-    function generateQRCodeSVG(text, size) {
-        // Generate QR matrix using a simple algorithm
-        const matrix = generateQRMatrix(text);
-        const moduleSize = size / matrix.length;
-        
-        // Create SVG
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('width', size);
-        svg.setAttribute('height', size);
-        svg.setAttribute('viewBox', `0 0 ${size} ${size}`);
-        
-        // Background
-        const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        bg.setAttribute('width', size);
-        bg.setAttribute('height', size);
-        bg.setAttribute('fill', '#FFFFFF');
-        svg.appendChild(bg);
-        
-        // Draw modules
-        for (let y = 0; y < matrix.length; y++) {
-            for (let x = 0; x < matrix[y].length; x++) {
-                if (matrix[y][x]) {
-                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                    rect.setAttribute('x', x * moduleSize);
-                    rect.setAttribute('y', y * moduleSize);
-                    rect.setAttribute('width', moduleSize);
-                    rect.setAttribute('height', moduleSize);
-                    rect.setAttribute('fill', '#000000');
-                    svg.appendChild(rect);
-                }
-            }
-        }
-        
-        return svg;
-    }
-    
-    function generateQRMatrix(text) {
-        // QR Code Version 2 (25x25) - supports up to 47 alphanumeric characters
-        const size = 25;
-        const matrix = Array(size).fill(0).map(() => Array(size).fill(0));
-        
-        // Add finder patterns (7x7 in corners)
-        addFinderPattern(matrix, 0, 0);
-        addFinderPattern(matrix, size - 7, 0);
-        addFinderPattern(matrix, 0, size - 7);
-        
-        // Add separators (white border around finders)
-        addSeparators(matrix, size);
-        
-        // Add timing patterns
-        for (let i = 8; i < size - 8; i++) {
-            matrix[6][i] = (i % 2 === 0) ? 1 : 0;
-            matrix[i][6] = (i % 2 === 0) ? 1 : 0;
-        }
-        
-        // Add alignment pattern for Version 2
-        addAlignmentPattern(matrix, 18, 18);
-        
-        // Encode data
-        encodeData(matrix, text, size);
-        
-        return matrix;
-    }
-    
-    function addFinderPattern(matrix, startY, startX) {
-        for (let y = 0; y < 7; y++) {
-            for (let x = 0; x < 7; x++) {
-                const isOuter = y === 0 || y === 6 || x === 0 || x === 6;
-                const isCenter = y >= 2 && y <= 4 && x >= 2 && x <= 4;
-                matrix[startY + y][startX + x] = (isOuter || isCenter) ? 1 : 0;
-            }
-        }
-    }
-    
-    function addSeparators(matrix, size) {
-        // Top-left separator
-        for (let i = 0; i < 8; i++) {
-            matrix[7][i] = 0;
-            matrix[i][7] = 0;
-        }
-        // Top-right separator
-        for (let i = 0; i < 8; i++) {
-            matrix[7][size - 8 + i] = 0;
-            matrix[i][size - 8] = 0;
-        }
-        // Bottom-left separator
-        for (let i = 0; i < 8; i++) {
-            matrix[size - 8][i] = 0;
-            matrix[size - 8 + i][7] = 0;
-        }
-    }
-    
-    function addAlignmentPattern(matrix, centerY, centerX) {
-        for (let y = -2; y <= 2; y++) {
-            for (let x = -2; x <= 2; x++) {
-                const isOuter = Math.abs(y) === 2 || Math.abs(x) === 2;
-                const isCenter = y === 0 && x === 0;
-                matrix[centerY + y][centerX + x] = (isOuter || isCenter) ? 1 : 0;
-            }
-        }
-    }
-    
-    function encodeData(matrix, text, size) {
-        // Convert text to binary (simplified encoding)
-        const data = textToBinary(text);
-        let dataIndex = 0;
-        
-        // Zigzag pattern (right to left, bottom to top)
-        for (let col = size - 1; col > 0; col -= 2) {
-            if (col === 6) col--; // Skip timing column
-            
-            for (let row = size - 1; row >= 0; row--) {
-                for (let c = 0; c < 2; c++) {
-                    const x = col - c;
-                    if (!isReservedPosition(matrix, row, x, size)) {
-                        matrix[row][x] = dataIndex < data.length ? parseInt(data[dataIndex]) : 0;
-                        dataIndex++;
-                    }
-                }
-            }
-        }
-    }
-    
-    function textToBinary(text) {
-        let binary = '';
-        for (let i = 0; i < text.length; i++) {
-            const byte = text.charCodeAt(i).toString(2).padStart(8, '0');
-            binary += byte;
-        }
-        // Pad to fill matrix
-        while (binary.length < 400) {
-            binary += '0';
-        }
-        return binary;
-    }
-    
-    function isReservedPosition(matrix, y, x, size) {
-        // Finder patterns + separators
-        if ((y < 9 && x < 9) || (y < 9 && x >= size - 8) || (y >= size - 8 && x < 9)) return true;
-        // Timing patterns
-        if (y === 6 || x === 6) return true;
-        // Alignment pattern (Version 2 at 18,18)
-        if (Math.abs(y - 18) <= 2 && Math.abs(x - 18) <= 2) return true;
-        return false;
     }
     
     function showHelpModal() {
