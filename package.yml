@@ -1,5 +1,5 @@
 package: info_center
-version: '2.1.2'
+version: '2.1.3'
 author: 'KLXM Crossmedia GmbH'
 supportpage: https://github.com/klxm/info_center
 
@@ -58,7 +58,6 @@ default_permissions:
     info_center[config]: 'Info Center Settings'
     info_center[recent_articles]: 'Zuletzt bearbeitete Artikel anzeigen'
     info_center[all_articles]: 'Alle Artikel-Änderungen sehen (nicht nur eigene)'
-    info_center[structure_links]: 'Links zur Struktur-Verwaltung nutzen'
 
 conflicts:
     packages:

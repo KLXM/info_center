@@ -149,8 +149,8 @@ if (rex::isBackend() && rex::getUser()) {
     });
 }
 
-// Frontend Integration - für eingeloggte Backend-Benutzer
-if (rex::isFrontend() && rex_backend_login::createUser()) {
+// Frontend Integration - für eingeloggte Backend-Benutzer mit info_center[] Berechtigung
+if (rex::isFrontend() && ($user = rex_backend_login::createUser()) && ($user->isAdmin() || $user->hasPerm('info_center[]'))) {
     rex_extension::register('OUTPUT_FILTER', function(rex_extension_point $ep) use ($infoCenter, $addon) {
         $content = $ep->getSubject();
         $infoCenterOutput = $infoCenter->get();

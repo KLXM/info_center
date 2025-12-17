@@ -126,8 +126,8 @@ class ArticleWidget extends AbstractWidget
 
         $html = '<div class="info-center-quick-links">';
         
-        // Struktur-Hauptseite - nur für Admins oder User mit info_center[structure_links] Berechtigung
-        if ($user->isAdmin() || $user->hasPerm('info_center[structure_links]')) {
+        // Struktur-Hauptseite - für User mit info_center[] Berechtigung
+        if ($user->isAdmin() || $user->hasPerm('info_center[]')) {
             $html .= sprintf(
                 '<div class="info-center-quick-link">
                     <a href="%s">%s</a>
@@ -318,8 +318,10 @@ class ArticleWidget extends AbstractWidget
                     // Im Backend: Normale Berechtigungsprüfung
                     $canLinkToStructure = $user->getComplexPerm('structure')?->hasCategoryPerm($parent->getId()) ?? false;
                 } else {
-                    // Im Frontend: Nur für Admins oder User mit info_center[structure_links] Berechtigung
-                    $canLinkToStructure = $user->isAdmin() || $user->hasPerm('info_center[structure_links]');
+                    // Im Frontend: info_center[] + Struktur-Rechte für die Kategorie
+                    $hasInfoCenter = $user->isAdmin() || $user->hasPerm('info_center[]');
+                    $categoryPerm = $user->getComplexPerm('structure');
+                    $canLinkToStructure = $hasInfoCenter && ($user->isAdmin() || ($categoryPerm && $categoryPerm->hasCategoryPerm($parent->getId())));
                 }
             }
             
@@ -354,8 +356,14 @@ class ArticleWidget extends AbstractWidget
                 // Im Backend: Normale Berechtigungsprüfung
                 $hasStructurePerm = $user->getComplexPerm('structure')?->hasCategoryPerm($this->article->getCategoryId()) ?? false;
             } else {
-                // Im Frontend: Nur für Admins oder User mit info_center[structure_links] Berechtigung
-                $hasStructurePerm = $user->isAdmin() || $user->hasPerm('info_center[structure_links]');
+                // Im Frontend: Prüfe info_center[] Berechtigung UND Struktur-Zugriff
+                $hasInfoCenterPerm = $user->isAdmin() || $user->hasPerm('info_center[]');
+                if ($hasInfoCenterPerm) {
+                    // Prüfe dann Struktur-Berechtigung für den konkreten Artikel
+                    $categoryPerm = $user->getComplexPerm('structure');
+                    $hasStructurePerm = $user->isAdmin() || 
+                                       ($categoryPerm && $categoryPerm->hasCategoryPerm($this->article->getCategoryId()));
+                }
             }
         }
         

@@ -90,6 +90,11 @@ info_center_refresh = Aktualisieren
 # Berechtigungen
 info_center_perm_general = Info Center anzeigen
 info_center_perm_settings = Info Center konfigurieren
+perm_general_info_center[] = Info Center nutzen
+perm_general_info_center[config] = Einstellungen verwalten
+perm_general_info_center[admin] = Widget Builder nutzen
+perm_general_info_center[recent_articles] = Zuletzt bearbeitete Artikel sehen
+perm_general_info_center[all_articles] = Alle Artikel-Änderungen sehen (nicht nur eigene)
 
 # Systemmeldungen
 info_center_saved = Einstellungen wurden gespeichert

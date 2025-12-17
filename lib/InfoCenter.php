@@ -83,8 +83,8 @@ class InfoCenter
                     </button>
                 </div>';
         }
-        // Frontend-spezifische Buttons für Backend-User
-        elseif (rex::isFrontend() && rex_backend_login::createUser()) {
+        // Frontend-spezifische Buttons für Backend-User mit info_center[] Berechtigung
+        elseif (rex::isFrontend() && ($user = rex_backend_login::createUser()) && ($user->isAdmin() || $user->hasPerm('info_center[]'))) {
             $headerButtons = '
                 <div class="info-center-header-buttons">
                     <button class="info-center-backend-btn" title="' . \rex_i18n::msg('info_center_goto_backend', 'Zum Backend wechseln') . '" onclick="window.location.href=\'' . rex_url::backendController() . '\'">
