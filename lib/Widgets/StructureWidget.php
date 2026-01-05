@@ -255,9 +255,12 @@ class StructureWidget extends AbstractWidget
         $isCurrent = ($categoryId == $currentCategoryId && $currentArticleId == 0) || 
                      ($categoryId == $currentArticleId);
         
+        // Für bessere Suche: Erste 2 Ebenen komplett laden (ohne Lazy Loading)
+        $shouldLazyLoad = $lazyLoad && $depth >= 2;
+        
         // Load children only if in path or not lazy loading
         $children = [];
-        if (!$lazyLoad || $isInPath || $isCurrent) {
+        if (!$shouldLazyLoad || $isInPath || $isCurrent) {
             $children = $this->buildStructureTree($clangId, $categoryId, $currentCategoryId, $currentArticleId, $lazyLoad, $depth + 1);
         }
         
