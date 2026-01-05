@@ -34,7 +34,7 @@ class rex_api_info_center_structure_search extends rex_api_function
                 FROM ' . rex::getTable('article') . '
                 WHERE startarticle = 1
                 AND clang_id = :clang_id
-                AND (catname LIKE :query OR id LIKE :queryId)
+                AND (catname LIKE :query OR CAST(id AS CHAR) LIKE :queryId)
                 ORDER BY catname
             ', [
                 'clang_id' => $clangId,
@@ -78,7 +78,7 @@ class rex_api_info_center_structure_search extends rex_api_function
                 FROM ' . rex::getTable('article') . '
                 WHERE startarticle = 0
                 AND clang_id = :clang_id
-                AND (name LIKE :query OR id LIKE :queryId)
+                AND (name LIKE :query OR CAST(id AS CHAR) LIKE :queryId)
                 ORDER BY name
             ', [
                 'clang_id' => $clangId,
