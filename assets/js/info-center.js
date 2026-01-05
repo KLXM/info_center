@@ -17,11 +17,18 @@
         applySavedSettings();
     };
     
+    // Save and apply width
+    window.InfoCenter.setWidth = function(width) {
+        localStorage.setItem('infoCenterWidth', width);
+        applySavedSettings();
+    };
+    
     // Get current settings
     window.InfoCenter.getSettings = function() {
         return {
             fontSize: localStorage.getItem('infoCenterFontSize') || 'medium',
-            position: localStorage.getItem('infoCenterPosition') || 'center'
+            position: localStorage.getItem('infoCenterPosition') || 'center',
+            width: localStorage.getItem('infoCenterWidth') || 'default'
         };
     };
     
@@ -76,9 +83,20 @@
     function initInfoCenterToggle() {
         const toggleBtns = document.querySelectorAll('.info-center-toggle');
         const closeBtns = document.querySelectorAll('.info-center-close-btn');
+        const widthBtns = document.querySelectorAll('.info-center-width-btn');
         
         // Apply saved settings
         applySavedSettings();
+        
+        // Width button handlers
+        widthBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const width = this.dataset.width;
+                window.InfoCenter.setWidth(width);
+            });
+        });
         
         toggleBtns.forEach(btn => {
             // Entferne alte Event Listener um Duplikate zu vermeiden
@@ -222,6 +240,20 @@
         container.className = container.className.replace(/position-\w+/g, '');
         container.classList.add('position-' + position);
         
+        // Apply width setting
+        const width = localStorage.getItem('infoCenterWidth') || 'default';
+        container.className = container.className.replace(/width-\w+/g, '');
+        container.classList.add('width-' + width);
+        
+        // Update active button state for width buttons
+        const widthButtons = document.querySelectorAll('.info-center-width-btn');
+        widthButtons.forEach(btn => {
+            if (btn.dataset.width === width) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
     }
 
     // Tab System
@@ -321,17 +353,19 @@
             const autoSwitchEnabled = domainSelect.dataset.autoSwitch === '1';
             const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
             
+            // Set initial select value based on saved preference or auto-detected domain
+            if (savedDomain !== null) {
+                // Always restore saved domain selection first
+                domainSelect.value = savedDomain;
+            }
+            
             // Only auto-switch if enabled in settings
             if (autoSwitchEnabled) {
                 // If auto-detected domain differs from saved, update localStorage
                 // This includes switching to '0' (all domains) when navigating to root categories
                 if (autoDomain !== undefined && autoDomain !== savedDomain) {
                     localStorage.setItem('infoCenterSelectedDomain', autoDomain);
-                    
-                    // Update select value if not already set correctly
-                    if (domainSelect.value !== autoDomain) {
-                        domainSelect.value = autoDomain;
-                    }
+                    domainSelect.value = autoDomain;
                 }
             } else if (savedDomain && savedDomain !== domainSelect.value && autoDomain === undefined) {
                 // Restore saved domain selection only if no auto-domain detected

@@ -12,6 +12,12 @@ info_center_position = Position
 info_center_position_left = Left
 info_center_position_right = Right
 
+# Width
+info_center_width_compact = Compact (320px)
+info_center_width_default = Default (360px)
+info_center_width_comfortable = Comfortable (440px)
+info_center_width_wide = Wide (520px)
+
 # Theme
 info_center_theme = Theme
 info_center_theme_auto = Automatic
