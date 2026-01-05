@@ -406,6 +406,8 @@
                     item.classList.toggle('expanded');
                     
                     // Lazy load children if not already loaded
+                    // Promise is not awaited - fire and forget for better UX
+                    // If loading fails, user can try expanding again
                     if (!wasExpanded && !item.dataset.childrenLoaded && item.dataset.hasChildren === 'true') {
                         loadCategoryChildren(item);
                     }
