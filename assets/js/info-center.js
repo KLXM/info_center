@@ -349,52 +349,13 @@
         // Domain Switcher
         const domainSelect = document.getElementById('info-center-domain-select');
         if (domainSelect) {
-            const autoDomain = domainSelect.dataset.autoDomain;
-            const autoSwitchEnabled = domainSelect.dataset.autoSwitch === '1';
+            // Restore saved domain selection from localStorage
             const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
-            
-            // Set initial select value based on saved preference or auto-detected domain
             if (savedDomain !== null) {
-                // Always restore saved domain selection first
                 domainSelect.value = savedDomain;
             }
             
-            // Only auto-switch if enabled in settings
-            if (autoSwitchEnabled) {
-                // If auto-detected domain differs from saved, update localStorage
-                // This includes switching to '0' (all domains) when navigating to root categories
-                if (autoDomain !== undefined && autoDomain !== savedDomain) {
-                    localStorage.setItem('infoCenterSelectedDomain', autoDomain);
-                    domainSelect.value = autoDomain;
-                }
-            } else if (savedDomain && savedDomain !== domainSelect.value && autoDomain === undefined) {
-                // Restore saved domain selection only if no auto-domain detected
-                domainSelect.value = savedDomain;
-                
-                // Trigger reload with saved domain
-                const container = document.getElementById('info-center-structure-container');
-                if (container && container.dataset.loaded === 'true') {
-                    container.dataset.loaded = 'false';
-                    const currentUrl = new URL(window.location.href);
-                    if (savedDomain === '0') {
-                        currentUrl.searchParams.delete('info_center_domain');
-                    } else {
-                        currentUrl.searchParams.set('info_center_domain', savedDomain);
-                    }
-                    
-                    container.innerHTML = '<div class="info-center-loading">Lade Struktur...</div>';
-                    fetch(currentUrl.pathname + currentUrl.search + '&rex-api-call=info_center_structure')
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                container.innerHTML = data.html;
-                                container.dataset.loaded = 'true';
-                                initStructureTree();
-                            }
-                        });
-                }
-            }
-            
+            // Handle domain selection change
             domainSelect.addEventListener('change', function() {
                 const selectedDomain = this.value;
                 
@@ -426,6 +387,34 @@
                         });
                 }
             });
+            
+            // Reset button handler
+            const resetBtn = document.querySelector('.info-center-domain-reset');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+                    domainSelect.value = '0';
+                    localStorage.setItem('infoCenterSelectedDomain', '0');
+                    
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.delete('info_center_domain');
+                    
+                    const container = document.getElementById('info-center-structure-container');
+                    if (container) {
+                        container.dataset.loaded = 'false';
+                        container.innerHTML = '<div class="info-center-loading">Lade Struktur...</div>';
+                        
+                        fetch(currentUrl.pathname + currentUrl.search + '&rex-api-call=info_center_structure')
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    container.innerHTML = data.html;
+                                    container.dataset.loaded = 'true';
+                                    initStructureTree();
+                                }
+                            });
+                    }
+                });
+            }
         }
         
         // Toggle für Akkordeon
@@ -459,31 +448,7 @@
             });
         }
         
-        // Domain switcher functionality
-        (function() {
-            const domainSelect = document.getElementById('info-center-domain-select');
-            if (domainSelect && !domainSelect.dataset.initialized) {
-                domainSelect.dataset.initialized = 'true';
-                
-                const autoSwitch = domainSelect.dataset.autoSwitch === '1';
-                const autoDomainId = parseInt(domainSelect.dataset.autoDomain) || 0;
-                const selectedDomain = parseInt(domainSelect.dataset.selectedDomain) || 0;
-                
-                // Use selected domain from PHP (already set via selected attribute)
-                // Only use localStorage if explicitly saved by user
-                const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
-                if (savedDomain !== null) {
-                    domainSelect.value = savedDomain;
-                }
-                // Otherwise use the PHP-selected value (already set via selected attribute)
-                
-                domainSelect.addEventListener('change', function() {
-                    const selectedDomain = this.value;
-                    localStorage.setItem('infoCenterSelectedDomain', selectedDomain);
-                    reloadStructureTree(selectedDomain);
-                });
-            }
-        })();
+        // Domain switcher functionality (legacy - now handled above)
     }
     
     function reloadStructureTree(domainId) {

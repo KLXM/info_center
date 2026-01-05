@@ -1129,10 +1129,13 @@ body.rex-theme-dark .info-center-widget:hover {
 /* Domain Switcher */
 .info-center-domain-switcher {
     margin-bottom: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
 }
 
 .info-center-domain-switcher select {
-    width: 100%;
+    flex: 1;
     padding: 10px 14px;
     background: rgba(255, 255, 255, 0.08);
     -webkit-backdrop-filter: blur(10px);
@@ -1154,6 +1157,31 @@ body.rex-theme-dark .info-center-widget:hover {
 
 .info-center-domain-switcher select:hover {
     background: rgba(255, 255, 255, 0.12);
+}
+
+.info-center-domain-reset {
+    background: var(--button-bg);
+    border: 1px solid var(--button-border);
+    color: var(--text-color-muted);
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.info-center-domain-reset:hover {
+    background: var(--hover-bg);
+    color: var(--text-color);
+    border-color: var(--text-color);
+    transform: translateY(-1px);
+}
+
+.info-center-domain-reset svg {
+    display: block;
 }
 
 /* Structure Search */
