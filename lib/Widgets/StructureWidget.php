@@ -153,11 +153,14 @@ class StructureWidget extends AbstractWidget
         return $content;
     }
 
-    private function buildStructureTree(int $clangId, int $parentId = 0, int $currentCategoryId = 0, int $currentArticleId = 0, bool $lazyLoad = true): array
+    private function buildStructureTree(int $clangId, int $parentId = 0, int $currentCategoryId = 0, int $currentArticleId = 0, bool $lazyLoad = true, int $depth = 0): array
     {
         $user = rex::getUser();
         $tree = [];
         $selectedDomain = rex_request('info_center_domain', 'int', 0);
+        
+        // Für bessere Suche: Erste 2 Ebenen komplett laden (ohne Lazy Loading)
+        $shouldLazyLoad = $lazyLoad && $depth >= 2;
 
         if ($parentId === 0) {
             // Wenn Domain ausgewählt und YRewrite verfügbar, filtere nach Domain-Mountpoint
@@ -167,7 +170,7 @@ class StructureWidget extends AbstractWidget
                     $mountId = $domain->getMountId();
                     if ($category = rex_category::get($mountId, $clangId)) {
                         if ($user->getComplexPerm('structure')->hasCategoryPerm($category->getId())) {
-                            $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $lazyLoad);
+                            $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $shouldLazyLoad, $depth);
                         }
                     }
                     return $tree;
@@ -179,14 +182,14 @@ class StructureWidget extends AbstractWidget
             if (!empty($mountpoints)) {
                 foreach ($mountpoints as $mpId) {
                     if ($category = rex_category::get($mpId, $clangId)) {
-                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $lazyLoad);
+                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $shouldLazyLoad, $depth);
                     }
                 }
             } else {
                 $categories = rex_category::getRootCategories(false, $clangId);
                 foreach ($categories as $category) {
                     if ($user->getComplexPerm('structure')->hasCategoryPerm($category->getId())) {
-                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $lazyLoad);
+                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $shouldLazyLoad, $depth);
                     }
                 }
                 
@@ -227,7 +230,7 @@ class StructureWidget extends AbstractWidget
                 $categories = $parentCategory->getChildren(false);
                 foreach ($categories as $category) {
                     if ($user->getComplexPerm('structure')->hasCategoryPerm($category->getId())) {
-                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $lazyLoad);
+                        $tree[] = $this->buildCategoryNode($category, $clangId, $currentCategoryId, $currentArticleId, $shouldLazyLoad, $depth);
                     }
                 }
             }
@@ -236,7 +239,7 @@ class StructureWidget extends AbstractWidget
         return $tree;
     }
 
-    private function buildCategoryNode(rex_category $category, int $clangId, int $currentCategoryId = 0, int $currentArticleId = 0, bool $lazyLoad = true): array
+    private function buildCategoryNode(rex_category $category, int $clangId, int $currentCategoryId = 0, int $currentArticleId = 0, bool $lazyLoad = true, int $depth = 0): array
     {
         $user = rex::getUser();
         $categoryId = $category->getId();
@@ -249,7 +252,7 @@ class StructureWidget extends AbstractWidget
         // Load children only if in path or not lazy loading
         $children = [];
         if (!$lazyLoad || $isInPath || $isCurrent) {
-            $children = $this->buildStructureTree($clangId, $categoryId, $currentCategoryId, $currentArticleId, $lazyLoad);
+            $children = $this->buildStructureTree($clangId, $categoryId, $currentCategoryId, $currentArticleId, $lazyLoad, $depth + 1);
         }
         
         // Build clean backend URL

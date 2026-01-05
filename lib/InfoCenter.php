@@ -69,6 +69,12 @@ class InfoCenter
         if (rex::isBackend() && rex::getUser()) {
             $headerButtons = '
                 <div class="info-center-header-buttons">
+                    <div class="info-center-width-presets">
+                        <button class="info-center-width-btn" data-width="compact" title="' . \rex_i18n::msg('info_center_width_compact', 'Kompakt (320px)') . '">S</button>
+                        <button class="info-center-width-btn active" data-width="default" title="' . \rex_i18n::msg('info_center_width_default', 'Standard (360px)') . '">M</button>
+                        <button class="info-center-width-btn" data-width="comfortable" title="' . \rex_i18n::msg('info_center_width_comfortable', 'Komfortabel (440px)') . '">L</button>
+                        <button class="info-center-width-btn" data-width="wide" title="' . \rex_i18n::msg('info_center_width_wide', 'Breit (520px)') . '">XL</button>
+                    </div>
                     <a href="' . rex_url::backendPage('info_center/config') . '" class="info-center-settings-btn" title="' . \rex_i18n::msg('info_center_settings') . '">
                         <svg class="info-center-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>

@@ -99,6 +99,23 @@ body.rex-theme-dark .info-center-container {
     --font-size-tiny: 13px;
 }
 
+/* Width Variants - settable via JavaScript */
+.info-center-container.width-compact {
+    --panel-width: 320px;
+}
+
+.info-center-container.width-default {
+    --panel-width: 360px;
+}
+
+.info-center-container.width-comfortable {
+    --panel-width: 440px;
+}
+
+.info-center-container.width-wide {
+    --panel-width: 520px;
+}
+
 /* Toggle Button - IMMER DUNKEL (unabhängig vom Theme) */
 .info-center-toggle {
     position: fixed;
@@ -185,7 +202,7 @@ body.rex-theme-dark .info-center-container {
 .info-center-sidebar {
     position: fixed;
     top: 0;
-    right: -400px;
+    right: calc(var(--panel-width) * -1);
     width: var(--panel-width);
     height: 100vh;
     max-height: 100vh;
@@ -907,6 +924,44 @@ body.rex-theme-dark .info-center-widget:hover {
     z-index: 10;
     display: flex;
     gap: 8px;
+    align-items: center;
+}
+
+.info-center-width-presets {
+    display: flex;
+    gap: 4px;
+    margin-right: 8px;
+    padding-right: 8px;
+    border-right: 1px solid var(--border-color);
+}
+
+.info-center-width-btn {
+    background: transparent;
+    border: 1px solid var(--button-border);
+    color: var(--text-color-muted);
+    padding: 6px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.info-center-width-btn:hover {
+    background: var(--hover-bg);
+    border-color: var(--text-color);
+    color: var(--text-color);
+}
+
+.info-center-width-btn.active {
+    background: var(--button-bg);
+    border-color: var(--text-color);
+    color: var(--text-color);
 }
 
 .info-center-settings-btn,
@@ -1153,7 +1208,7 @@ body.rex-theme-dark .info-center-widget:hover {
 }
 
 .info-center-tree-level[data-depth]:not([data-depth="0"]) {
-    padding-left: 20px;
+    padding-left: 12px;
     margin-top: 4px;
     display: none;
 }

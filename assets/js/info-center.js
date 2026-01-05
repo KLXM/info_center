@@ -17,11 +17,18 @@
         applySavedSettings();
     };
     
+    // Save and apply width
+    window.InfoCenter.setWidth = function(width) {
+        localStorage.setItem('infoCenterWidth', width);
+        applySavedSettings();
+    };
+    
     // Get current settings
     window.InfoCenter.getSettings = function() {
         return {
             fontSize: localStorage.getItem('infoCenterFontSize') || 'medium',
-            position: localStorage.getItem('infoCenterPosition') || 'center'
+            position: localStorage.getItem('infoCenterPosition') || 'center',
+            width: localStorage.getItem('infoCenterWidth') || 'default'
         };
     };
     
@@ -76,9 +83,20 @@
     function initInfoCenterToggle() {
         const toggleBtns = document.querySelectorAll('.info-center-toggle');
         const closeBtns = document.querySelectorAll('.info-center-close-btn');
+        const widthBtns = document.querySelectorAll('.info-center-width-btn');
         
         // Apply saved settings
         applySavedSettings();
+        
+        // Width button handlers
+        widthBtns.forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                const width = this.dataset.width;
+                window.InfoCenter.setWidth(width);
+            });
+        });
         
         toggleBtns.forEach(btn => {
             // Entferne alte Event Listener um Duplikate zu vermeiden
@@ -222,6 +240,20 @@
         container.className = container.className.replace(/position-\w+/g, '');
         container.classList.add('position-' + position);
         
+        // Apply width setting
+        const width = localStorage.getItem('infoCenterWidth') || 'default';
+        container.className = container.className.replace(/width-\w+/g, '');
+        container.classList.add('width-' + width);
+        
+        // Update active button state for width buttons
+        const widthButtons = document.querySelectorAll('.info-center-width-btn');
+        widthButtons.forEach(btn => {
+            if (btn.dataset.width === width) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
     }
 
     // Tab System
@@ -321,17 +353,19 @@
             const autoSwitchEnabled = domainSelect.dataset.autoSwitch === '1';
             const savedDomain = localStorage.getItem('infoCenterSelectedDomain');
             
+            // Set initial select value based on saved preference or auto-detected domain
+            if (savedDomain !== null) {
+                // Always restore saved domain selection first
+                domainSelect.value = savedDomain;
+            }
+            
             // Only auto-switch if enabled in settings
             if (autoSwitchEnabled) {
                 // If auto-detected domain differs from saved, update localStorage
                 // This includes switching to '0' (all domains) when navigating to root categories
                 if (autoDomain !== undefined && autoDomain !== savedDomain) {
                     localStorage.setItem('infoCenterSelectedDomain', autoDomain);
-                    
-                    // Update select value if not already set correctly
-                    if (domainSelect.value !== autoDomain) {
-                        domainSelect.value = autoDomain;
-                    }
+                    domainSelect.value = autoDomain;
                 }
             } else if (savedDomain && savedDomain !== domainSelect.value && autoDomain === undefined) {
                 // Restore saved domain selection only if no auto-domain detected
@@ -533,12 +567,15 @@
         let childrenContainer = parentItem.querySelector(':scope > ul');
         if (!childrenContainer) {
             childrenContainer = document.createElement('ul');
-            childrenContainer.className = 'info-center-tree-children';
+            childrenContainer.className = 'info-center-tree-level';
             parentItem.appendChild(childrenContainer);
         }
         
         // Clear existing content
         childrenContainer.innerHTML = '';
+        
+        // Get clang from parent item
+        const clang = parentItem.dataset.clang || '1';
         
         // Render each child
         children.forEach(child => {
@@ -549,6 +586,7 @@
                 li.classList.add('info-center-tree-category');
                 li.dataset.id = child.id;
                 li.dataset.hasChildren = child.hasChildren;
+                li.dataset.clang = clang;
                 
                 const statusClass = child.status == 0 ? 'status-offline' : (child.status == 2 ? 'status-locked' : 'status-online');
                 
@@ -571,7 +609,6 @@
                 
                 li.innerHTML = `
                     <div class="info-center-tree-node">
-                        ${child.hasChildren ? '<button class="info-center-tree-toggle" type="button"></button>' : '<span class="info-center-tree-spacer"></span>'}
                         <a href="${child.url}" class="info-center-tree-link" title="${categoryTitle}">
                             <svg class="info-center-tree-folder-icon ${statusClass}" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M3 5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
@@ -592,6 +629,13 @@
                                 </svg>
                             </a>
                         </div>
+                        ${child.hasChildren ? `<button class="info-center-tree-toggle" type="button">
+                            <svg class="icon-toggle" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                                <circle cx="12" cy="6" r="1.5" fill="currentColor"/>
+                                <circle cx="12" cy="18" r="1.5" fill="currentColor"/>
+                            </svg>
+                        </button>` : ''}
                     </div>`;
             } else {
                 // Article
@@ -619,7 +663,6 @@
                 
                 li.innerHTML = `
                     <div class="info-center-tree-node">
-                        <span class="info-center-tree-spacer"></span>
                         <a href="${child.url}" class="info-center-tree-link" title="${articleTitle}">
                             <svg class="info-center-tree-article-icon ${statusClass}" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
