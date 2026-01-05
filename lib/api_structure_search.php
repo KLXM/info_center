@@ -34,12 +34,12 @@ class rex_api_info_center_structure_search extends rex_api_function
                 FROM ' . rex::getTable('article') . '
                 WHERE startarticle = 1
                 AND clang_id = :clang_id
-                AND (catname LIKE :query OR CAST(id AS CHAR) LIKE :queryId)
+                AND (catname LIKE CONCAT("%", :query, "%") OR CAST(id AS CHAR) LIKE CONCAT("%", :queryId, "%"))
                 ORDER BY catname
             ', [
                 'clang_id' => $clangId,
-                'query' => '%' . $query . '%',
-                'queryId' => '%' . $query . '%'
+                'query' => $query,
+                'queryId' => $query
             ]);
             
             while ($sql->hasNext()) {
@@ -78,12 +78,12 @@ class rex_api_info_center_structure_search extends rex_api_function
                 FROM ' . rex::getTable('article') . '
                 WHERE startarticle = 0
                 AND clang_id = :clang_id
-                AND (name LIKE :query OR CAST(id AS CHAR) LIKE :queryId)
+                AND (name LIKE CONCAT("%", :query, "%") OR CAST(id AS CHAR) LIKE CONCAT("%", :queryId, "%"))
                 ORDER BY name
             ', [
                 'clang_id' => $clangId,
-                'query' => '%' . $query . '%',
-                'queryId' => '%' . $query . '%'
+                'query' => $query,
+                'queryId' => $query
             ]);
             
             while ($sql->hasNext()) {

@@ -580,7 +580,6 @@
     function performDOMSearch(normalizedQuery) {
         // Fallback: Search only through visible DOM items
         const items = document.querySelectorAll('.info-center-tree-item');
-        let hasMatches = false;
         
         items.forEach(item => {
             const name = item.querySelector('.info-center-tree-name');
@@ -591,7 +590,6 @@
             const matches = nameText.includes(normalizedQuery) || idText.includes(normalizedQuery);
             
             if (matches) {
-                hasMatches = true;
                 item.classList.remove('search-hidden');
                 item.classList.add('search-match');
                 // Expand parent items
@@ -601,11 +599,6 @@
                 item.classList.remove('search-match');
             }
         });
-    }
-    
-    function performSearch(normalizedQuery) {
-        // This function is now replaced by performDOMSearch
-        performDOMSearch(normalizedQuery);
     }
 
     function expandParents(item) {
