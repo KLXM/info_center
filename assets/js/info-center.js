@@ -460,16 +460,127 @@
     }
 
     function searchStructure(query) {
-        const items = document.querySelectorAll('.info-center-tree-item');
         const normalizedQuery = query.toLowerCase().trim();
         
         if (!normalizedQuery) {
-            // Reset search
+            // Reset search - show all items, keep current expansion state
+            const items = document.querySelectorAll('.info-center-tree-item');
             items.forEach(item => {
                 item.classList.remove('search-hidden', 'search-match');
             });
             return;
         }
+        
+        // Use server-side search to find matches across entire tree
+        const selectedDomain = localStorage.getItem('infoCenterSelectedDomain') || '0';
+        const clang = document.querySelector('[data-clang]')?.dataset.clang || '1';
+        
+        // Build API URL
+        const isBackend = window.location.pathname.includes('/redaxo/');
+        const backendPath = isBackend ? '' : 'redaxo/';
+        const apiUrl = backendPath + 'index.php?rex-api-call=info_center_structure_search' +
+                      '&query=' + encodeURIComponent(normalizedQuery) +
+                      '&domain=' + selectedDomain +
+                      '&clang=' + clang;
+        
+        fetch(apiUrl)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.matches) {
+                    applySearchResults(data.matches, normalizedQuery);
+                } else {
+                    console.error('Search error:', data.error);
+                    // Fallback to DOM-based search
+                    performDOMSearch(normalizedQuery);
+                }
+            })
+            .catch(error => {
+                console.error('Search API error:', error);
+                // Fallback to DOM-based search
+                performDOMSearch(normalizedQuery);
+            });
+    }
+    
+    function applySearchResults(matches, query) {
+        // First, hide all items
+        const items = document.querySelectorAll('.info-center-tree-item');
+        items.forEach(item => {
+            item.classList.add('search-hidden');
+            item.classList.remove('search-match');
+        });
+        
+        if (matches.length === 0) {
+            // No matches found - show "no results" in all items
+            return;
+        }
+        
+        // For each match, find or load the item and show it with its parents
+        matches.forEach(match => {
+            const itemId = match.type === 'article' ? 'article-' + match.id : match.id;
+            let item = document.querySelector(`.info-center-tree-item[data-id="${itemId}"]`);
+            
+            if (item) {
+                // Item exists in DOM - show it and its parents
+                item.classList.remove('search-hidden');
+                item.classList.add('search-match');
+                expandParents(item);
+            } else {
+                // Item not in DOM yet - need to expand parents to load it
+                // Parse path to find parent categories
+                if (match.path) {
+                    const pathIds = match.path.split('|').filter(id => id);
+                    expandCategoryPath(pathIds, 0, () => {
+                        // After expanding path, the item should be visible
+                        item = document.querySelector(`.info-center-tree-item[data-id="${itemId}"]`);
+                        if (item) {
+                            item.classList.remove('search-hidden');
+                            item.classList.add('search-match');
+                        }
+                    });
+                }
+            }
+        });
+    }
+    
+    function expandCategoryPath(pathIds, index, callback) {
+        if (index >= pathIds.length) {
+            callback();
+            return;
+        }
+        
+        const categoryId = pathIds[index];
+        const item = document.querySelector(`.info-center-tree-item[data-id="${categoryId}"]`);
+        
+        if (!item) {
+            // Category not in DOM, skip to next
+            expandCategoryPath(pathIds, index + 1, callback);
+            return;
+        }
+        
+        // Show this category (it's in the path to a match)
+        item.classList.remove('search-hidden');
+        
+        // Expand it if it has children and they're not loaded
+        if (item.dataset.hasChildren === 'true' && !item.dataset.childrenLoaded) {
+            item.classList.add('expanded');
+            loadCategoryChildren(item).then(() => {
+                // Continue with next in path
+                expandCategoryPath(pathIds, index + 1, callback);
+            });
+        } else if (item.dataset.hasChildren === 'true') {
+            // Children already loaded, just expand
+            item.classList.add('expanded');
+            expandCategoryPath(pathIds, index + 1, callback);
+        } else {
+            // No children, continue
+            expandCategoryPath(pathIds, index + 1, callback);
+        }
+    }
+    
+    function performDOMSearch(normalizedQuery) {
+        // Fallback: Search only through visible DOM items
+        const items = document.querySelectorAll('.info-center-tree-item');
+        let hasMatches = false;
         
         items.forEach(item => {
             const name = item.querySelector('.info-center-tree-name');
@@ -480,6 +591,7 @@
             const matches = nameText.includes(normalizedQuery) || idText.includes(normalizedQuery);
             
             if (matches) {
+                hasMatches = true;
                 item.classList.remove('search-hidden');
                 item.classList.add('search-match');
                 // Expand parent items
@@ -489,6 +601,11 @@
                 item.classList.remove('search-match');
             }
         });
+    }
+    
+    function performSearch(normalizedQuery) {
+        // This function is now replaced by performDOMSearch
+        performDOMSearch(normalizedQuery);
     }
 
     function expandParents(item) {
@@ -512,16 +629,18 @@
         const backendPath = isBackend ? '' : 'redaxo/';
         const apiUrl = backendPath + 'index.php?rex-api-call=info_center_structure_children';
         
-        fetch(apiUrl + '&category_id=' + categoryId + '&clang=' + clang)
+        return fetch(apiUrl + '&category_id=' + categoryId + '&clang=' + clang)
             .then(response => response.json())
             .then(data => {
                 if (data.success && data.children) {
                     renderChildren(item, data.children);
                     item.dataset.childrenLoaded = 'true';
                 }
+                return data;
             })
             .catch(error => {
                 console.error('Error loading children:', error);
+                return { success: false, error: error.message };
             })
             .finally(() => {
                 item.classList.remove('loading');
