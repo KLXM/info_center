@@ -533,12 +533,15 @@
         let childrenContainer = parentItem.querySelector(':scope > ul');
         if (!childrenContainer) {
             childrenContainer = document.createElement('ul');
-            childrenContainer.className = 'info-center-tree-children';
+            childrenContainer.className = 'info-center-tree-level';
             parentItem.appendChild(childrenContainer);
         }
         
         // Clear existing content
         childrenContainer.innerHTML = '';
+        
+        // Get clang from parent item
+        const clang = parentItem.dataset.clang || '1';
         
         // Render each child
         children.forEach(child => {
@@ -549,6 +552,7 @@
                 li.classList.add('info-center-tree-category');
                 li.dataset.id = child.id;
                 li.dataset.hasChildren = child.hasChildren;
+                li.dataset.clang = clang;
                 
                 const statusClass = child.status == 0 ? 'status-offline' : (child.status == 2 ? 'status-locked' : 'status-online');
                 
@@ -571,7 +575,6 @@
                 
                 li.innerHTML = `
                     <div class="info-center-tree-node">
-                        ${child.hasChildren ? '<button class="info-center-tree-toggle" type="button"></button>' : '<span class="info-center-tree-spacer"></span>'}
                         <a href="${child.url}" class="info-center-tree-link" title="${categoryTitle}">
                             <svg class="info-center-tree-folder-icon ${statusClass}" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M3 5a2 2 0 012-2h5l2 3h9a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V5z"/>
@@ -592,6 +595,13 @@
                                 </svg>
                             </a>
                         </div>
+                        ${child.hasChildren ? `<button class="info-center-tree-toggle" type="button">
+                            <svg class="icon-toggle" viewBox="0 0 24 24" fill="none">
+                                <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                                <circle cx="12" cy="6" r="1.5" fill="currentColor"/>
+                                <circle cx="12" cy="18" r="1.5" fill="currentColor"/>
+                            </svg>
+                        </button>` : ''}
                     </div>`;
             } else {
                 // Article
@@ -619,7 +629,6 @@
                 
                 li.innerHTML = `
                     <div class="info-center-tree-node">
-                        <span class="info-center-tree-spacer"></span>
                         <a href="${child.url}" class="info-center-tree-link" title="${articleTitle}">
                             <svg class="info-center-tree-article-icon ${statusClass}" viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z"/>
