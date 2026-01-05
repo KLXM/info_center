@@ -391,7 +391,10 @@
             // Reset button handler
             const resetBtn = document.querySelector('.info-center-domain-reset');
             if (resetBtn) {
-                resetBtn.addEventListener('click', function() {
+                resetBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
                     domainSelect.value = '0';
                     localStorage.setItem('infoCenterSelectedDomain', '0');
                     
