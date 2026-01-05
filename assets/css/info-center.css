@@ -1130,41 +1130,54 @@ body.rex-theme-dark .info-center-widget:hover {
 .info-center-domain-switcher {
     margin-bottom: 12px;
     display: flex;
-    gap: 8px;
-    align-items: center;
-}
-
-.info-center-domain-switcher select {
-    flex: 1;
-    padding: 10px 14px;
+    gap: 0;
+    align-items: stretch;
     background: rgba(255, 255, 255, 0.08);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 8px;
-    color: var(--text-color);
-    font-size: var(--font-size-base);
+    overflow: hidden;
     transition: all 0.2s ease;
-    cursor: pointer;
 }
 
-.info-center-domain-switcher select:focus {
-    outline: none;
-    background: rgba(255, 255, 255, 0.12);
+.info-center-domain-switcher:hover {
+    border-color: rgba(255, 255, 255, 0.25);
+}
+
+.info-center-domain-switcher:focus-within {
     border-color: rgba(59, 181, 148, 0.5);
     box-shadow: 0 0 0 3px rgba(59, 181, 148, 0.15);
 }
 
-.info-center-domain-switcher select:hover {
-    background: rgba(255, 255, 255, 0.12);
+.info-center-domain-switcher select {
+    flex: 1;
+    padding: 11px 14px;
+    background: transparent;
+    border: none;
+    color: var(--text-color);
+    font-size: var(--font-size-base);
+    font-weight: 500;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23e2e8f0' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.info-center-domain-switcher select:focus {
+    outline: none;
 }
 
 .info-center-domain-reset {
-    background: var(--button-bg);
-    border: 1px solid var(--button-border);
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
     color: var(--text-color-muted);
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 0 14px;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
@@ -1174,10 +1187,12 @@ body.rex-theme-dark .info-center-widget:hover {
 }
 
 .info-center-domain-reset:hover {
-    background: var(--hover-bg);
+    background: rgba(255, 255, 255, 0.1);
     color: var(--text-color);
-    border-color: var(--text-color);
-    transform: translateY(-1px);
+}
+
+.info-center-domain-reset:active {
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .info-center-domain-reset svg {
