@@ -12,7 +12,7 @@ class rex_api_info_center_save_widget_order extends rex_api_function
 
     public function execute()
     {
-        // Output buffer leeren
+        // Clear output buffer to prevent REDAXO framework output from interfering with JSON response
         while (ob_get_level()) {
             ob_end_clean();
         }

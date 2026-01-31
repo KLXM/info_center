@@ -1640,6 +1640,14 @@
         let draggedElement = null;
         let draggedIndex = null;
         
+        // Helper function to update widget indices
+        function updateWidgetIndices() {
+            const allWidgets = widgetsContainer.querySelectorAll('.info-center-widget');
+            allWidgets.forEach((w, idx) => {
+                w.dataset.index = idx;
+            });
+        }
+        
         // Make widgets draggable
         widgets.forEach((widget, index) => {
             widget.draggable = true;
@@ -1704,13 +1712,7 @@
                     this.parentNode.insertBefore(draggedElement, this);
                 }
                 
-                // Update indices
-                const allWidgets = widgetsContainer.querySelectorAll('.info-center-widget');
-                allWidgets.forEach((w, idx) => {
-                    w.dataset.index = idx;
-                });
-                
-                // Save new order
+                updateWidgetIndices();
                 saveWidgetOrder();
             }
             
@@ -1746,12 +1748,18 @@
                 body: formData
             }).catch(err => {
                 console.warn('Could not save widget order to server:', err);
+                // Note: User changes are still saved to localStorage and will work on this device
             });
         }
         
         // Keyboard navigation with arrow keys
         function initKeyboardNavigation() {
-            widgetsContainer.addEventListener('keydown', function(e) {
+            // Remove existing listener to prevent duplicates after PJAX updates
+            if (widgetsContainer._keydownHandler) {
+                widgetsContainer.removeEventListener('keydown', widgetsContainer._keydownHandler);
+            }
+            
+            widgetsContainer._keydownHandler = function(e) {
                 if (!['ArrowUp', 'ArrowDown'].includes(e.key)) return;
                 
                 const focusedWidget = document.activeElement.closest('.info-center-widget');
@@ -1768,29 +1776,19 @@
                     const previous = widgetsArray[focusedIndex - 1];
                     widgetsContainer.insertBefore(focusedWidget, previous);
                     focusedWidget.focus();
-                    
-                    // Update indices
-                    const allWidgets = widgetsContainer.querySelectorAll('.info-center-widget');
-                    allWidgets.forEach((w, idx) => {
-                        w.dataset.index = idx;
-                    });
-                    
+                    updateWidgetIndices();
                     saveWidgetOrder();
                 } else if (e.key === 'ArrowDown' && focusedIndex < widgetsArray.length - 1) {
                     // Move widget down
                     const next = widgetsArray[focusedIndex + 1];
                     widgetsContainer.insertBefore(next, focusedWidget);
                     focusedWidget.focus();
-                    
-                    // Update indices
-                    const allWidgets = widgetsContainer.querySelectorAll('.info-center-widget');
-                    allWidgets.forEach((w, idx) => {
-                        w.dataset.index = idx;
-                    });
-                    
+                    updateWidgetIndices();
                     saveWidgetOrder();
                 }
-            });
+            };
+            
+            widgetsContainer.addEventListener('keydown', widgetsContainer._keydownHandler);
             
             // Make widgets focusable
             widgets.forEach(widget => {

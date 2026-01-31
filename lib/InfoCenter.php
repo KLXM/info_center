@@ -54,38 +54,8 @@ class InfoCenter
         // Get user-specific widget order if available
         $savedOrder = $addon->getConfig('widget_order_user_' . $userId, []);
         
-        // Sortiere die Widgets nach Priorität oder gespeicherter Reihenfolge
-        if (!empty($savedOrder)) {
-            // Create a temporary array with order
-            $orderedWidgets = [];
-            $unorderedWidgets = [];
-            
-            foreach ($savedOrder as $index => $widgetId) {
-                if (isset($this->widgets[$widgetId])) {
-                    $orderedWidgets[$widgetId] = $this->widgets[$widgetId];
-                }
-            }
-            
-            // Add any widgets that weren't in the saved order
-            foreach ($this->widgets as $id => $widget) {
-                if (!isset($orderedWidgets[$id])) {
-                    $unorderedWidgets[$id] = $widget;
-                }
-            }
-            
-            // Sort unordered widgets by priority
-            uasort($unorderedWidgets, function ($a, $b) {
-                return $a->getPriority() <=> $b->getPriority();
-            });
-            
-            // Merge ordered and unordered widgets
-            $this->widgets = array_merge($orderedWidgets, $unorderedWidgets);
-        } else {
-            // Sortiere die Widgets nach Priorität (default)
-            uasort($this->widgets, function ($a, $b) {
-                return $a->getPriority() <=> $b->getPriority();
-            });
-        }
+        // Apply widget ordering
+        $this->widgets = $this->applyWidgetOrder($savedOrder);
 
         // Rendere alle Widgets
         $widgetsOutput = '';
@@ -241,5 +211,47 @@ class InfoCenter
                 }
             }
         }
+    }
+
+    /**
+     * Apply widget ordering based on saved user preferences or priority
+     * 
+     * @param array $savedOrder User's saved widget order
+     * @return array Ordered widgets
+     */
+    private function applyWidgetOrder(array $savedOrder): array
+    {
+        if (empty($savedOrder)) {
+            // Sort by priority (default)
+            uasort($this->widgets, function ($a, $b) {
+                return $a->getPriority() <=> $b->getPriority();
+            });
+            return $this->widgets;
+        }
+
+        // Apply saved order
+        $orderedWidgets = [];
+        $unorderedWidgets = [];
+        
+        foreach ($savedOrder as $widgetId) {
+            if (isset($this->widgets[$widgetId])) {
+                $orderedWidgets[$widgetId] = $this->widgets[$widgetId];
+            }
+        }
+        
+        // Add any widgets that weren't in the saved order
+        foreach ($this->widgets as $id => $widget) {
+            if (!isset($orderedWidgets[$id])) {
+                $unorderedWidgets[$id] = $widget;
+            }
+        }
+        
+        // Sort unordered widgets by priority
+        uasort($unorderedWidgets, function ($a, $b) {
+            return $a->getPriority() <=> $b->getPriority();
+        });
+        
+        // Merge ordered and unordered widgets
+        return array_merge($orderedWidgets, $unorderedWidgets);
     }
 }
