@@ -2126,7 +2126,7 @@ body.rex-theme-light .info-center-search-badge.offline {
 
 .drag-handle {
     cursor: grab;
-    color: var(--text-muted, #999);
+    color: var(--text-color-muted, #999);
     font-size: 16px;
     margin-right: 8px;
     user-select: none;

@@ -35,6 +35,9 @@ class SearchWidget extends AbstractWidget
 
         $content = '
         <div class="info-center-widget info-center-search-widget" id="info-center-search-widget">
+            <div class="info-center-widget-header">
+                <h3 class="info-center-widget-title">' . rex_escape($this->getTitle()) . '</h3>
+            </div>
             <div class="info-center-widget-content">
                 <div class="info-center-search-input-wrapper" title="↑↓ ' . rex_i18n::msg('info_center_search_navigate') . ' • Enter ' . rex_i18n::msg('info_center_search_open') . ' • ⌘K ' . rex_i18n::msg('info_center_search_focus') . '">
                     <svg class="info-center-search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
