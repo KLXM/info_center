@@ -59,6 +59,10 @@
             // URL Widget nach PJAX-Updates aktualisieren  
             refreshUrlWidget(viewRoot);
             
+            // Reinitialize drag & drop after PJAX updates
+            applySavedWidgetOrder();
+            initWidgetDragDrop();
+            
             // Refresh structure tree if on structure tab
             const structureContainer = document.getElementById('info-center-structure-container');
             if (structureContainer && structureContainer.dataset.loaded === 'true') {
@@ -1625,10 +1629,215 @@
         document.body.appendChild(modal);
     }
 
+    // Widget Drag & Drop functionality
+    function initWidgetDragDrop() {
+        const widgetsContainer = document.querySelector('[data-content="widgets"]');
+        if (!widgetsContainer) return;
+        
+        const widgets = widgetsContainer.querySelectorAll('.info-center-widget');
+        if (widgets.length === 0) return;
+        
+        let draggedElement = null;
+        let draggedIndex = null;
+        
+        // Helper function to update widget indices
+        function updateWidgetIndices() {
+            const allWidgets = widgetsContainer.querySelectorAll('.info-center-widget');
+            allWidgets.forEach((w, idx) => {
+                w.dataset.index = idx;
+            });
+        }
+        
+        // Make widgets draggable
+        widgets.forEach((widget, index) => {
+            widget.draggable = true;
+            widget.dataset.index = index;
+            
+            // Add drag handle visual indicator
+            const header = widget.querySelector('.info-center-widget-header');
+            if (header && !header.querySelector('.drag-handle')) {
+                const dragHandle = document.createElement('span');
+                dragHandle.className = 'drag-handle';
+                dragHandle.innerHTML = '⋮⋮';
+                dragHandle.title = 'Drag to reorder';
+                header.insertBefore(dragHandle, header.firstChild);
+            }
+            
+            widget.addEventListener('dragstart', handleDragStart);
+            widget.addEventListener('dragover', handleDragOver);
+            widget.addEventListener('drop', handleDrop);
+            widget.addEventListener('dragend', handleDragEnd);
+            widget.addEventListener('dragenter', handleDragEnter);
+            widget.addEventListener('dragleave', handleDragLeave);
+        });
+        
+        function handleDragStart(e) {
+            draggedElement = this;
+            draggedIndex = parseInt(this.dataset.index);
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', this.innerHTML);
+        }
+        
+        function handleDragOver(e) {
+            if (e.preventDefault) {
+                e.preventDefault();
+            }
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+        
+        function handleDragEnter(e) {
+            if (this !== draggedElement) {
+                this.classList.add('drag-over');
+            }
+        }
+        
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+        
+        function handleDrop(e) {
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            }
+            
+            if (draggedElement !== this) {
+                const targetIndex = parseInt(this.dataset.index);
+                
+                // Reorder widgets in DOM
+                if (draggedIndex < targetIndex) {
+                    this.parentNode.insertBefore(draggedElement, this.nextSibling);
+                } else {
+                    this.parentNode.insertBefore(draggedElement, this);
+                }
+                
+                updateWidgetIndices();
+                saveWidgetOrder();
+            }
+            
+            return false;
+        }
+        
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            
+            // Remove drag-over class from all widgets
+            const allWidgets = widgetsContainer.querySelectorAll('.info-center-widget');
+            allWidgets.forEach(w => w.classList.remove('drag-over'));
+        }
+        
+        function saveWidgetOrder() {
+            const widgets = widgetsContainer.querySelectorAll('.info-center-widget');
+            const order = Array.from(widgets).map(w => w.dataset.id);
+            localStorage.setItem('infoCenterWidgetOrder', JSON.stringify(order));
+            
+            // If backend is available, save to server
+            if (typeof rex !== 'undefined' && rex.backend) {
+                saveWidgetOrderToServer(order);
+            }
+        }
+        
+        function saveWidgetOrderToServer(order) {
+            // Use AJAX to save order to user preferences
+            const formData = new FormData();
+            formData.append('widget_order', JSON.stringify(order));
+            
+            fetch(window.location.pathname + '?rex-api-call=info_center_save_widget_order', {
+                method: 'POST',
+                body: formData
+            }).catch(err => {
+                console.warn('Could not save widget order to server:', err);
+                // Note: User changes are still saved to localStorage and will work on this device
+            });
+        }
+        
+        // Keyboard navigation with arrow keys
+        function initKeyboardNavigation() {
+            // Remove existing listener to prevent duplicates after PJAX updates
+            if (widgetsContainer._keydownHandler) {
+                widgetsContainer.removeEventListener('keydown', widgetsContainer._keydownHandler);
+            }
+            
+            widgetsContainer._keydownHandler = function(e) {
+                if (!['ArrowUp', 'ArrowDown'].includes(e.key)) return;
+                
+                const focusedWidget = document.activeElement.closest('.info-center-widget');
+                if (!focusedWidget) return;
+                
+                e.preventDefault();
+                
+                // Get current widgets array dynamically
+                const widgetsArray = Array.from(widgetsContainer.querySelectorAll('.info-center-widget'));
+                const focusedIndex = widgetsArray.indexOf(focusedWidget);
+                
+                if (e.key === 'ArrowUp' && focusedIndex > 0) {
+                    // Move widget up
+                    const previous = widgetsArray[focusedIndex - 1];
+                    widgetsContainer.insertBefore(focusedWidget, previous);
+                    focusedWidget.focus();
+                    updateWidgetIndices();
+                    saveWidgetOrder();
+                } else if (e.key === 'ArrowDown' && focusedIndex < widgetsArray.length - 1) {
+                    // Move widget down
+                    const next = widgetsArray[focusedIndex + 1];
+                    widgetsContainer.insertBefore(next, focusedWidget);
+                    focusedWidget.focus();
+                    updateWidgetIndices();
+                    saveWidgetOrder();
+                }
+            };
+            
+            widgetsContainer.addEventListener('keydown', widgetsContainer._keydownHandler);
+            
+            // Make widgets focusable
+            widgets.forEach(widget => {
+                if (!widget.hasAttribute('tabindex')) {
+                    widget.setAttribute('tabindex', '0');
+                }
+            });
+        }
+        
+        initKeyboardNavigation();
+    }
+    
+    // Apply saved widget order
+    function applySavedWidgetOrder() {
+        const widgetsContainer = document.querySelector('[data-content="widgets"]');
+        if (!widgetsContainer) return;
+        
+        const savedOrder = localStorage.getItem('infoCenterWidgetOrder');
+        if (!savedOrder) return;
+        
+        try {
+            const order = JSON.parse(savedOrder);
+            const widgets = widgetsContainer.querySelectorAll('.info-center-widget');
+            const widgetMap = new Map();
+            
+            // Create a map of widget id to element
+            widgets.forEach(widget => {
+                widgetMap.set(widget.dataset.id, widget);
+            });
+            
+            // Reorder widgets based on saved order
+            order.forEach((id, index) => {
+                const widget = widgetMap.get(id);
+                if (widget) {
+                    widgetsContainer.appendChild(widget);
+                    widget.dataset.index = index;
+                }
+            });
+        } catch (e) {
+            console.warn('Could not apply saved widget order:', e);
+        }
+    }
+
     // Initialize tabs on load
     document.addEventListener('DOMContentLoaded', function() {
         initTabs();
         initSearchWidget();
+        applySavedWidgetOrder();
+        initWidgetDragDrop();
     });
 
 })(); // Self-executing anonymous function without jQuery dependency
