@@ -2065,8 +2065,8 @@
                 }
             });
 
-            // If we are here, LocalStorage was newer than Server (see check above).
-            // Sync this newer state to the server so it persists across devices.
+            // If we are here, the server did not provide a newer timestamp than LocalStorage (see check above),
+            // so we treat the local widget order as the source of truth and sync it to the server to persist across devices.
             if (typeof rex !== 'undefined' && rex.backend) {
                 const formData = new FormData();
                 formData.append('widget_order', JSON.stringify(order));
