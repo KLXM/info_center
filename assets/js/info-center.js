@@ -59,6 +59,10 @@
             // URL Widget nach PJAX-Updates aktualisieren  
             refreshUrlWidget(viewRoot);
             
+            // Reinitialize drag & drop after PJAX updates
+            applySavedWidgetOrder();
+            initWidgetDragDrop();
+            
             // Refresh structure tree if on structure tab
             const structureContainer = document.getElementById('info-center-structure-container');
             if (structureContainer && structureContainer.dataset.loaded === 'true') {
@@ -1747,9 +1751,6 @@
         
         // Keyboard navigation with arrow keys
         function initKeyboardNavigation() {
-            const widgetsArray = Array.from(widgets);
-            let focusedIndex = -1;
-            
             widgetsContainer.addEventListener('keydown', function(e) {
                 if (!['ArrowUp', 'ArrowDown'].includes(e.key)) return;
                 
@@ -1757,7 +1758,10 @@
                 if (!focusedWidget) return;
                 
                 e.preventDefault();
-                focusedIndex = widgetsArray.indexOf(focusedWidget);
+                
+                // Get current widgets array dynamically
+                const widgetsArray = Array.from(widgetsContainer.querySelectorAll('.info-center-widget'));
+                const focusedIndex = widgetsArray.indexOf(focusedWidget);
                 
                 if (e.key === 'ArrowUp' && focusedIndex > 0) {
                     // Move widget up
