@@ -2107,3 +2107,47 @@ body.rex-theme-light .info-center-search-badge.offline {
     gap: 12px;
     align-items: flex-start;
 }
+
+/* Drag & Drop Styles */
+.info-center-widget {
+    cursor: move;
+    transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.info-center-widget.dragging {
+    opacity: 0.5;
+    transform: scale(0.95);
+}
+
+.info-center-widget.drag-over {
+    border-top: 3px solid #3498db;
+    margin-top: 3px;
+}
+
+.drag-handle {
+    cursor: grab;
+    color: var(--text-muted, #999);
+    font-size: 16px;
+    margin-right: 8px;
+    user-select: none;
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+}
+
+.drag-handle:hover {
+    opacity: 1;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+.info-center-widget:focus {
+    outline: 2px solid #3498db;
+    outline-offset: 2px;
+}
+
+/* Dark mode drag styles */
+body.rex-theme-dark .info-center-widget.drag-over {
+    border-top-color: #4a9eff;
+}
