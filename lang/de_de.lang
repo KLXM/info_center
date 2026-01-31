@@ -216,3 +216,5 @@ info_center_recently_edited_title = Zuletzt bearbeitet
 info_center_not_logged_in = Nicht angemeldet
 info_center_no_recent_articles = Keine kürzlich bearbeiteten Artikel gefunden
 info_center_no_permitted_articles = Keine Artikel mit ausreichenden Berechtigungen gefunden
+info_center_search_clear = Eingabe löschen
+info_center_search_help = Suche-Hilfe öffnen

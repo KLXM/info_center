@@ -699,9 +699,19 @@
         const searchInput = document.getElementById('info-center-search-input');
         const searchResults = document.getElementById('info-center-search-results');
         const clearButton = document.getElementById('info-center-search-clear');
+        const helpButton = document.getElementById('info-center-search-help');
         
         if (!searchInput || !searchResults) {
             return;
+        }
+
+        // Help button
+        if (helpButton) {
+            helpButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showHelpModal();
+            });
         }
 
         // Focus on Cmd/Ctrl + K
@@ -782,8 +792,16 @@
 
         searchResults.innerHTML = '<div class="info-center-search-loading">Suche läuft...</div>';
         
+        const searchWidget = document.getElementById('info-center-search-widget');
+        const isAdmin = searchWidget && searchWidget.dataset.isAdmin === 'true';
+
         // Parse filters from query FIRST (before quick actions)
-        const filters = parseSearchFilters(query);
+        // Only allow filters for admins
+        let filters = { query: query, modified: null, created: null, author: null, editor: null };
+        if (isAdmin) {
+            filters = parseSearchFilters(query);
+        }
+        
         const searchQuery = filters.query;
         
         // Check if we have filters - if yes, perform search even without query text
@@ -1159,21 +1177,61 @@
     function getQuickActions(query) {
         const actions = [];
         const trimmedQuery = query.trim();
+        const searchWidget = document.getElementById('info-center-search-widget');
+        const isAdmin = searchWidget && searchWidget.dataset.isAdmin === 'true';
         
         // Calculator
-        if (/^[\d\s+\-*\/().%]+$/.test(trimmedQuery) && /[\d]/.test(trimmedQuery)) {
+        // Support for px to rem/em conversion and regular math
+        if (/^[\d\s+\-*\/().%,pxrem]+$/.test(trimmedQuery) || (trimmedQuery.includes('px') && (trimmedQuery.includes('rem') || trimmedQuery.includes('em')))) {
             try {
-                const result = eval(trimmedQuery);
-                if (!isNaN(result) && isFinite(result)) {
-                    actions.push({
-                        type: 'calculator',
-                        title: '= ' + result,
-                        subtitle: trimmedQuery,
-                        action: () => {
-                            navigator.clipboard.writeText(result.toString());
-                            alert('Ergebnis kopiert: ' + result);
+                // Pixel to REM/EM conversion (Base 16 default)
+                if (trimmedQuery.includes('px') || trimmedQuery.includes('rem') || trimmedQuery.includes('em')) {
+                    const baseSize = 16;
+                    
+                    // Simple conversion: "16px to rem" or just "16px"
+                    let val = parseFloat(trimmedQuery);
+                    if (!isNaN(val)) {
+                        if (trimmedQuery.includes('px')) {
+                            // px to rem
+                            const rem = val / baseSize;
+                            actions.push({
+                                type: 'calculator',
+                                title: val + 'px = ' + rem + 'rem',
+                                subtitle: 'Basis: ' + baseSize + 'px (1rem)',
+                                action: () => {
+                                    navigator.clipboard.writeText(rem + 'rem');
+                                    alert('Kopiert: ' + rem + 'rem');
+                                }
+                            });
+                        } else if (trimmedQuery.includes('rem')) {
+                            // rem to px
+                            const px = val * baseSize;
+                            actions.push({
+                                type: 'calculator',
+                                title: val + 'rem = ' + px + 'px',
+                                subtitle: 'Basis: ' + baseSize + 'px (1rem)',
+                                action: () => {
+                                    navigator.clipboard.writeText(px + 'px');
+                                    alert('Kopiert: ' + px + 'px');
+                                }
+                            });
                         }
-                    });
+                    }
+                } 
+                // Regular math
+                else if (/^[\d]/.test(trimmedQuery)) {
+                    const result = eval(trimmedQuery);
+                    if (!isNaN(result) && isFinite(result)) {
+                        actions.push({
+                            type: 'calculator',
+                            title: '= ' + result,
+                            subtitle: trimmedQuery,
+                            action: () => {
+                                navigator.clipboard.writeText(result.toString());
+                                alert('Ergebnis kopiert: ' + result);
+                            }
+                        });
+                    }
                 }
             } catch (e) {
                 // Invalid expression, ignore
@@ -1298,6 +1356,113 @@
                     window.open(trimmedQuery, '_blank');
                 }
             });
+        }
+
+        // Timestamp Converter (ts 1234567890 or ts now)
+        if (isAdmin && (trimmedQuery.toLowerCase().startsWith('ts ') || trimmedQuery.toLowerCase() === 'ts now')) {
+            let tsValue = trimmedQuery.toLowerCase() === 'ts now' ? 'now' : trimmedQuery.substring(3).trim();
+            let date, timestamp;
+            
+            if (tsValue === 'now') {
+                date = new Date();
+                timestamp = Math.floor(date.getTime() / 1000);
+            } else {
+                // Check if seconds (10 digits) or milliseconds (13 digits)
+                let ts = parseInt(tsValue);
+                if (!isNaN(ts)) {
+                    timestamp = ts;
+                    // Auto-detect seconds vs milliseconds
+                    if (tsValue.length <= 10) ts *= 1000;
+                    date = new Date(ts);
+                }
+            }
+
+            if (date && !isNaN(date.getTime())) {
+                const dateStr = date.toLocaleString('de-DE');
+                const isoStr = date.toISOString();
+                
+                actions.push({
+                    type: 'calculator',
+                    title: 'Zeitstempel: ' + timestamp,
+                    subtitle: dateStr + ' (' + isoStr + ')',
+                    action: () => {
+                        navigator.clipboard.writeText(timestamp.toString());
+                        alert('Timestamp kopiert: ' + timestamp);
+                    }
+                });
+            }
+        }
+
+        // Password Generator (pw 16)
+        if (isAdmin && trimmedQuery.toLowerCase().startsWith('pw')) {
+            const match = trimmedQuery.match(/pw\s*(\d+)?/i);
+            const length = match && match[1] ? parseInt(match[1]) : 12;
+            const safeLength = Math.min(Math.max(length, 4), 64); // Min 4, Max 64
+            
+            const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+            let retVal = "";
+            for (let i = 0, n = charset.length; i < safeLength; ++i) {
+                retVal += charset.charAt(Math.floor(Math.random() * n));
+            }
+            
+            actions.push({
+                type: 'calculator',
+                title: 'Passwort generieren (' + safeLength + ' Zeichen)',
+                subtitle: retVal,
+                action: () => {
+                    navigator.clipboard.writeText(retVal);
+                    alert('Passwort kopiert');
+                }
+            });
+        }
+
+        // REDAXO Navigation (go modules, go yform...)
+        if (isAdmin && trimmedQuery.toLowerCase().startsWith('go ')) {
+            const target = trimmedQuery.substring(3).toLowerCase().trim();
+            const pages = {
+                'structure': { url: 'index.php?page=structure', label: 'Strukturverwaltung' },
+                'content': { url: 'index.php?page=content', label: 'Strukturverwaltung' },
+                'templates': { url: 'index.php?page=templates', label: 'Templates' },
+                'modules': { url: 'index.php?page=modules', label: 'Module' },
+                'media': { url: 'index.php?page=mediapool', label: 'Medienpool' },
+                'users': { url: 'index.php?page=users', label: 'Benutzerverwaltung' },
+                'addons': { url: 'index.php?page=packages', label: 'AddOns' },
+                'packages': { url: 'index.php?page=packages', label: 'AddOns' },
+                'settings': { url: 'index.php?page=system/settings', label: 'System-Einstellungen' },
+                'log': { url: 'index.php?page=system/log', label: 'System-Log' },
+                'yform': { url: 'index.php?page=yform/manager/data_edit', label: 'YForm Daten' },
+                'info': { url: 'index.php?page=system/report', label: 'System-Bericht' },
+                'console': { url: 'index.php?page=system/console', label: 'System-Console' },
+                'debug': { url: 'index.php?page=system/debug', label: 'Debug' },
+            };
+            
+            if (pages[target]) {
+                actions.push({
+                    type: 'category', // Use category icon for navigation
+                    title: 'Gehe zu: ' + pages[target].label,
+                    subtitle: pages[target].url,
+                    action: () => {
+                        window.location.href = pages[target].url;
+                    }
+                });
+            } else {
+                 // Suggest similar pages? For now just list available
+            }
+        }
+
+        // Documentation Search
+        if (isAdmin && trimmedQuery.toLowerCase().startsWith('docs ')) {
+            const term = trimmedQuery.substring(5).trim();
+            if (term.length > 0) {
+                actions.push({
+                    type: 'wikipedia', // Use book/wiki icon
+                    title: 'REDAXO Doku: ' + term,
+                    subtitle: 'In der offiziellen Dokumentation suchen',
+                    action: () => {
+                        window.open('https://redaxo.org/doku/master/search?q=' + encodeURIComponent(term), '_blank');
+                    }
+                });
+            }
         }
         
         return actions;
@@ -1538,6 +1703,10 @@
                           document.body.classList.contains('rex-theme-dark') ||
                           window.matchMedia('(prefers-color-scheme: dark)').matches;
         
+        // Check for admin status
+        const searchWidget = document.getElementById('info-center-search-widget');
+        const isAdmin = searchWidget && searchWidget.dataset.isAdmin === 'true';
+        
         const bgColor = isDarkMode ? '#1e1e1e' : '#ffffff';
         const textColor = isDarkMode ? '#e0e0e0' : '#2c3e50';
         const headingColor = isDarkMode ? '#4a9eff' : '#3498db';
@@ -1545,6 +1714,14 @@
         const codeBg = isDarkMode ? '#3d3d3d' : '#e9ecef';
         const codeColor = isDarkMode ? '#e0e0e0' : '#333333';
         
+        // Translation helper
+        const t = (key, defaultText) => {
+            if (typeof rex !== 'undefined' && rex.info_center_translations && rex.info_center_translations[key]) {
+                return rex.info_center_translations[key];
+            }
+            return defaultText;
+        };
+
         const modal = document.createElement('div');
         modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);display:flex;align-items:center;justify-content:center;z-index:999999;overflow-y:auto;padding:20px;';
         
@@ -1552,73 +1729,71 @@
         content.style.cssText = `background:${bgColor};color:${textColor};padding:30px;border-radius:8px;max-width:800px;width:100%;max-height:90vh;overflow-y:auto;`;
         
         content.innerHTML = `
-            <h2 style="margin-top:0;color:${headingColor};">🔍 Search Widget - Hilfe</h2>
+            <h2 style="margin-top:0;color:${headingColor};">${t('help_title', '🔎 Search Widget - Hilfe')}</h2>
             
-            <h3 style="color:${headingColor};margin-top:25px;">📊 Quick Actions</h3>
+            <h3 style="color:${headingColor};margin-top:25px;">${t('help_quick_actions', '⚡ Quick Actions')}</h3>
             <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
-                <p style="margin:5px 0;color:${textColor};"><strong>🧮 Rechner:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">2+2</code> oder <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">15*20%</code> - Ergebnis wird kopiert</p>
-                <p style="margin:5px 0;color:${textColor};"><strong>📚 Wikipedia:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">wiki REDAXO</code> - Live-Vorschau aus Wikipedia</p>
-                <p style="margin:5px 0;color:${textColor};"><strong>📖 Wörterbuch:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">define CMS</code> - Definition aus Wiktionary</p>
-                <p style="margin:5px 0;color:${textColor};"><strong>📝 Blindtext:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">blindtext 500</code> - Generiert deutschen Platzhaltertext</p>
-                <p style="margin:5px 0;color:${textColor};"><strong>📱 QR Code:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">qr https://example.com</code> - Erstellt QR Code als SVG/PNG</p>
-                <p style="margin:5px 0;color:${textColor};"><strong>🔗 URL:</strong> URLs werden automatisch erkannt und können geöffnet werden</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>${t('help_calculator', '🧮 Rechner & Einheiten')}:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">2+2</code>, <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">16px rem</code>, <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">1.5rem px</code></p>
+                <p style="margin:5px 0;color:${textColor};"><strong>${t('help_wiki', '📚 Wikipedia & Wörterbuch')}:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">${t('help_wiki_desc', 'wiki REDAXO, define CMS')}</code></p>
+                ${isAdmin ? `<p style="margin:5px 0;color:${textColor};"><strong>${t('help_navigation', '🚀 Navigation')}:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">${t('help_nav_desc', 'go modules, go yform, go user')}</code></p>` : ''}
+                ${isAdmin ? `<p style="margin:5px 0;color:${textColor};"><strong>${t('help_tools', '🕒 Tools')}:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">${t('help_tools_desc', 'ts now (Timestamp), pw 16 (Passwort)')}</code></p>` : ''}
+                <p style="margin:5px 0;color:${textColor};"><strong>${t('help_blindtext', '📝 Blindtext')}:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">blindtext 500</code></p>
+                ${isAdmin ? `<p style="margin:5px 0;color:${textColor};"><strong>${t('help_doku', '📘 Doku')}:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">${t('help_doku_desc', 'docs api - REDAXO Dokumentation')}</code></p>` : ''}
+                <p style="margin:5px 0;color:${textColor};"><strong>${t('help_other', '📱 Sonstiges')}:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">${t('help_other_desc', 'qr https://... (URL öffnen)')}</code></p>
             </div>
             
-            <h3 style="color:${headingColor};margin-top:25px;">🔎 Erweiterte Filter</h3>
+            ${isAdmin ? `
+            <h3 style="color:${headingColor};margin-top:25px;">${t('help_filters', '🔎 Erweiterte Filter')}</h3>
             <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
-                <p style="margin:10px 0;color:${textColor};"><strong>📅 Datum-Filter (geändert):</strong></p>
+                <p style="margin:10px 0;color:${textColor};"><strong>${t('help_modified', '📅 Datum-Filter (geändert)')}:</strong></p>
                 <ul style="margin:5px 0 10px 20px;color:${textColor};">
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:today</code> - Heute geändert</li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:yesterday</code> - Gestern geändert</li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:last-week</code> - Letzte 7 Tage</li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:last-month</code> - Letzte 30 Tage</li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:2025-12-05</code> - Exaktes Datum</li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:today</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:yesterday</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:last-week</code></li>
                 </ul>
                 
-                <p style="margin:10px 0;color:${textColor};"><strong>📅 Datum-Filter (erstellt):</strong></p>
+                <p style="margin:10px 0;color:${textColor};"><strong>${t('help_created', '📅 Datum-Filter (erstellt)')}:</strong></p>
                 <ul style="margin:5px 0 10px 20px;color:${textColor};">
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">created:today</code> - Heute erstellt</li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">created:last-week</code> - Letzte 7 Tage</li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">created:2025-12-01</code> - Exaktes Datum</li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">created:today</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">created:last-week</code></li>
                 </ul>
                 
-                <p style="margin:10px 0;color:${textColor};"><strong>👤 Benutzer-Filter:</strong></p>
+                <p style="margin:10px 0;color:${textColor};"><strong>${t('help_user', '👤 Benutzer-Filter')}:</strong></p>
                 <ul style="margin:5px 0 10px 20px;color:${textColor};">
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">author:admin</code> - Erstellt von User "admin"</li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">editor:thomas</code> - Bearbeitet von User "thomas"</li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">author:admin</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">editor:thomas</code></li>
                 </ul>
                 
-                <p style="margin:10px 0;color:${textColor};"><strong>🔗 Kombinationen:</strong></p>
+                <p style="margin:10px 0;color:${textColor};"><strong>${t('help_combinations', '🔗 Kombinationen')}:</strong></p>
                 <ul style="margin:5px 0 10px 20px;color:${textColor};">
                     <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">test modified:today</code></li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">artikel author:admin created:last-week</code></li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">news modified:yesterday editor:thomas</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">artikel author:admin</code></li>
                 </ul>
+            </div>` : ''}
+            
+            <h3 style="color:${headingColor};margin-top:25px;">${t('help_shortcuts', '⌨️ Tastatur-Shortcuts')}</h3>
+            <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
+                <p style="margin:5px 0;color:${textColor};"><strong>⌘K / Ctrl+K</strong> - ${t('help_shortcuts_focus', 'Suche fokussieren')}</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>↑/↓</strong> - ${t('help_shortcuts_nav', 'Durch Ergebnisse navigieren')}</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>Enter</strong> - ${t('help_shortcuts_open', 'Ausgewähltes Ergebnis öffnen')}</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>ESC</strong> - ${t('help_shortcuts_close', 'Suche schließen')}</p>
             </div>
             
-            <h3 style="color:${headingColor};margin-top:25px;">⌨️ Tastatur-Shortcuts</h3>
+            <h3 style="color:${headingColor};margin-top:25px;">${t('help_search', '🔎 Normale Suche')}</h3>
             <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
-                <p style="margin:5px 0;color:${textColor};"><strong>⌘K</strong> oder <strong>Ctrl+K</strong> - Suche fokussieren</p>
-                <p style="margin:5px 0;color:${textColor};"><strong>↑/↓</strong> - Durch Ergebnisse navigieren</p>
-                <p style="margin:5px 0;color:${textColor};"><strong>Enter</strong> - Ausgewähltes Ergebnis öffnen</p>
-                <p style="margin:5px 0;color:${textColor};"><strong>ESC</strong> - Suche schließen</p>
-            </div>
-            
-            <h3 style="color:${headingColor};margin-top:25px;">🔍 Normale Suche</h3>
-            <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
-                <p style="margin:5px 0;color:${textColor};">Durchsucht automatisch:</p>
+                <p style="margin:5px 0;color:${textColor};">${t('help_search_desc', 'Durchsucht automatisch:')}</p>
                 <ul style="margin:5px 0 0 20px;color:${textColor};">
-                    <li><strong>Artikel</strong> - Name, ID und alle Content-Felder (value1-20)</li>
-                    <li><strong>Kategorien</strong> - Name und ID</li>
-                    <li><strong>Module</strong> - Name und Code</li>
-                    <li><strong>Templates</strong> - Name und Code</li>
-                    <li><strong>Medien</strong> - Dateiname und Titel</li>
+                    <li><strong>${t('help_search_articles', 'Artikel (Name, ID, Content)')}</strong></li>
+                    <li><strong>${t('help_search_categories', 'Kategorien (Name, ID)')}</strong></li>
+                    <li><strong>${t('help_search_modules', 'Module (Name, Code)')}</strong></li>
+                    <li><strong>${t('help_search_templates', 'Templates (Name, Code)')}</strong></li>
+                    <li><strong>${t('help_search_media', 'Medien (Dateiname, Titel)')}</strong></li>
                 </ul>
             </div>
             
             <div style="text-align:center;margin-top:25px;">
                 <button class="btn btn-primary" onclick="this.closest('div[style*=fixed]').remove()">
-                    Schließen
+                    ${t('help_close', 'Schließen')}
                 </button>
             </div>
         `;
@@ -1650,8 +1825,14 @@
         
         // Make widgets draggable
         widgets.forEach((widget, index) => {
-            widget.draggable = true;
+            // Update index
             widget.dataset.index = index;
+
+            // Prevent duplicate initialization
+            if (widget.dataset.dndInitialized === 'true') {
+                return;
+            }
+            widget.dataset.dndInitialized = 'true';
             
             // Add drag handle visual indicator
             const header = widget.querySelector('.info-center-widget-header');
@@ -1659,9 +1840,30 @@
                 const dragHandle = document.createElement('span');
                 dragHandle.className = 'drag-handle';
                 dragHandle.innerHTML = '⋮⋮';
-                dragHandle.title = 'Drag to reorder';
+                
+                const dragTitle = (window.InfoCenter && window.InfoCenter.translations && window.InfoCenter.translations.drag_reorder) 
+                    ? window.InfoCenter.translations.drag_reorder 
+                    : 'Drag to reorder';
+
+                dragHandle.title = dragTitle;
+                dragHandle.setAttribute('role', 'button');
+                dragHandle.setAttribute('aria-label', dragTitle);
+                
                 header.insertBefore(dragHandle, header.firstChild);
             }
+
+            // Only allow dragging from header
+            widget.addEventListener('mousedown', function(e) {
+                if (e.target.closest('.info-center-widget-header')) {
+                    this.setAttribute('draggable', 'true');
+                } else {
+                    this.setAttribute('draggable', 'false');
+                }
+            });
+
+            widget.addEventListener('mouseup', function(e) {
+                 this.setAttribute('draggable', 'false');
+            });
             
             widget.addEventListener('dragstart', handleDragStart);
             widget.addEventListener('dragover', handleDragOver);
@@ -1729,9 +1931,13 @@
         
         function saveWidgetOrder() {
             const widgets = widgetsContainer.querySelectorAll('.info-center-widget');
-            const order = Array.from(widgets).map(w => w.dataset.id);
-            localStorage.setItem('infoCenterWidgetOrder', JSON.stringify(order));
+            const order = Array.from(widgets)
+                .filter(w => w.dataset.id)
+                .map(w => w.dataset.id);
             
+            localStorage.setItem('infoCenterWidgetOrder', JSON.stringify(order));
+            localStorage.setItem('infoCenterWidgetOrderTimestamp', Date.now().toString());
+
             // If backend is available, save to server
             if (typeof rex !== 'undefined' && rex.backend) {
                 saveWidgetOrderToServer(order);
@@ -1746,7 +1952,15 @@
             fetch(window.location.pathname + '?rex-api-call=info_center_save_widget_order', {
                 method: 'POST',
                 body: formData
-            }).catch(err => {
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.timestamp) {
+                    // Update local timestamp with server timestamp to stay in sync
+                    localStorage.setItem('infoCenterWidgetOrderTimestamp', data.timestamp);
+                }
+            })
+            .catch(err => {
                 console.warn('Could not save widget order to server:', err);
                 // Note: User changes are still saved to localStorage and will work on this device
             });
@@ -1806,6 +2020,29 @@
         const widgetsContainer = document.querySelector('[data-content="widgets"]');
         if (!widgetsContainer) return;
         
+        // Check timestamps logic
+        const container = document.querySelector('.info-center-container');
+        const serverTimestamp = container && container.dataset.widgetOrderTimestamp 
+            ? parseInt(container.dataset.widgetOrderTimestamp) 
+            : 0;
+            
+        const localTimestamp = localStorage.getItem('infoCenterWidgetOrderTimestamp') 
+            ? parseInt(localStorage.getItem('infoCenterWidgetOrderTimestamp')) 
+            : 0;
+
+        // If Server is newer or equal to Local Storage, trust Server.
+        // The DOM is already rendered in Server order.
+        if (serverTimestamp > 0 && serverTimestamp >= localTimestamp) {
+            // Server is the authority. 
+            // Sync Local Storage to match Server state
+            const currentWidgets = widgetsContainer.querySelectorAll('.info-center-widget');
+            const serverOrder = Array.from(currentWidgets).map(w => w.dataset.id);
+            
+            localStorage.setItem('infoCenterWidgetOrder', JSON.stringify(serverOrder));
+            localStorage.setItem('infoCenterWidgetOrderTimestamp', serverTimestamp.toString());
+            return; // EXIT: Do not reorder DOM
+        }
+
         const savedOrder = localStorage.getItem('infoCenterWidgetOrder');
         if (!savedOrder) return;
         
@@ -1827,6 +2064,25 @@
                     widget.dataset.index = index;
                 }
             });
+
+            // If we are here, LocalStorage was newer than Server (see check above).
+            // Sync this newer state to the server so it persists across devices.
+            if (typeof rex !== 'undefined' && rex.backend) {
+                const formData = new FormData();
+                formData.append('widget_order', JSON.stringify(order));
+                
+                fetch(window.location.pathname + '?rex-api-call=info_center_save_widget_order', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.timestamp) {
+                        localStorage.setItem('infoCenterWidgetOrderTimestamp', data.timestamp);
+                    }
+                })
+                .catch(err => console.warn('Auto-sync to server failed:', err));
+            }
         } catch (e) {
             console.warn('Could not apply saved widget order:', e);
         }
