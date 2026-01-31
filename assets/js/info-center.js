@@ -1931,9 +1931,16 @@
         
         function saveWidgetOrder() {
             const widgets = widgetsContainer.querySelectorAll('.info-center-widget');
-            const order = Array.from(widgets)
-                .filter(w => w.dataset.id)
-                .map(w => w.dataset.id);
+            const widgetsArray = Array.from(widgets);
+
+            // Ensure every widget has a data-id so ordering stays consistent
+            widgetsArray.forEach((w, index) => {
+                if (!w.dataset.id) {
+                    w.dataset.id = 'auto-' + index;
+                }
+            });
+
+            const order = widgetsArray.map(w => w.dataset.id);
             
             localStorage.setItem('infoCenterWidgetOrder', JSON.stringify(order));
             localStorage.setItem('infoCenterWidgetOrderTimestamp', Date.now().toString());
