@@ -38,15 +38,48 @@ class rex_api_info_center_save_widget_order extends rex_api_function
                 $this->sendError('Invalid JSON');
                 return;
             }
+
+            // Validate that the decoded value is an array
+            if (!is_array($order)) {
+                $this->sendError('Widget order must be an array');
+                return;
+            }
+
+            // Sanitize and validate each widget ID
+            $sanitizedOrder = [];
+            foreach ($order as $widgetId) {
+                if (!is_string($widgetId)) {
+                    continue;
+                }
+
+                // Allow only expected widget ID format: letters, numbers, underscore, dash
+                if (!preg_match('/^[a-zA-Z0-9_-]+$/', $widgetId)) {
+                    continue;
+                }
+
+                $sanitizedOrder[] = $widgetId;
+            }
+
+            if (empty($sanitizedOrder)) {
+                $this->sendError('No valid widget IDs provided');
+                return;
+            }
             
             // Save to user-specific configuration
             $addon = rex_addon::get('info_center');
             $user = rex::getUser();
             $userId = $user->getId();
             
-            $addon->setConfig('widget_order_user_' . $userId, $order);
+            $addon->setConfig('widget_order_user_' . $userId, $sanitizedOrder);
             
-            $this->sendSuccess(['message' => 'Widget order saved successfully']);
+            // Save timestamp
+            $timestamp = time();
+            $addon->setConfig('widget_order_updated_user_' . $userId, $timestamp);
+            
+            $this->sendSuccess([
+                'message' => 'Widget order saved successfully',
+                'timestamp' => $timestamp * 1000 // Convert to milliseconds for JS
+            ]);
             
         } catch (\Exception $e) {
             $this->sendError('Error saving widget order: ' . $e->getMessage());

@@ -26,7 +26,7 @@
 /* System Light Theme - nur als Fallback wenn keine REDAXO Theme Class */
 @media (prefers-color-scheme: light) {
     body:not(.rex-theme-dark) .info-center-container {
-        --panel-bg: rgba(50, 64, 80, 0.15);
+        --panel-bg: rgba(68, 108, 154, 0.71);
         --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.25);
         --border-color: rgba(50, 64, 80, 0.2);
         --text-color: #1f2937;
@@ -42,7 +42,7 @@
 
 /* REDAXO Light Theme - höchste Priorität */
 body.rex-theme-light .info-center-container {
-    --panel-bg: rgba(50, 64, 80, 0.15) !important;
+    --panel-bg: rgba(68, 108, 154, 0.71) !important;
     --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.25) !important;
     --border-color: rgba(50, 64, 80, 0.2) !important;
     --text-color: #1f2937 !important;
@@ -1634,9 +1634,10 @@ body.rex-theme-dark .info-center-widget:hover {
 
 .info-center-search-input {
     width: 100%;
-    padding: 10px 40px 10px 40px;
+    padding: 10px 70px 10px 40px;
     background: var(--widget-bg);
     border: 1px solid var(--widget-border);
+
     border-radius: 8px;
     color: var(--text-color);
     font-size: var(--font-size-base);
@@ -1655,7 +1656,7 @@ body.rex-theme-dark .info-center-widget:hover {
 
 .info-center-search-clear {
     position: absolute;
-    right: 12px;
+    right: 40px;
     top: 50%;
     transform: translateY(-50%);
     background: none;
@@ -1668,6 +1669,23 @@ body.rex-theme-dark .info-center-widget:hover {
 }
 
 .info-center-search-clear:hover {
+    color: var(--text-color);
+}
+
+.info-center-search-help {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 4px;
+    cursor: pointer;
+    color: var(--text-color-muted);
+    transition: color 0.2s ease;
+}
+
+.info-center-search-help:hover {
     color: var(--text-color);
 }
 
@@ -2110,7 +2128,6 @@ body.rex-theme-light .info-center-search-badge.offline {
 
 /* Drag & Drop Styles */
 .info-center-widget {
-    cursor: move;
     transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 

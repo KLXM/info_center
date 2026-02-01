@@ -53,6 +53,7 @@ class InfoCenter
 
         // Get user-specific widget order if available
         $savedOrder = $addon->getConfig('widget_order_user_' . $userId, []);
+        $savedTimestamp = (int) $addon->getConfig('widget_order_updated_user_' . $userId, 0);
         
         // Apply widget ordering
         $this->widgets = $this->applyWidgetOrder($savedOrder);
@@ -146,7 +147,7 @@ class InfoCenter
 
         // Das komplette Info Center HTML mit Tab-System
         return sprintf(
-            '<div class="%s">
+            '<div class="%s" data-widget-order-timestamp="%d">
                 <button class="info-center-toggle" type="button" title="' . \rex_i18n::msg('info_center_toggle', 'Info Center öffnen/schließen') . '">
                     <span class="toggle-icon"></span>
                 </button>
@@ -160,6 +161,7 @@ class InfoCenter
                 </div>
             </div>',
             implode(' ', $containerClasses),
+            $savedTimestamp * 1000,
             $headerButtons,
             $tabNav,
             $widgetsOutput,

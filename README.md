@@ -31,6 +31,7 @@ Das **Info Center** ist ein intelligentes Dashboard-System für REDAXO CMS, das 
 
 ### 🎛️ **Intelligente Anzeige**
 - **📱 Responsive Design** - Optimal auf allen Geräten
+- **🖐️ Drag & Drop Sortierung** - Widgets einfach per Drag & Drop verschieben (benutzerspezifisch gespeichert)
 - **🌙 Dark/Light Mode** - Automatisch oder manuell wählbar
 - **📍 Flexible Positionierung** - Links oder rechts positionierbar
 - **👤 Benutzer-spezifisch** - Individuelle Widget-Konfiguration pro User
