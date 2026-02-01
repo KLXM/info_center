@@ -1182,33 +1182,35 @@
         
         // Calculator
         // Support for px to rem/em conversion and regular math
-        if (/^[\d\s+\-*\/().%,pxrem]+$/.test(trimmedQuery) || (trimmedQuery.includes('px') && (trimmedQuery.includes('rem') || trimmedQuery.includes('em')))) {
+        if (/^[\d\s+\-*\/().%,pxrem]+$/.test(trimmedQuery)) {
             try {
                 // Pixel to REM/EM conversion (Base 16 default)
                 if (trimmedQuery.includes('px') || trimmedQuery.includes('rem') || trimmedQuery.includes('em')) {
                     const baseSize = 16;
                     
-                    // Simple conversion: "16px to rem" or just "16px"
-                    let val = parseFloat(trimmedQuery);
-                    if (!isNaN(val)) {
-                        if (trimmedQuery.includes('px')) {
+                    // Validate strictly for conversion: number + unit [to unit]
+                    // But here we just check presence. Let's try to parse the number.
+                    const valStr = parseFloat(trimmedQuery);
+                    
+                    if (!isNaN(valStr)) {
+                        if (trimmedQuery.includes('px') && !trimmedQuery.includes('rem') && !trimmedQuery.includes('em')) {
                             // px to rem
-                            const rem = val / baseSize;
+                            const rem = valStr / baseSize;
                             actions.push({
                                 type: 'calculator',
-                                title: val + 'px = ' + rem + 'rem',
+                                title: valStr + 'px = ' + rem + 'rem',
                                 subtitle: 'Basis: ' + baseSize + 'px (1rem)',
                                 action: () => {
                                     navigator.clipboard.writeText(rem + 'rem');
                                     alert('Kopiert: ' + rem + 'rem');
                                 }
                             });
-                        } else if (trimmedQuery.includes('rem')) {
+                        } else if ((trimmedQuery.includes('rem') || trimmedQuery.includes('em')) && !trimmedQuery.includes('px')) {
                             // rem to px
-                            const px = val * baseSize;
+                            const px = valStr * baseSize;
                             actions.push({
                                 type: 'calculator',
-                                title: val + 'rem = ' + px + 'px',
+                                title: valStr + 'rem = ' + px + 'px',
                                 subtitle: 'Basis: ' + baseSize + 'px (1rem)',
                                 action: () => {
                                     navigator.clipboard.writeText(px + 'px');
@@ -1218,19 +1220,28 @@
                         }
                     }
                 } 
-                // Regular math
-                else if (/^[\d]/.test(trimmedQuery)) {
-                    const result = eval(trimmedQuery);
-                    if (!isNaN(result) && isFinite(result)) {
-                        actions.push({
-                            type: 'calculator',
-                            title: '= ' + result,
-                            subtitle: trimmedQuery,
-                            action: () => {
-                                navigator.clipboard.writeText(result.toString());
-                                alert('Ergebnis kopiert: ' + result);
-                            }
-                        });
+                // Regular math - Strict validation to avoid eval() risks
+                else if (/^[\d\s+\-*\/().%,]+$/.test(trimmedQuery)) {
+                    // Replace comma with dot for standard JS math
+                    const mathQuery = trimmedQuery.replace(/,/g, '.');
+                    
+                    // Double check strictly for safe chars before execution
+                    if (/^[\d\s+\-*\/().]+$/.test(mathQuery)) {
+                        // Use Function constructor instead of eval, still dangerous if not sanitized, 
+                        // but we strictly validated the charset above.
+                        const result = new Function('return ' + mathQuery)();
+                        
+                        if (!isNaN(result) && isFinite(result)) {
+                            actions.push({
+                                type: 'calculator',
+                                title: '= ' + result,
+                                subtitle: trimmedQuery,
+                                action: () => {
+                                    navigator.clipboard.writeText(result.toString());
+                                    alert('Ergebnis kopiert: ' + result);
+                                }
+                            });
+                        }
                     }
                 }
             } catch (e) {
@@ -1445,8 +1456,6 @@
                         window.location.href = pages[target].url;
                     }
                 });
-            } else {
-                 // Suggest similar pages? For now just list available
             }
         }
 
@@ -1839,7 +1848,7 @@
             if (header && !header.querySelector('.drag-handle')) {
                 const dragHandle = document.createElement('span');
                 dragHandle.className = 'drag-handle';
-                dragHandle.innerHTML = '⋮⋮';
+                dragHandle.textContent = '⋮⋮';
                 
                 const dragTitle = (window.InfoCenter && window.InfoCenter.translations && window.InfoCenter.translations.drag_reorder) 
                     ? window.InfoCenter.translations.drag_reorder 
@@ -1853,17 +1862,33 @@
             }
 
             // Only allow dragging from header
-            widget.addEventListener('mousedown', function(e) {
-                if (e.target.closest('.info-center-widget-header')) {
-                    this.setAttribute('draggable', 'true');
-                } else {
+            if (widget._infoCenterInteractHandlers) {
+                widget.removeEventListener('mousedown', widget._infoCenterInteractHandlers.down);
+                widget.removeEventListener('mouseup', widget._infoCenterInteractHandlers.up);
+                widget.removeEventListener('mouseleave', widget._infoCenterInteractHandlers.leave);
+            }
+
+            const handlers = {
+                down: function(e) {
+                    if (e.target.closest('.info-center-widget-header')) {
+                        this.setAttribute('draggable', 'true');
+                    } else {
+                        this.setAttribute('draggable', 'false');
+                    }
+                },
+                up: function(e) {
+                    this.setAttribute('draggable', 'false');
+                },
+                leave: function(e) {
                     this.setAttribute('draggable', 'false');
                 }
-            });
+            };
+            
+            widget._infoCenterInteractHandlers = handlers;
 
-            widget.addEventListener('mouseup', function(e) {
-                 this.setAttribute('draggable', 'false');
-            });
+            widget.addEventListener('mousedown', handlers.down);
+            widget.addEventListener('mouseup', handlers.up);
+            widget.addEventListener('mouseleave', handlers.leave);
             
             widget.addEventListener('dragstart', handleDragStart);
             widget.addEventListener('dragover', handleDragOver);
