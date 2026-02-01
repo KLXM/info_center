@@ -32,7 +32,7 @@
         --text-color: #1f2937;
         --text-color-muted: #6b7280;
         --header-bg: rgba(50, 64, 80, 0.08);
-        --widget-bg: rgba(255, 255, 255, 0.6);
+        --widget-bg: rgba(255, 255, 255, 0.95);
         --widget-border: rgba(50, 64, 80, 0.12);
         --button-bg: rgba(248, 250, 252, 0.8);
         --button-border: rgba(50, 64, 80, 0.15);
@@ -48,11 +48,37 @@ body.rex-theme-light .info-center-container {
     --text-color: #1f2937 !important;
     --text-color-muted: #6b7280 !important;
     --header-bg: rgba(50, 64, 80, 0.08) !important;
-    --widget-bg: rgba(255, 255, 255, 0.6) !important;
+    --widget-bg: rgba(255, 255, 255, 0.95) !important;
     --widget-border: rgba(50, 64, 80, 0.12) !important;
     --button-bg: rgba(248, 250, 252, 0.8) !important;
     --button-border: rgba(50, 64, 80, 0.15) !important;
     --hover-bg: rgba(50, 64, 80, 0.06) !important;
+}
+
+/* Header Buttons Fix for Blue Panel Background in Light Mode */
+body.rex-theme-light .info-center-width-btn,
+body.rex-theme-light .info-center-settings-btn,
+body.rex-theme-light .info-center-backend-btn,
+body.rex-theme-light .info-center-close-btn {
+    background: rgba(0, 0, 0, 0.12) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+}
+
+body.rex-theme-light .info-center-width-btn:hover,
+body.rex-theme-light .info-center-settings-btn:hover,
+body.rex-theme-light .info-center-backend-btn:hover,
+body.rex-theme-light .info-center-close-btn:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: #ffffff !important;
+    color: #ffffff !important;
+}
+
+body.rex-theme-light .info-center-width-btn.active {
+    background: #ffffff !important;
+    color: #446c9a !important;
+    border-color: #ffffff !important;
+    font-weight: 700;
 }
 
 /* REDAXO Dark Theme - höchste Priorität */
@@ -281,21 +307,21 @@ body.rex-theme-dark .info-center-container {
 /* Widget Hover - System Light Theme als Fallback */
 @media (prefers-color-scheme: light) {
     body:not(.rex-theme-dark) .info-center-widget:hover {
-        background: rgba(255, 255, 255, 0.8);
-        border-color: rgba(0, 0, 0, 0.15);
+        background: rgba(255, 255, 255, 1);
+        border-color: rgba(255, 255, 255, 0.8);
         box-shadow: 
-            inset 0 1px 0 rgba(255,255,255,0.8),
-            0 6px 20px rgba(0, 0, 0, 0.1);
+            inset 0 1px 0 rgba(255,255,255,1),
+            0 6px 20px rgba(0, 0, 0, 0.15);
     }
 }
 
 /* REDAXO Light Theme Widget Hover */
 body.rex-theme-light .info-center-widget:hover {
-    background: rgba(255, 255, 255, 0.8) !important;
-    border-color: rgba(0, 0, 0, 0.15) !important;
+    background: rgba(255, 255, 255, 1) !important;
+    border-color: rgba(255, 255, 255, 0.8) !important;
     box-shadow: 
-        inset 0 1px 0 rgba(255,255,255,0.8),
-        0 6px 20px rgba(0, 0, 0, 0.1) !important;
+        inset 0 1px 0 rgba(255,255,255,1),
+        0 6px 20px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* REDAXO Dark Theme Widget Hover */
@@ -1223,6 +1249,20 @@ body.rex-theme-dark .info-center-widget:hover {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+/* REDAXO Light Theme Structure Search Input */
+body.rex-theme-light .info-center-structure-search input {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #1f2937;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+body.rex-theme-light .info-center-structure-search input:focus {
+    background: #ffffff;
+    border-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
 .info-center-structure-search input:focus {
     outline: none;
     background: rgba(255, 255, 255, 0.12);
@@ -1281,6 +1321,29 @@ body.rex-theme-dark .info-center-widget:hover {
 .info-center-tree-node:hover {
     background: var(--hover-bg);
     box-shadow: inset 0 0 0 1px var(--text-color);
+}
+
+/* REDAXO Light Theme Tree Node */
+body.rex-theme-light .info-center-tree-node {
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+}
+
+body.rex-theme-light .info-center-tree-node:hover {
+    background: #ffffff;
+    box-shadow: inset 0 0 0 1px #ffffff;
+}
+
+body.rex-theme-light .info-center-tree-link {
+    color: #1f2937;
+}
+
+body.rex-theme-light .info-center-tree-toggle {
+    color: #6b7280;
+}
+
+body.rex-theme-light .info-center-tree-toggle:hover {
+    color: #1f2937;
 }
 
 .info-center-tree-toggle {
@@ -2002,29 +2065,25 @@ body.rex-theme-light .info-center-search-badge.offline {
     display: inline-block;
 }
 
-.info-center-image-preview::after {
-    content: '';
+.info-center-image-preview-tooltip {
     position: fixed;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
     width: 200px;
     height: 200px;
-    background-image: var(--preview-image);
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+    background-color: var(--widget-bg);
+    border: 2px solid var(--widget-border);
     border-radius: 8px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
     z-index: 999999;
-    border: 2px solid var(--widget-border);
-    background-color: var(--widget-bg);
+    padding: 2px;
 }
 
-.info-center-image-preview:hover::after {
+.info-center-image-preview:hover .info-center-image-preview-tooltip {
     opacity: 1;
 }
 
@@ -2167,4 +2226,176 @@ body.rex-theme-light .info-center-search-badge.offline {
 /* Dark mode drag styles */
 body.rex-theme-dark .info-center-widget.drag-over {
     border-top-color: #4a9eff;
+}
+
+/* ==========================================================================
+   LIGHT THEME OVERRIDES (Specific Fixes)
+   ========================================================================== */
+
+/* Structure Tree & Widget Container */
+body.rex-theme-light .info-center-widget {
+    background-color: #ffffff !important;
+    border: 1px solid #dcdcdc !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+}
+
+body.rex-theme-light .info-center-header {
+    background-color: #ffffff !important; 
+    border-bottom: 1px solid #eeeeee !important;
+}
+
+body.rex-theme-light .info-center-title {
+    color: #333333 !important;
+    font-weight: 600 !important;
+}
+
+/* Structure Tree Items - Card Style */
+body.rex-theme-light .info-center-tree-node {
+    background-color: #ffffff !important;
+    border: 1px solid #e0e0e0 !important;
+    margin-bottom: 4px !important;
+    border-radius: 6px !important;
+    padding: 6px 8px !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+}
+
+body.rex-theme-light .info-center-tree-node:hover {
+    background-color: #f8fbff !important;
+    border-color: #b3d7ff !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+}
+
+/* Tree Item Text */
+body.rex-theme-light .info-center-tree-link {
+    color: #333333 !important;
+    font-weight: 500 !important;
+}
+
+/* Icons - Force standard colors in light mode */
+body.rex-theme-light .info-center-tree-folder-icon,
+body.rex-theme-light .info-center-tree-article-icon {
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* Action Buttons (Edit/View) */
+body.rex-theme-light .info-center-tree-actions a {
+    color: #777777 !important;
+    background: transparent !important;
+}
+
+body.rex-theme-light .info-center-tree-actions a:hover {
+    color: #0c93cd !important;
+    background-color: #e6f7ff !important;
+}
+
+/* Search Bar visibility */
+body.rex-theme-light .info-center-structure-search input {
+    background-color: #ffffff !important;
+    border: 1px solid #cccccc !important;
+    color: #333333 !important;
+}
+body.rex-theme-light .info-center-structure-search input:focus {
+    border-color: #4b9ad9 !important;
+    box-shadow: 0 0 0 3px rgba(75, 154, 217, 0.2) !important;
+}
+
+/* ==========================================================================
+   SYSTEM LIGHT MODE FALBACK (Auto Setting)
+   Applies same overrides when system is light but REDAXO hasn't added .rex-theme-light class
+   ========================================================================== */
+@media (prefers-color-scheme: light) {
+    /* Structure Tree & Widget Container */
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-widget {
+        background-color: #ffffff !important;
+        border: 1px solid #dcdcdc !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+    }
+
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-header {
+        background-color: #ffffff !important; 
+        border-bottom: 1px solid #eeeeee !important;
+    }
+
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-title {
+        color: #333333 !important;
+        font-weight: 600 !important;
+    }
+
+    /* Structure Tree Items - Card Style */
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-tree-node {
+        background-color: #ffffff !important;
+        border: 1px solid #e0e0e0 !important;
+        margin-bottom: 4px !important;
+        border-radius: 6px !important;
+        padding: 6px 8px !important;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03) !important;
+    }
+
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-tree-node:hover {
+        background-color: #f8fbff !important;
+        border-color: #b3d7ff !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+    }
+
+    /* Tree Item Text */
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-tree-link {
+        color: #333333 !important;
+        font-weight: 500 !important;
+    }
+
+    /* Icons */
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-tree-folder-icon,
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-tree-article-icon {
+        opacity: 1 !important;
+        filter: none !important;
+    }
+
+    /* Action Buttons */
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-tree-actions a {
+        color: #777777 !important;
+        background: transparent !important;
+    }
+
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-tree-actions a:hover {
+        color: #0c93cd !important;
+        background-color: #e6f7ff !important;
+    }
+
+    /* Search Bar */
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-structure-search input {
+        background-color: #ffffff !important;
+        border: 1px solid #cccccc !important;
+        color: #333333 !important;
+    }
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-structure-search input:focus {
+        border-color: #4b9ad9 !important;
+        box-shadow: 0 0 0 3px rgba(75, 154, 217, 0.2) !important;
+    }
+    
+    /* Header Buttons Fix for system light mode */
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-width-btn,
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-settings-btn,
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-backend-btn,
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-close-btn {
+        background: rgba(0, 0, 0, 0.12) !important;
+        color: #ffffff !important;
+        border-color: rgba(255, 255, 255, 0.5) !important;
+    }
+
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-width-btn:hover,
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-settings-btn:hover,
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-backend-btn:hover,
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-close-btn:hover {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-color: #ffffff !important;
+        color: #ffffff !important;
+    }
+
+    body.rex-has-theme:not(.rex-theme-dark) .info-center-width-btn.active {
+        background: #ffffff !important;
+        color: #446c9a !important;
+        border-color: #ffffff !important;
+        font-weight: 700;
+    }
 }

@@ -1065,7 +1065,7 @@
                 if (isImage && item.url_media_small) {
                     // Use rex_media_small for thumbnail and rex_media_medium for hover preview
                     const previewUrl = item.url_media || item.url_media_small;
-                    icon = `<div class="info-center-image-preview" style="--preview-image: url('${previewUrl}');">
+                    icon = `<div class="info-center-image-preview" data-preview-url="${previewUrl}">
                         <img src="${item.url_media_small}" alt="${escapeAttr(item.filename)}" style="width: 32px; height: 32px; object-fit: cover; border-radius: 4px;" />
                     </div>`;
                 } else if (isVideo && item.url_media) {
@@ -1092,6 +1092,17 @@
 
             resultItem.innerHTML = html;
             section.appendChild(resultItem);
+        });
+
+        // Add image preview tooltips
+        section.querySelectorAll('.info-center-image-preview').forEach(imagePreview => {
+            const previewUrl = imagePreview.getAttribute('data-preview-url');
+            if (previewUrl) {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'info-center-image-preview-tooltip';
+                tooltip.innerHTML = `<img src="${previewUrl}" alt="" style="width:100%;height:100%;object-fit:contain;display:block;">`;
+                imagePreview.appendChild(tooltip);
+            }
         });
 
         // Add video preview tooltips
