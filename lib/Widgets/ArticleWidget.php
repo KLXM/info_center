@@ -158,26 +158,18 @@ class ArticleWidget extends AbstractWidget
 
         $html = '<div class="info-center-recent-articles">';
         $html .= '<h4>' . rex_i18n::msg('info_center_recent_articles') . '</h4>';
-        
-        foreach ($recentArticles as $article) {
-            // Status: 0 = offline (grau), 1 = online (blau), 2 = locked (rot)
+
+        $renderArticle = function(array $article): string {
             $statusClass = 'status-online';
             if ($article['status'] == 0) {
                 $statusClass = 'status-offline';
             } elseif ($article['status'] == 2) {
                 $statusClass = 'status-locked';
             }
-            
-            // Bessere Datumsformatierung - prüfe ob updatedate ein gültiger Timestamp ist
             $updatedate = (int)$article['updatedate'];
-            if ($updatedate > 0) {
-                $date = date('d.m. H:i', $updatedate);
-            } else {
-                // Fallback: aktuelles Datum
-                $date = date('d.m. H:i');
-            }
-            
-            $html .= sprintf(
+            $date = $updatedate > 0 ? date('d.m. H:i', $updatedate) : date('d.m. H:i');
+
+            return sprintf(
                 '<div class="info-center-recent-article %s">
                     <div class="article-main">
                         <a href="%s" title="%s">
@@ -200,6 +192,27 @@ class ArticleWidget extends AbstractWidget
                 rex_escape($this->truncateString($article['name'], 30)),
                 rex_escape($article['updateuser']),
                 $date
+            );
+        };
+
+        $visible = array_slice($recentArticles, 0, 5);
+        $extra   = array_slice($recentArticles, 5);
+
+        foreach ($visible as $article) {
+            $html .= $renderArticle($article);
+        }
+
+        if (!empty($extra)) {
+            $html .= '<div class="info-center-articles-extra" hidden>';
+            foreach ($extra as $article) {
+                $html .= $renderArticle($article);
+            }
+            $html .= '</div>';
+            $html .= sprintf(
+                '<button class="info-center-articles-toggle-btn" data-more="%s" data-less="%s">%s</button>',
+                rex_escape(rex_i18n::msg('info_center_articles_show_more', sprintf('+%d', count($extra)))),
+                rex_escape(rex_i18n::msg('info_center_articles_show_less')),
+                rex_escape(rex_i18n::msg('info_center_articles_show_more', sprintf('+%d', count($extra))))
             );
         }
         

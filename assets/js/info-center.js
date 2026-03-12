@@ -2120,6 +2120,17 @@
         }
     }
 
+    // Recent articles toggle
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.info-center-articles-toggle-btn');
+        if (!btn) return;
+        const extra = btn.previousElementSibling;
+        if (!extra || !extra.classList.contains('info-center-articles-extra')) return;
+        const open = extra.classList.toggle('is-open');
+        extra.hidden = !open;
+        btn.textContent = open ? btn.dataset.less : btn.dataset.more;
+    });
+
     // Initialize tabs on load
     document.addEventListener('DOMContentLoaded', function() {
         initTabs();

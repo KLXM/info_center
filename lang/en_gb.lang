@@ -259,3 +259,5 @@ info_center_help_search_categories = Categories (Name, ID)
 info_center_help_search_modules = Modules (Name, Code)
 info_center_help_search_templates = Templates (Name, Code)
 info_center_help_search_media = Media (Filename, Title)
+info_center_articles_show_more = Show {0} more
+info_center_articles_show_less = Show less

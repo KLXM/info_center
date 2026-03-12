@@ -693,6 +693,30 @@ body.rex-theme-dark .info-center-widget:hover {
     margin-left: 8px;
 }
 
+/* Recent Articles toggle */
+.info-center-articles-extra {
+    display: none;
+}
+.info-center-articles-extra.is-open {
+    display: block;
+}
+.info-center-articles-toggle-btn {
+    display: inline-block;
+    margin-top: 6px;
+    padding: 2px 8px;
+    font-size: var(--font-size-tiny);
+    color: var(--text-color-muted);
+    background: transparent;
+    border: 1px solid var(--widget-border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.info-center-articles-toggle-btn:hover {
+    color: var(--text-color);
+    border-color: var(--text-color);
+}
+
 /* Upkeep Widget Specific Styles */
 .info-center-upkeep-item {
     display: flex;
