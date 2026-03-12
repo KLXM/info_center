@@ -2134,9 +2134,9 @@
             extra.setAttribute('hidden', '');
             btn.textContent = btn.dataset.more;
         }
-        // Zum Anfang des Artikel-Widgets scrollen
-        const widget = btn.closest('.info-center-widget');
+        // Zum Artikel-Widget-Anfang scrollen
         const container = btn.closest('.info-center-content');
+        const widget = container && container.querySelector('[data-id="article"]');
         if (widget && container) {
             setTimeout(function() {
                 const top = widget.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - 10;
