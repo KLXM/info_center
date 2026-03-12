@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.3.5] - 2026-03-12
+
+### Changed
+- Artikel-Widget: Jeder Backend-User sieht automatisch seine eigenen zuletzt bearbeiteten Artikel – ohne explizite Berechtigungsvergabe.
+- `info_center[recent_articles]` bedeutet nun: **alle** Artikel-Änderungen aller User sehen (nicht nur eigene).
+- `info_center[all_articles]` entfernt (war redundant).
+- Artikel-Widget zeigt max. 5 Einträge, weitere per Toggle einblendbar.
+- Einstellungen-Button nur noch für Admins und User mit `info_center[config]` sichtbar.
+- Berechtigungen werden nun korrekt via `rex_perm::register()` in der `boot.php` registriert.
+
 ## [2.3.4] - 2026-03-12
 
 ### Fixed
