@@ -99,7 +99,7 @@ info_center_perm_settings = Configure Info Center
 perm_general_info_center[] = Use Info Center
 perm_general_info_center[config] = Manage Settings
 perm_general_info_center[admin] = Use Widget Builder
-perm_general_info_center[recent_articles] = View recently edited articles
+perm_general_info_center[recent_articles] = See all article changes (not just own)
 perm_general_info_center[all_articles] = View all article changes (not just own)
 
 # System Messages

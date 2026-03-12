@@ -28,7 +28,6 @@ if (rex::isBackend()) {
     rex_perm::register('info_center[]');
     rex_perm::register('info_center[config]');
     rex_perm::register('info_center[recent_articles]');
-    rex_perm::register('info_center[all_articles]');
 
     rex_view::setJsProperty('info_center_search_i18n', [
         'categories' => rex_i18n::msg('info_center_search_categories'),

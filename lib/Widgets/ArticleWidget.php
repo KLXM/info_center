@@ -146,10 +146,9 @@ class ArticleWidget extends AbstractWidget
             return '';
         }
 
-        // Analog zu quick_navigation[history]: ohne Berechtigung kein Verlauf
-        if (!$user->isAdmin() && !$user->hasPerm('info_center[recent_articles]')) {
-            return '';
-        }
+        // Analog zu quick_navigation: jeder Backend-User sieht seine eigenen Artikel.
+        // info_center[recent_articles] berechtigt zusätzlich zum Sehen aller Artikel-Änderungen.
+        // (wird in getRecentArticles() ausgewertet)
 
         $recentArticles = $this->getRecentArticles();
         if (empty($recentArticles)) {
@@ -231,12 +230,9 @@ class ArticleWidget extends AbstractWidget
                 return [];
             }
 
-            // Berechtigungsprüfung analog zu quick_navigation:
-            // 1. Admins / info_center[all_articles] → alle Änderungen sehen
-            // 2. Alle anderen → nur eigene Änderungen (WHERE updateuser = login)
-            // Keine zusätzliche hasCategoryPerm-Prüfung nötig – wer den Artikel
-            // bearbeitet hat, hatte zum Zeitpunkt der Bearbeitung Zugriff.
-            if (!$user->isAdmin() && !$user->hasPerm('info_center[all_articles]')) {
+            // Jeder Backend-User sieht seine eigenen Artikel.
+            // Admins oder User mit info_center[recent_articles] sehen alle Änderungen.
+            if (!$user->isAdmin() && !$user->hasPerm('info_center[recent_articles]')) {
                 $where = 'WHERE updateuser = :user';
                 $whereParams['user'] = $user->getValue('login');
             }
