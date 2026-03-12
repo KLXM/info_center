@@ -126,16 +126,14 @@ class ArticleWidget extends AbstractWidget
 
         $html = '<div class="info-center-quick-links">';
         
-        // Struktur-Hauptseite - für User mit info_center[] Berechtigung
-        if ($user->isAdmin() || $user->hasPerm('info_center[]')) {
-            $html .= sprintf(
-                '<div class="info-center-quick-link">
-                    <a href="%s">%s</a>
-                </div>',
-                rex_url::backendPage('structure'),
-                rex_i18n::msg('info_center_structure_overview')
-            );
-        }
+        // Struktur-Hauptseite - für User mit access (die haben sie immer, sonst kämen sie nicht ins Backend zur Struktur)
+        $html .= sprintf(
+            '<div class="info-center-quick-link">
+                <a href="%s">%s</a>
+            </div>',
+            rex_url::backendPage('structure'),
+            rex_i18n::msg('info_center_structure_overview')
+        );
 
         $html .= '</div>';
         return $html;
@@ -144,8 +142,12 @@ class ArticleWidget extends AbstractWidget
     private function renderRecentArticles(): string
     {
         $user = rex_backend_login::createUser();
-        // Nur Admins oder User mit info_center[recent_articles] Berechtigung
-        if (!$user || (!$user->isAdmin() && !$user->hasPerm('info_center[recent_articles]'))) {
+        if (!$user) {
+            return '';
+        }
+
+        // Analog zu quick_navigation[history]: ohne Berechtigung kein Verlauf
+        if (!$user->isAdmin() && !$user->hasPerm('info_center[recent_articles]')) {
             return '';
         }
 
@@ -216,13 +218,12 @@ class ArticleWidget extends AbstractWidget
                 return [];
             }
 
-            // Vereinfachte Berechtigungsprüfung
-            // 1. Admins sehen alle Änderungen
-            // 2. User mit info_center[all_articles] sehen alle Änderungen  
-            // 3. Andere sehen nur ihre eigenen Änderungen
-            if ($user->isAdmin() || $user->hasPerm('info_center[all_articles]')) {
-                $where = 'WHERE updatedate > 0';
-            } else {
+            // Berechtigungsprüfung analog zu quick_navigation:
+            // 1. Admins / info_center[all_articles] → alle Änderungen sehen
+            // 2. Alle anderen → nur eigene Änderungen (WHERE updateuser = login)
+            // Keine zusätzliche hasCategoryPerm-Prüfung nötig – wer den Artikel
+            // bearbeitet hat, hatte zum Zeitpunkt der Bearbeitung Zugriff.
+            if (!$user->isAdmin() && !$user->hasPerm('info_center[all_articles]')) {
                 $where = 'WHERE updateuser = :user';
                 $whereParams['user'] = $user->getValue('login');
             }
@@ -240,26 +241,10 @@ class ArticleWidget extends AbstractWidget
                 FROM ' . rex::getTable('article') . ' 
                 ' . $where . ' 
                 ORDER BY updatedate DESC 
-                LIMIT 5
+                LIMIT 15
             ';
             
-            $sql->setQuery($query, $whereParams);
-            
-            $articles = [];
-            while ($sql->hasNext()) {
-                $articles[] = [
-                    'id' => $sql->getValue('id'),
-                    'category_id' => $sql->getValue('category_id'),
-                    'clang_id' => $sql->getValue('clang_id'),
-                    'name' => $sql->getValue('name'),
-                    'updateuser' => $sql->getValue('updateuser'),
-                    'updatedate' => $sql->getValue('updatedate'),
-                    'status' => $sql->getValue('status')
-                ];
-                $sql->next();
-            }
-            
-            return $articles;
+            return $sql->getArray($query, $whereParams);
         } catch (\Exception $e) {
             return [];
         }

@@ -11,6 +11,7 @@ use rex_addon;
 use rex_i18n;
 use rex_backend_login;
 use rex_be_controller;
+use rex_perm;
 
 
 // Frontend-Session starten, damit rex::getUser() funktioniert
@@ -23,6 +24,12 @@ $addon = rex_addon::get('info_center');
 
 // Add i18n translations to JavaScript for Search Widget
 if (rex::isBackend()) {
+    // Berechtigungen registrieren
+    rex_perm::register('info_center[]');
+    rex_perm::register('info_center[config]');
+    rex_perm::register('info_center[recent_articles]');
+    rex_perm::register('info_center[all_articles]');
+
     rex_view::setJsProperty('info_center_search_i18n', [
         'categories' => rex_i18n::msg('info_center_search_categories'),
         'articles' => rex_i18n::msg('info_center_search_articles'),
