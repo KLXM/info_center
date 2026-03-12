@@ -25,6 +25,17 @@ if (rex_post('formsubmit', 'string') == '1') {
     // Widget-Einstellungen pro User speichern
     $widgetConfig = [];
     $widgets = ['search', 'url', 'timetracker', 'article', 'upkeep', 'stats', 'system'];
+    
+    // Füge registrierte externe Widgets hinzu
+    if (class_exists(\KLXM\InfoCenter\InfoCenter::class)) {
+        foreach (\KLXM\InfoCenter\InfoCenter::getInstance()->getWidgets() as $w) {
+            $id = $w->getId();
+            if ($id !== 'custom' && !in_array($id, $widgets)) {
+                $widgets[] = $id;
+            }
+        }
+    }
+    
     $globalConfig = $package->getConfig('widgets', []);
     
     foreach ($widgets as $widget) {
@@ -91,6 +102,16 @@ $adminWidgets = [
 // Füge Admin-Widgets hinzu wenn User Admin ist
 if (rex::getUser()->isAdmin()) {
     $widgets = array_merge($widgets, $adminWidgets);
+}
+
+// Füge alle anderen registrierten Widgets hinzu
+if (class_exists(\KLXM\InfoCenter\InfoCenter::class)) {
+    foreach (\KLXM\InfoCenter\InfoCenter::getInstance()->getWidgets() as $w) {
+        $id = $w->getId();
+        if ($id !== 'custom' && !array_key_exists($id, $widgets)) {
+            $widgets[$id] = $w->getTitle() ?: (ucfirst($id) . ' Widget');
+        }
+    }
 }
 
 foreach ($widgets as $widgetId => $widgetTitle) {

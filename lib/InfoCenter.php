@@ -28,6 +28,11 @@ class InfoCenter
         // initializeWidgets() entfernt - Widgets werden in boot.php registriert
     }
 
+    public function getWidgets(): array
+    {
+        return $this->widgets;
+    }
+
     public function get(): string 
     {
         if (!$this->shouldRender()) {

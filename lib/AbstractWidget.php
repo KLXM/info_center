@@ -57,6 +57,25 @@ abstract class AbstractWidget implements WidgetInterface
 
     public function isEnabled(): bool
     {
+        $addon = \rex_addon::get('info_center');
+        
+        // 1. Globale Einstellung prüfen
+        $globalConfig = $addon->getConfig('widgets', []);
+        $globalEnabled = $globalConfig[$this->getId()]['enabled'] ?? true;
+        
+        if (!$globalEnabled) {
+            return false;
+        }
+
+        // 2. User-spezifische Einstellung prüfen
+        $user = \rex::getUser();
+        if ($user) {
+            $userConfig = $addon->getConfig('widgets_user_' . $user->getId(), []);
+            if (isset($userConfig[$this->getId()]['enabled'])) {
+                return (bool) $userConfig[$this->getId()]['enabled'];
+            }
+        }
+
         return $this->enabled;
     }
 

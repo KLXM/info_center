@@ -1,0 +1,9 @@
+# Changelog
+
+## [2.3.2] - 2026-03-12
+
+### Fixed
+- Fixed an issue where external third-party widgets (e.g. Matomo) could not be toggled via the user settings.
+- Einstellungs-Seite listet nun automatisch alle Fremd-Widgets dynamisch zur Konfiguration auf.
+- Drittanbieter-Widgets prüfen nun ordnungsgemäß die benutzerdefinierten und globalen Anzeige-Einstellungen in `AbstractWidget`.
+
