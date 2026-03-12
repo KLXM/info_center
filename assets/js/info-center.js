@@ -2127,16 +2127,11 @@
         const extra = btn.previousElementSibling;
         if (!extra || !extra.classList.contains('info-center-articles-extra')) return;
         const scrollToBtn = function() {
-            const container = btn.closest('.info-center-sidebar') || btn.closest('.info-center-content') || btn.parentElement;
-            const scrollable = (function find(el) {
-                if (!el || el === document.body) return window;
-                const style = getComputedStyle(el);
-                if (/(auto|scroll)/.test(style.overflow + style.overflowY)) return el;
-                return find(el.parentElement);
-            })(container);
+            const container = btn.closest('.info-center-content');
+            if (!container) return;
             const offset = 40;
-            const top = btn.getBoundingClientRect().top - (scrollable === window ? 0 : scrollable.getBoundingClientRect().top) + (scrollable === window ? window.scrollY : scrollable.scrollTop) - offset;
-            (scrollable === window ? window : scrollable).scrollTo({ top: top, behavior: 'smooth' });
+            const top = btn.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - offset;
+            container.scrollTo({ top: top, behavior: 'smooth' });
         };
         const isOpen = extra.hasAttribute('hidden');
         if (isOpen) {
