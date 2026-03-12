@@ -2130,9 +2130,13 @@
         if (isOpen) {
             extra.removeAttribute('hidden');
             btn.textContent = btn.dataset.less;
+            // Button ins View scrollen, damit er nach dem Aufklappen sichtbar bleibt
+            setTimeout(function() { btn.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 50);
         } else {
             extra.setAttribute('hidden', '');
             btn.textContent = btn.dataset.more;
+            // Zum Button zurückscrollen
+            btn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         }
     });
 
