@@ -2126,9 +2126,14 @@
         if (!btn) return;
         const extra = btn.previousElementSibling;
         if (!extra || !extra.classList.contains('info-center-articles-extra')) return;
-        const open = extra.classList.toggle('is-open');
-        extra.hidden = !open;
-        btn.textContent = open ? btn.dataset.less : btn.dataset.more;
+        const isOpen = extra.hasAttribute('hidden');
+        if (isOpen) {
+            extra.removeAttribute('hidden');
+            btn.textContent = btn.dataset.less;
+        } else {
+            extra.setAttribute('hidden', '');
+            btn.textContent = btn.dataset.more;
+        }
     });
 
     // Initialize tabs on load

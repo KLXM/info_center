@@ -694,12 +694,6 @@ body.rex-theme-dark .info-center-widget:hover {
 }
 
 /* Recent Articles toggle */
-.info-center-articles-extra {
-    display: none;
-}
-.info-center-articles-extra.is-open {
-    display: block;
-}
 .info-center-articles-toggle-btn {
     display: inline-block;
     margin-top: 6px;
