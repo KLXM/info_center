@@ -2126,22 +2126,22 @@
         if (!btn) return;
         const extra = btn.previousElementSibling;
         if (!extra || !extra.classList.contains('info-center-articles-extra')) return;
-        const scrollToBtn = function() {
-            const container = btn.closest('.info-center-content');
-            if (!container) return;
-            const offset = 40;
-            const top = btn.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - offset;
-            container.scrollTo({ top: top, behavior: 'smooth' });
-        };
         const isOpen = extra.hasAttribute('hidden');
         if (isOpen) {
             extra.removeAttribute('hidden');
             btn.textContent = btn.dataset.less;
-            setTimeout(scrollToBtn, 50);
         } else {
             extra.setAttribute('hidden', '');
             btn.textContent = btn.dataset.more;
-            scrollToBtn();
+        }
+        // Zum Anfang des Artikel-Widgets scrollen
+        const widget = btn.closest('.info-center-widget');
+        const container = btn.closest('.info-center-content');
+        if (widget && container) {
+            setTimeout(function() {
+                const top = widget.getBoundingClientRect().top - container.getBoundingClientRect().top + container.scrollTop - 10;
+                container.scrollTo({ top: top, behavior: 'smooth' });
+            }, 30);
         }
     });
 
