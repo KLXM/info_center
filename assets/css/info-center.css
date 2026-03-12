@@ -26,7 +26,7 @@
 /* System Light Theme - nur als Fallback wenn keine REDAXO Theme Class */
 @media (prefers-color-scheme: light) {
     body:not(.rex-theme-dark) .info-center-container {
-        --panel-bg: rgba(68, 108, 154, 0.71);
+        --panel-bg: rgba(166, 186, 209, 0.71);
         --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.25);
         --border-color: rgba(50, 64, 80, 0.2);
         --text-color: #1f2937;
@@ -42,7 +42,7 @@
 
 /* REDAXO Light Theme - höchste Priorität */
 body.rex-theme-light .info-center-container {
-    --panel-bg: rgba(68, 108, 154, 0.71) !important;
+    --panel-bg: rgba(166, 186, 209, 0.71) !important;
     --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.25) !important;
     --border-color: rgba(50, 64, 80, 0.2) !important;
     --text-color: #1f2937 !important;
