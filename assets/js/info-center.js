@@ -2126,17 +2126,27 @@
         if (!btn) return;
         const extra = btn.previousElementSibling;
         if (!extra || !extra.classList.contains('info-center-articles-extra')) return;
+        const scrollToBtn = function() {
+            const container = btn.closest('.info-center-sidebar') || btn.closest('.info-center-content') || btn.parentElement;
+            const scrollable = (function find(el) {
+                if (!el || el === document.body) return window;
+                const style = getComputedStyle(el);
+                if (/(auto|scroll)/.test(style.overflow + style.overflowY)) return el;
+                return find(el.parentElement);
+            })(container);
+            const offset = 40;
+            const top = btn.getBoundingClientRect().top - (scrollable === window ? 0 : scrollable.getBoundingClientRect().top) + (scrollable === window ? window.scrollY : scrollable.scrollTop) - offset;
+            (scrollable === window ? window : scrollable).scrollTo({ top: top, behavior: 'smooth' });
+        };
         const isOpen = extra.hasAttribute('hidden');
         if (isOpen) {
             extra.removeAttribute('hidden');
             btn.textContent = btn.dataset.less;
-            // Button ins View scrollen, damit er nach dem Aufklappen sichtbar bleibt
-            setTimeout(function() { btn.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 50);
+            setTimeout(scrollToBtn, 50);
         } else {
             extra.setAttribute('hidden', '');
             btn.textContent = btn.dataset.more;
-            // Zum Button zurückscrollen
-            btn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            scrollToBtn();
         }
     });
 
