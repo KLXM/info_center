@@ -1441,7 +1441,7 @@ body.rex-theme-dark .info-center-widget:hover {
 
 /* Article styling */
 .info-center-tree-article .info-center-tree-node {
-    padding-left: 32px;
+    padding-left: 12px;
     background: rgba(255, 255, 255, 0.02);
     opacity: 0.95;
 }
@@ -1454,7 +1454,6 @@ body.rex-theme-dark .info-center-widget:hover {
     width: 14px;
     height: 14px;
     flex-shrink: 0;
-    margin-left: 4px;
     transition: color 0.2s ease;
 }
 
@@ -1503,7 +1502,7 @@ body.rex-theme-dark .info-center-widget:hover {
 }
 
 .info-center-tree-article .info-center-tree-spacer {
-    width: 0;
+    display: none;
 }
 
 /* Action Buttons (Edit + View) */
