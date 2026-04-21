@@ -857,10 +857,22 @@
             return; // Only show quick actions, no regular results
         }
         
-        // Count total results
-        Object.values(results).forEach(items => {
-            if (Array.isArray(items)) {
-                totalResults += items.length;
+        // Deduplicate: start articles share the same ID as their category (startarticle=1).
+        // Remove articles from the article list when they already appear in the category list.
+        let dedupedArticles = results.articles || [];
+        if (results.categories && results.categories.length > 0 && dedupedArticles.length > 0) {
+            const categoryIds = new Set(results.categories.map(c => parseInt(c.id)));
+            dedupedArticles = dedupedArticles.filter(a => !categoryIds.has(parseInt(a.id)));
+        }
+
+        // Count total results (using deduplicated article list)
+        Object.keys(results).forEach(key => {
+            if (Array.isArray(results[key])) {
+                if (key === 'articles') {
+                    totalResults += dedupedArticles.length;
+                } else {
+                    totalResults += results[key].length;
+                }
             }
         });
 
@@ -885,9 +897,9 @@
             searchResults.appendChild(section);
         }
 
-        // Render Articles
-        if (results.articles && results.articles.length > 0) {
-            const section = createSearchSection(i18n.articles, results.articles, 'article');
+        // Render Articles (deduplicated)
+        if (dedupedArticles.length > 0) {
+            const section = createSearchSection(i18n.articles, dedupedArticles, 'article');
             searchResults.appendChild(section);
         }
 
@@ -1180,68 +1192,64 @@
         const searchWidget = document.getElementById('info-center-search-widget');
         const isAdmin = searchWidget && searchWidget.dataset.isAdmin === 'true';
         
-        // Calculator
-        // Support for px to rem/em conversion and regular math
-        if (/^[\d\s+\-*\/().%,pxrem]+$/.test(trimmedQuery)) {
+        // Unit conversion: px ↔ rem/em
+        // Supports: "16px", "16px rem", "16px to rem", "1.5rem", "1.5rem px", "1.5rem to px"
+        const unitConvMatch = trimmedQuery.match(/^([\d.]+)\s*(px|rem|em)\b(.*)?$/i);
+        if (unitConvMatch) {
+            const val = parseFloat(unitConvMatch[1]);
+            const sourceUnit = unitConvMatch[2].toLowerCase();
+            const rest = (unitConvMatch[3] || '').trim().toLowerCase().replace(/^to\s+/, '');
+            const baseSize = 16;
+
+            if (!isNaN(val)) {
+                if (sourceUnit === 'px' && (!rest || /^(rem|em)/.test(rest))) {
+                    // px → rem
+                    const rem = parseFloat((val / baseSize).toFixed(5));
+                    actions.push({
+                        type: 'calculator',
+                        title: val + 'px = ' + rem + 'rem',
+                        subtitle: 'Basis: ' + baseSize + 'px (1rem) – Klick kopiert',
+                        action: () => {
+                            navigator.clipboard.writeText(rem + 'rem');
+                            alert('Kopiert: ' + rem + 'rem');
+                        }
+                    });
+                } else if ((sourceUnit === 'rem' || sourceUnit === 'em') && (!rest || /^px/.test(rest))) {
+                    // rem → px
+                    const px = parseFloat((val * baseSize).toFixed(5));
+                    actions.push({
+                        type: 'calculator',
+                        title: val + sourceUnit + ' = ' + px + 'px',
+                        subtitle: 'Basis: ' + baseSize + 'px (1rem) – Klick kopiert',
+                        action: () => {
+                            navigator.clipboard.writeText(px + 'px');
+                            alert('Kopiert: ' + px + 'px');
+                        }
+                    });
+                }
+            }
+        }
+
+        // Calculator (pure math expressions, no units)
+        if (/^[\d\s+\-*\/().%,]+$/.test(trimmedQuery)) {
             try {
-                // Pixel to REM/EM conversion (Base 16 default)
-                if (trimmedQuery.includes('px') || trimmedQuery.includes('rem') || trimmedQuery.includes('em')) {
-                    const baseSize = 16;
-                    
-                    // Validate strictly for conversion: number + unit [to unit]
-                    // But here we just check presence. Let's try to parse the number.
-                    const valStr = parseFloat(trimmedQuery);
-                    
-                    if (!isNaN(valStr)) {
-                        if (trimmedQuery.includes('px') && !trimmedQuery.includes('rem') && !trimmedQuery.includes('em')) {
-                            // px to rem
-                            const rem = valStr / baseSize;
-                            actions.push({
-                                type: 'calculator',
-                                title: valStr + 'px = ' + rem + 'rem',
-                                subtitle: 'Basis: ' + baseSize + 'px (1rem)',
-                                action: () => {
-                                    navigator.clipboard.writeText(rem + 'rem');
-                                    alert('Kopiert: ' + rem + 'rem');
-                                }
-                            });
-                        } else if ((trimmedQuery.includes('rem') || trimmedQuery.includes('em')) && !trimmedQuery.includes('px')) {
-                            // rem to px
-                            const px = valStr * baseSize;
-                            actions.push({
-                                type: 'calculator',
-                                title: valStr + 'rem = ' + px + 'px',
-                                subtitle: 'Basis: ' + baseSize + 'px (1rem)',
-                                action: () => {
-                                    navigator.clipboard.writeText(px + 'px');
-                                    alert('Kopiert: ' + px + 'px');
-                                }
-                            });
-                        }
-                    }
-                } 
-                // Regular math - Strict validation to avoid eval() risks
-                else if (/^[\d\s+\-*\/().%,]+$/.test(trimmedQuery)) {
-                    // Replace comma with dot for standard JS math
-                    const mathQuery = trimmedQuery.replace(/,/g, '.');
-                    
-                    // Double check strictly for safe chars before execution
-                    if (/^[\d\s+\-*\/().]+$/.test(mathQuery)) {
-                        // Use Function constructor instead of eval, still dangerous if not sanitized, 
-                        // but we strictly validated the charset above.
-                        const result = new Function('return ' + mathQuery)();
-                        
-                        if (!isNaN(result) && isFinite(result)) {
-                            actions.push({
-                                type: 'calculator',
-                                title: '= ' + result,
-                                subtitle: trimmedQuery,
-                                action: () => {
-                                    navigator.clipboard.writeText(result.toString());
-                                    alert('Ergebnis kopiert: ' + result);
-                                }
-                            });
-                        }
+                // Replace comma with dot for standard JS math
+                const mathQuery = trimmedQuery.replace(/,/g, '.');
+
+                // Strict validation before execution – only digits, spaces and math operators allowed
+                if (/^[\d\s+\-*\/().]+$/.test(mathQuery)) {
+                    const result = new Function('return ' + mathQuery)();
+
+                    if (!isNaN(result) && isFinite(result)) {
+                        actions.push({
+                            type: 'calculator',
+                            title: '= ' + result,
+                            subtitle: trimmedQuery,
+                            action: () => {
+                                navigator.clipboard.writeText(result.toString());
+                                alert('Ergebnis kopiert: ' + result);
+                            }
+                        });
                     }
                 }
             } catch (e) {

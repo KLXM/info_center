@@ -96,7 +96,8 @@ class rex_api_info_center_search extends rex_api_function
     protected function searchArticles(string $query, rex_user $user, array $filters = []): array
     {
         $results = [];
-        $clangs = $user->getComplexPerm('clang')->getClangs();
+        // getClangs() kann bei Admins Sprache 1 (Default) auslassen – daher für Admins alle Sprachen verwenden
+        $clangs = $user->isAdmin() ? array_keys(rex_clang::getAll()) : $user->getComplexPerm('clang')->getClangs();
         
         foreach ($clangs as $clangId) {
             $sql = rex_sql::factory();
@@ -201,7 +202,8 @@ class rex_api_info_center_search extends rex_api_function
     protected function searchCategories(string $query, rex_user $user, array $filters = []): array
     {
         $results = [];
-        $clangs = $user->getComplexPerm('clang')->getClangs();
+        // getClangs() kann bei Admins Sprache 1 (Default) auslassen – daher für Admins alle Sprachen verwenden
+        $clangs = $user->isAdmin() ? array_keys(rex_clang::getAll()) : $user->getComplexPerm('clang')->getClangs();
         
         foreach ($clangs as $clangId) {
             $sql = rex_sql::factory();
