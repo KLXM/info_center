@@ -1439,15 +1439,33 @@ body.rex-theme-dark .info-center-widget:hover {
     color: rgba(255, 255, 255, 0.7);
 }
 
-/* Article styling */
+/* Article styling - keine Bubble/Box, nur Trennlinien */
+.info-center-tree-article {
+    margin-bottom: 0;
+}
+
 .info-center-tree-article .info-center-tree-node {
-    padding-left: 12px;
-    background: rgba(255, 255, 255, 0.02);
-    opacity: 0.95;
+    padding: 6px 40px 6px 12px;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-radius: 0;
+    box-shadow: none;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-center-tree-article:last-child .info-center-tree-node {
+    border-bottom: none;
+}
+
+.info-center-tree-article .info-center-tree-node:hover {
+    background: var(--hover-bg);
+    box-shadow: none;
 }
 
 .info-center-tree-article .info-center-tree-link {
     gap: 6px;
+    font-weight: 400;
 }
 
 .info-center-tree-article-icon {
@@ -1475,8 +1493,21 @@ body.rex-theme-dark .info-center-widget:hover {
     font-weight: 400;
 }
 
-/* Keep status colors for article icons even when current */
-.info-center-tree-article.current .info-center-tree-article-icon.status-online {
+/* Current article – kein Box-Highlight, nur Hintergrundfarbe */
+.info-center-tree-article.current > .info-center-tree-node {
+    background: rgba(59, 181, 148, 0.12);
+    box-shadow: none;
+    border-bottom-color: rgba(59, 181, 148, 0.4);
+}
+
+.info-center-tree-article.current > .info-center-tree-node .info-center-tree-link {
+    font-weight: 600;
+    color: #3bb594;
+}
+
+.info-center-tree-article.current > .info-center-tree-node .info-center-tree-name {
+    color: #3bb594;
+}
     color: #4b9ad9 !important;
 }
 
