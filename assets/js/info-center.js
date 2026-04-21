@@ -1605,29 +1605,29 @@
             editor: null
         };
         
-        // Extract #modified: filter
-        const modifiedMatch = query.match(/#modified:(today|yesterday|last-week|last-month|\d{4}-\d{2}-\d{2})/i);
+        // Extract modified: filter (# prefix optional)
+        const modifiedMatch = query.match(/#?modified:(today|yesterday|last-week|last-month|\d{4}-\d{2}-\d{2})/i);
         if (modifiedMatch) {
             filters.modified = modifiedMatch[1];
             filters.query = filters.query.replace(modifiedMatch[0], '').trim();
         }
         
-        // Extract #created: filter
-        const createdMatch = query.match(/#created:(today|yesterday|last-week|last-month|\d{4}-\d{2}-\d{2})/i);
+        // Extract created: filter (# prefix optional)
+        const createdMatch = query.match(/#?created:(today|yesterday|last-week|last-month|\d{4}-\d{2}-\d{2})/i);
         if (createdMatch) {
             filters.created = createdMatch[1];
             filters.query = filters.query.replace(createdMatch[0], '').trim();
         }
         
-        // Extract #author: filter
-        const authorMatch = query.match(/#author:(\S+)/i);
+        // Extract author: filter (# prefix optional)
+        const authorMatch = query.match(/#?author:(\S+)/i);
         if (authorMatch) {
             filters.author = authorMatch[1];
             filters.query = filters.query.replace(authorMatch[0], '').trim();
         }
         
-        // Extract #editor: filter
-        const editorMatch = query.match(/#editor:(\S+)/i);
+        // Extract editor: filter (# prefix optional)
+        const editorMatch = query.match(/#?editor:(\S+)/i);
         if (editorMatch) {
             filters.editor = editorMatch[1];
             filters.query = filters.query.replace(editorMatch[0], '').trim();
