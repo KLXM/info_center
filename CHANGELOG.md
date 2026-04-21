@@ -1,20 +1,19 @@
 # Changelog
 
-## [2.4.1] - 2026-04-22
+## [2.5.0] - 2026-04-21
+
+### Added
+- **Admin-Befehl `#user login email [Rolle]`**: Legt einen neuen REDAXO-Benutzer direkt aus dem Suchfeld an. Ein kryptografisch sicheres temporäres Passwort wird generiert. `password_change_required = 1` erzwingt die Passwortänderung beim ersten Login. Zugangsdaten werden in einem Modal angezeigt und können per Klick kopiert werden.
+- **Admin-Befehl `#showusers`**: Listet alle REDAXO-Benutzer mit Status, Rolle und letztem Login in einem Modal auf.
+- **Admin-Befehl `#clearcache`**: Leert den kompletten REDAXO-Cache (`rex_delete_cache()`) und gibt direktes Feedback.
+- **Admin-Befehl `#userdisable login`**: Deaktiviert einen Benutzeraccount sofort (`status = 0`). Self-Lock ist verhindert – der ausführende Admin kann sich nicht selbst sperren.
+- Alle Admin-Befehle nutzen den neuen API-Endpunkt `rex_api_info_center_admin_command` mit CSRF-Token-Validierung.
+- Hilfe-Modal zeigt Admin-Befehle in eigenem Abschnitt (nur für Admins sichtbar).
 
 ### Fixed
-- Such-Widget: Quick Action px↔rem/em-Konvertierung war fehlerhaft. Eingaben wie `16px rem` oder `1.5rem px` wurden nicht erkannt, weil die alte Logik `parseFloat(trimmedQuery)` nutzte und dann auf das Fehlen des Ziel-Einheit im Query prüfte – was bei `16px rem` scheiterte, da beide Einheiten vorhanden waren. Ersetzt durch Regex-basierte Mustererkennung (`/^(\d+\.?\d*)\s*(px|rem|em)\b(.*)?$/i`) mit expliziter Richtungserkennung. Unterstützt jetzt alle Formate: `16px`, `16px rem`, `16px to rem`, `1.5rem`, `1.5rem px`, `1.5rem to px`.
-- Such-Widget: Start-Artikel (Artikel mit `startarticle=1`) teilten bisher ihre ID mit der gleichnamigen Kategorie und erschienen doppelt in den Suchergebnissen (einmal in *Kategorien*, einmal in *Artikel*). Start-Artikel werden jetzt aus der Artikel-Liste gefiltert, wenn ihre ID bereits in der Kategorienliste vorkommt.
-
-## [2.4.0] - 2026-04-21
-
-### Fixed
-- Struktur-Widget: Artikel auf der gleichen Ebene wie Kategorien wurden optisch um genau eine Einrückungsebene zu tief dargestellt. Ursache: Der `.info-center-tree-spacer` (`width: 0`) erzeugte im Flex-Container trotzdem einen `gap: 8px`, und das Artikel-Icon hatte zusätzlich `margin-left: 4px` – zusammen 12 px, was einer `ul`-Einrückungsebene (`padding-left: 12px`) entspricht. Fix: `padding-left` des Artikel-Nodes auf 12 px gesetzt, Spacer via `display: none` aus dem Flex-Flow entfernt, `margin-left` am Artikel-Icon entfernt.
-- Widget-Sortierung per Tastatur: Pfeiltasten allein lösten versehentlich das Widget-Verschieben aus, auch beim Schreiben in Textfeldern (z. B. WriteAssist-Prompt). Shortcut auf **Alt+↑/↓** (Mac: Option+↑/↓) umgestellt. Zusätzliche Guard: Input/Textarea/contenteditable werden explizit ausgenommen. (Fixes #22)
-- Such-Widget: `getClangs()` liefert für Admin-User in REDAXO nicht zwingend die erste (Default-)Sprache zurück. Artikel und Kategorien in Sprache 1 wurden daher nicht gefunden. Fix: Admins erhalten alle Sprachen via `rex_clang::getAll()`, reguläre User weiterhin via `getClangs()`.
-
-### Changed
-- Struktur-Widget: Artikel werden nun ohne Box/Bubble dargestellt – nur Trennlinien (`border-bottom`) trennen sie voneinander. Kategorien behalten ihren Rahmen und sind damit klar visuell unterscheidbar. Padding und Hover-Verhalten bleiben erhalten.
+- Such-Widget: Quick Action px↔rem/em-Konvertierung war fehlerhaft. Eingaben wie `16px rem` oder `1.5rem px` wurden nicht erkannt. Ersetzt durch Regex-basierte Mustererkennung mit expliziter Richtungserkennung. Unterstützt jetzt: `16px`, `16px rem`, `16px to rem`, `1.5rem`, `1.5rem px`, `1.5rem to px`.
+- Such-Widget: Start-Artikel erschienen doppelt in den Suchergebnissen (einmal als Kategorie, einmal als Artikel). Start-Artikel werden jetzt aus der Artikel-Liste dedupliziert.
+- Suchfilter `created:today` / `modified:today` etc. funktionierten nicht, da das `#`-Präfix in der Regex zwingend war. Das Präfix ist jetzt optional.
 
 ## [2.3.5] - 2026-03-12
 

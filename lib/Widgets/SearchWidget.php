@@ -4,6 +4,7 @@ namespace KLXM\InfoCenter\Widgets;
 
 use KLXM\InfoCenter\AbstractWidget;
 use rex;
+use rex_csrf_token;
 use rex_i18n;
 use rex_view;
 
@@ -32,6 +33,12 @@ class SearchWidget extends AbstractWidget
         }
         
         $isAdmin = $user->isAdmin() ? 'true' : 'false';
+
+        // CSRF token for admin commands
+        $csrfToken = '';
+        if ($user->isAdmin()) {
+            $csrfToken = rex_csrf_token::factory('info_center_admin_command')->getValue();
+        }
 
         // Add i18n translations to JavaScript
         $translations = [
@@ -72,7 +79,7 @@ class SearchWidget extends AbstractWidget
         rex_view::setJsProperty('info_center_translations', $translations);
 
         $content = '
-        <div class="info-center-widget info-center-search-widget" id="info-center-search-widget" data-id="search" data-is-admin="' . $isAdmin . '">
+        <div class="info-center-widget info-center-search-widget" id="info-center-search-widget" data-id="search" data-is-admin="' . $isAdmin . '" data-csrf-token="' . rex_escape($csrfToken) . '">
             <div class="info-center-widget-header">
                 <h3 class="info-center-widget-title">' . rex_escape($this->getTitle()) . '</h3>
             </div>

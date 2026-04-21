@@ -1481,10 +1481,222 @@
                 });
             }
         }
-        
+
+        // -----------------------------------------------------------------------
+        // Admin Commands (2.5.0)
+        // -----------------------------------------------------------------------
+
+        // #clearcache
+        if (isAdmin && /^#?clearcache$/i.test(trimmedQuery)) {
+            actions.push({
+                type: 'calculator',
+                title: 'Cache leeren',
+                subtitle: 'REDAXO-Cache vollständig löschen – Klick zum Ausführen',
+                action: () => adminCommand('clearcache', null, (result) => {
+                    showCommandFeedback(result.success, result.message);
+                })
+            });
+        }
+
+        // #user login email [Rolle]
+        if (isAdmin && /^#?user\s+\S+\s+\S+/i.test(trimmedQuery)) {
+            const args = trimmedQuery.replace(/^#?user\s+/i, '').trim();
+            const parts = args.split(/\s+/);
+            const login = parts[0] || '';
+            const email = parts[1] || '';
+            const role  = parts.slice(2).join(' ');
+
+            actions.push({
+                type: 'url',
+                title: 'Benutzer erstellen: ' + login,
+                subtitle: (email || '(keine E-Mail)') + (role ? ' · Rolle: ' + role : '') + ' – Klick zum Anlegen',
+                action: () => adminCommand('user ' + args, null, (result) => {
+                    if (result.success && result.data) {
+                        showUserCreatedModal(result.data);
+                    } else {
+                        showCommandFeedback(false, result.message);
+                    }
+                })
+            });
+        }
+
+        // #userdisable login
+        if (isAdmin && /^#?userdisable\s+\S+/i.test(trimmedQuery)) {
+            const login = trimmedQuery.replace(/^#?userdisable\s+/i, '').trim();
+            actions.push({
+                type: 'url',
+                title: 'Benutzer sperren: ' + login,
+                subtitle: 'Account deaktivieren – Klick zum Ausführen',
+                action: () => adminCommand('userdisable ' + login, null, (result) => {
+                    showCommandFeedback(result.success, result.message);
+                })
+            });
+        }
+
+        // #showusers
+        if (isAdmin && /^#?showusers$/i.test(trimmedQuery)) {
+            actions.push({
+                type: 'url',
+                title: 'Benutzerliste anzeigen',
+                subtitle: 'Alle REDAXO-Benutzer auflisten – Klick zum Laden',
+                action: () => adminCommand('showusers', null, (result) => {
+                    if (result.success && result.data) {
+                        showUsersModal(result.data);
+                    } else {
+                        showCommandFeedback(false, result.message);
+                    }
+                })
+            });
+        }
+
         return actions;
     }
     
+    // -------------------------------------------------------------------------
+    // Admin Command Helpers (2.5.0)
+    // -------------------------------------------------------------------------
+
+    function adminCommand(command, _unused, callback) {
+        const searchWidget = document.getElementById('info-center-search-widget');
+        const csrfToken = searchWidget ? searchWidget.dataset.csrfToken : '';
+
+        const isBackend = window.location.pathname.includes('/redaxo/');
+        const backendPath = isBackend ? '' : 'redaxo/';
+        const url = backendPath + 'index.php?rex-api-call=info_center_admin_command';
+
+        const body = new URLSearchParams();
+        body.append('command', command);
+        body.append('_csrf_token', csrfToken);
+
+        fetch(url, { method: 'POST', body: body })
+            .then(r => r.json())
+            .then(data => callback(data))
+            .catch(() => callback({ success: false, message: 'Verbindungsfehler' }));
+    }
+
+    function showUsersModal(users) {
+        const isDark = document.documentElement.classList.contains('rex-theme-dark') ||
+                       document.body.classList.contains('rex-theme-dark') ||
+                       window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        const bg      = isDark ? '#1e1e1e' : '#fff';
+        const textCol = isDark ? '#e0e0e0' : '#333';
+        const thBg    = isDark ? '#2d2d2d' : '#f4f4f4';
+        const rowAlt  = isDark ? '#252525' : '#fafafa';
+        const border  = isDark ? '#3a3a3a' : '#e0e0e0';
+
+        const rows = users.map((u, i) => {
+            const statusBadge = u.status
+                ? '<span style="color:#4caf50;font-weight:bold;">✓ aktiv</span>'
+                : '<span style="color:#ef5350;font-weight:bold;">✗ gesperrt</span>';
+            const adminBadge = u.admin ? ' <span style="font-size:.75em;background:#ff9800;color:#fff;padding:1px 5px;border-radius:3px;">Admin</span>' : '';
+            return `<tr style="background:${i % 2 === 0 ? 'transparent' : rowAlt};">
+                <td style="padding:6px 10px;border-bottom:1px solid ${border};">${escapeHtml(u.login)}${adminBadge}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid ${border};">${escapeHtml(u.name)}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid ${border};">${escapeHtml(u.email)}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid ${border};">${escapeHtml(u.role || '–')}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid ${border};">${statusBadge}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid ${border};font-size:.85em;">${escapeHtml(u.lastlogin)}</td>
+                <td style="padding:6px 10px;border-bottom:1px solid ${border};"><a href="${escapeHtml(u.url_edit)}" target="_blank" style="color:#4a9eff;">✎</a></td>
+            </tr>`;
+        }).join('');
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:999999;padding:20px;';
+
+        const box = document.createElement('div');
+        box.style.cssText = `background:${bg};padding:24px;border-radius:8px;max-width:900px;width:100%;max-height:85vh;overflow-y:auto;`;
+        box.innerHTML = `
+            <h3 style="margin:0 0 16px;color:${isDark ? '#4a9eff' : '#1976d2'};">👥 REDAXO Benutzer (${users.length})</h3>
+            <table style="width:100%;border-collapse:collapse;color:${textCol};font-size:.9rem;">
+                <thead>
+                    <tr style="background:${thBg};">
+                        <th style="padding:8px 10px;text-align:left;border-bottom:2px solid ${border};">Login</th>
+                        <th style="padding:8px 10px;text-align:left;border-bottom:2px solid ${border};">Name</th>
+                        <th style="padding:8px 10px;text-align:left;border-bottom:2px solid ${border};">E-Mail</th>
+                        <th style="padding:8px 10px;text-align:left;border-bottom:2px solid ${border};">Rolle</th>
+                        <th style="padding:8px 10px;text-align:left;border-bottom:2px solid ${border};">Status</th>
+                        <th style="padding:8px 10px;text-align:left;border-bottom:2px solid ${border};">Letzter Login</th>
+                        <th style="padding:8px 10px;border-bottom:2px solid ${border};"></th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div style="text-align:center;margin-top:20px;">
+                <button class="btn btn-primary" onclick="this.closest('[style*=fixed]').remove()">Schließen</button>
+            </div>
+        `;
+
+        modal.appendChild(box);
+        modal.onclick = e => { if (e.target === modal) modal.remove(); };
+        document.body.appendChild(modal);
+    }
+
+    function showCommandFeedback(success, message) {
+        const isDark = document.documentElement.classList.contains('rex-theme-dark') ||
+                       document.body.classList.contains('rex-theme-dark') ||
+                       window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:999999;';
+
+        const box = document.createElement('div');
+        const bg  = isDark ? '#1e1e1e' : '#fff';
+        const col = success ? (isDark ? '#4caf50' : '#2e7d32') : (isDark ? '#ef5350' : '#c62828');
+        box.style.cssText = `background:${bg};padding:28px 32px;border-radius:8px;max-width:420px;width:90%;text-align:center;border-top:4px solid ${col};`;
+        box.innerHTML = `
+            <div style="font-size:2rem;margin-bottom:8px;">${success ? '✅' : '❌'}</div>
+            <p style="margin:0 0 20px;font-size:1rem;color:${isDark ? '#e0e0e0' : '#333'};">${escapeHtml(message)}</p>
+            <button class="btn btn-primary" onclick="this.closest('[style*=fixed]').remove()">OK</button>
+        `;
+        modal.appendChild(box);
+        modal.onclick = e => { if (e.target === modal) modal.remove(); };
+        document.body.appendChild(modal);
+    }
+
+    function showUserCreatedModal(data) {
+        const isDark = document.documentElement.classList.contains('rex-theme-dark') ||
+                       document.body.classList.contains('rex-theme-dark') ||
+                       window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        const bg      = isDark ? '#1e1e1e' : '#fff';
+        const textCol = isDark ? '#e0e0e0' : '#333';
+        const codeBg  = isDark ? '#2d2d2d' : '#f4f4f4';
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:999999;';
+
+        const credentials = `Login: ${data.login}\nE-Mail: ${data.email}\nPasswort: ${data.password}\nRolle: ${data.role}`;
+
+        const box = document.createElement('div');
+        box.style.cssText = `background:${bg};padding:28px 32px;border-radius:8px;max-width:480px;width:90%;border-top:4px solid #4caf50;`;
+        box.innerHTML = `
+            <h3 style="margin:0 0 16px;color:${isDark ? '#4caf50' : '#2e7d32'};">✅ Benutzer angelegt</h3>
+            <p style="color:${textCol};margin:0 0 6px;">Der User muss beim ersten Login sein Passwort ändern.</p>
+            <table style="width:100%;border-collapse:collapse;margin:12px 0;color:${textCol};">
+                <tr><td style="padding:4px 8px;font-weight:bold;">Login</td><td style="padding:4px 8px;font-family:monospace;">${escapeHtml(data.login)}</td></tr>
+                <tr><td style="padding:4px 8px;font-weight:bold;">E-Mail</td><td style="padding:4px 8px;font-family:monospace;">${escapeHtml(data.email)}</td></tr>
+                <tr><td style="padding:4px 8px;font-weight:bold;">Passwort</td><td style="padding:4px 8px;font-family:monospace;background:${codeBg};letter-spacing:.05em;">${escapeHtml(data.password)}</td></tr>
+                <tr><td style="padding:4px 8px;font-weight:bold;">Rolle</td><td style="padding:4px 8px;">${escapeHtml(data.role)}</td></tr>
+            </table>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px;">
+                <button class="btn btn-default" id="ic-copy-creds">Zugangsdaten kopieren</button>
+                <a class="btn btn-default" href="${escapeHtml(data.url_backend)}" target="_blank">Benutzer bearbeiten</a>
+                <button class="btn btn-primary" onclick="this.closest('[style*=fixed]').remove()">Schließen</button>
+            </div>
+        `;
+
+        box.querySelector('#ic-copy-creds').addEventListener('click', () => {
+            navigator.clipboard.writeText(credentials)
+                .then(() => alert('Zugangsdaten kopiert!'))
+                .catch(() => prompt('Zugangsdaten (manuell kopieren):', credentials));
+        });
+
+        modal.appendChild(box);
+        modal.onclick = e => { if (e.target === modal) modal.remove(); };
+        document.body.appendChild(modal);
+    }
+
     async function fetchWikipediaSummary(searchTerm) {
         try {
             const response = await fetch(`https://de.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(searchTerm)}`);
@@ -1760,31 +1972,42 @@
             </div>
             
             ${isAdmin ? `
+            <h3 style="color:${headingColor};margin-top:25px;">⚙️ Admin-Befehle</h3>
+            <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
+                <p style="margin:5px 0;color:${textColor};"><strong>👤 Benutzer anlegen:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#user login email [Rolle]</code></p>
+                <p style="margin:5px 0 10px 20px;color:${textColor};font-size:.9em;">Legt einen neuen User an. Beim ersten Login muss das Passwort geändert werden. Die Zugangsdaten werden angezeigt.</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>🔒 Benutzer sperren:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#userdisable login</code></p>
+                <p style="margin:5px 0 10px 20px;color:${textColor};font-size:.9em;">Deaktiviert den Account sofort (status = 0).</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>🗑️ Cache leeren:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#clearcache</code></p>
+                <p style="margin:5px 0 0 20px;color:${textColor};font-size:.9em;">Löscht den kompletten REDAXO-Cache.</p>
+            </div>` : ''}
+            
+            ${isAdmin ? `
             <h3 style="color:${headingColor};margin-top:25px;">${t('help_filters', '🔎 Erweiterte Filter')}</h3>
             <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
                 <p style="margin:10px 0;color:${textColor};"><strong>${t('help_modified', '📅 Datum-Filter (geändert)')}:</strong></p>
                 <ul style="margin:5px 0 10px 20px;color:${textColor};">
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:today</code></li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:yesterday</code></li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">modified:last-week</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#modified:today</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#modified:yesterday</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#modified:last-week</code></li>
                 </ul>
                 
                 <p style="margin:10px 0;color:${textColor};"><strong>${t('help_created', '📅 Datum-Filter (erstellt)')}:</strong></p>
                 <ul style="margin:5px 0 10px 20px;color:${textColor};">
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">created:today</code></li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">created:last-week</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#created:today</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#created:last-week</code></li>
                 </ul>
                 
                 <p style="margin:10px 0;color:${textColor};"><strong>${t('help_user', '👤 Benutzer-Filter')}:</strong></p>
                 <ul style="margin:5px 0 10px 20px;color:${textColor};">
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">author:admin</code></li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">editor:thomas</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#author:admin</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#editor:thomas</code></li>
                 </ul>
                 
                 <p style="margin:10px 0;color:${textColor};"><strong>${t('help_combinations', '🔗 Kombinationen')}:</strong></p>
                 <ul style="margin:5px 0 10px 20px;color:${textColor};">
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">test modified:today</code></li>
-                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">artikel author:admin</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">test #modified:today</code></li>
+                    <li><code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">artikel #author:admin</code></li>
                 </ul>
             </div>` : ''}
             
