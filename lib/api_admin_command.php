@@ -105,7 +105,8 @@ class rex_api_info_center_admin_command extends rex_api_function
                 'status'    => (int) $sql->getValue('status') === 1,
                 'role'      => $roleName,
                 'lastlogin' => $lastlogin ? date('d.m.Y H:i', strtotime((string) $lastlogin)) : '–',
-                'url_edit'  => rex_url::backendPage('users/user', ['user_id' => (int) $sql->getValue('id'), 'func' => 'edit']),
+                'url_edit'  => rex_url::backendPage('users/users', ['user_id' => (int) $sql->getValue('id')]),
+
             ];
             $sql->next();
         }
@@ -209,7 +210,7 @@ class rex_api_info_center_admin_command extends rex_api_function
                 'email' => $email,
                 'password' => $password,
                 'role' => $roleName ?: '–',
-                'url_backend' => rex_url::backendPage('users/user', ['user_id' => $userId, 'func' => 'edit']),
+                'url_backend' => rex_url::backendPage('users/users', ['user_id' => $userId]),
             ],
         ]);
         exit;
