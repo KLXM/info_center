@@ -20,6 +20,15 @@
 - Suchfilter `created:today` / `modified:today` etc. funktionierten nicht, da das `#`-Präfix in der Regex zwingend war. Das Präfix ist jetzt optional.
 - Benutzer-Bearbeiten-Link in `#showusers` verwendete falsche Backend-URL (`users/user` → `users/users`) und HTML-escapte `&amp;` in JSON-Ausgabe.
 
+## [2.4.0] - 2026-04-21
+
+### Fixed
+- Struktur-Widget: Artikel auf der gleichen Ebene wie Kategorien wurden optisch um genau eine Einrückungsebene zu tief dargestellt. Ursache: Der `.info-center-tree-spacer` (`width: 0`) erzeugte im Flex-Container trotzdem einen `gap: 8px`, und das Artikel-Icon hatte zusätzlich `margin-left: 4px` – zusammen 12 px, was einer `ul`-Einrückungsebene (`padding-left: 12px`) entspricht. Fix: `padding-left` des Artikel-Nodes auf 12 px gesetzt, Spacer via `display: none` aus dem Flex-Flow entfernt, `margin-left` am Artikel-Icon entfernt.
+- Widget-Sortierung per Tastatur: Pfeiltasten allein lösten versehentlich das Widget-Verschieben aus, auch beim Schreiben in Textfeldern (z. B. WriteAssist-Prompt). Shortcut auf **Alt+↑/↓** (Mac: Option+↑/↓) umgestellt. Zusätzliche Guard: Input/Textarea/contenteditable werden explizit ausgenommen. (Fixes #22)
+
+### Changed
+- Struktur-Widget: Artikel werden nun ohne Box/Bubble dargestellt – nur Trennlinien (`border-bottom`) trennen sie voneinander. Kategorien behalten ihren Rahmen und sind damit klar visuell unterscheidbar. Padding und Hover-Verhalten bleiben erhalten.
+
 ## [2.3.5] - 2026-03-12
 
 ### Changed
