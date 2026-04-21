@@ -159,18 +159,23 @@ class rex_api_info_center_admin_command extends rex_api_function
         }
 
         // Resolve role ID
-        $roleId = null;
+        $roleId   = null;
+        $isAdmin  = false;
         if ($roleName !== '') {
-            $roleCheck = rex_sql::factory();
-            $roleCheck->setQuery(
-                'SELECT id FROM ' . rex::getTable('user_role') . ' WHERE name = :name LIMIT 1',
-                ['name' => $roleName]
-            );
-            if ($roleCheck->getRows() > 0) {
-                $roleId = (int) $roleCheck->getValue('id');
+            if (strtolower($roleName) === 'admin') {
+                $isAdmin = true;
             } else {
-                rex_response::sendJson(['success' => false, 'message' => 'Rolle "' . rex_escape($roleName) . '" nicht gefunden.']);
-                exit;
+                $roleCheck = rex_sql::factory();
+                $roleCheck->setQuery(
+                    'SELECT id FROM ' . rex::getTable('user_role') . ' WHERE name = :name LIMIT 1',
+                    ['name' => $roleName]
+                );
+                if ($roleCheck->getRows() > 0) {
+                    $roleId = (int) $roleCheck->getValue('id');
+                } else {
+                    rex_response::sendJson(['success' => false, 'message' => 'Rolle "' . rex_escape($roleName) . '" nicht gefunden.']);
+                    exit;
+                }
             }
         }
 
@@ -186,7 +191,7 @@ class rex_api_info_center_admin_command extends rex_api_function
         $sql->setValue('login', $login);
         $sql->setValue('email', $email);
         $sql->setValue('password', $passwordHash);
-        $sql->setValue('admin', 0);
+        $sql->setValue('admin', $isAdmin ? 1 : 0);
         $sql->setValue('status', 1);
         $sql->setValue('login_tries', 0);
         $sql->setValue('password_change_required', 1);
@@ -209,7 +214,7 @@ class rex_api_info_center_admin_command extends rex_api_function
                 'login' => $login,
                 'email' => $email,
                 'password' => $password,
-                'role' => $roleName ?: '–',
+                'role' => $isAdmin ? 'Admin' : ($roleName ?: '–'),
                 'url_backend' => rex_url::backendPage('users/users', ['user_id' => $userId], false),
             ],
         ]);
