@@ -1852,7 +1852,7 @@
                 
                 const dragTitle = (window.InfoCenter && window.InfoCenter.translations && window.InfoCenter.translations.drag_reorder) 
                     ? window.InfoCenter.translations.drag_reorder 
-                    : 'Drag to reorder';
+                    : 'Drag to reorder · Alt+↑↓';
 
                 dragHandle.title = dragTitle;
                 dragHandle.setAttribute('role', 'button');
@@ -1998,7 +1998,7 @@
             });
         }
         
-        // Keyboard navigation with arrow keys
+        // Keyboard navigation with Alt+Arrow keys (Mac: Option+Arrow, Win: Alt+Arrow)
         function initKeyboardNavigation() {
             // Remove existing listener to prevent duplicates after PJAX updates
             if (widgetsContainer._keydownHandler) {
@@ -2006,7 +2006,12 @@
             }
             
             widgetsContainer._keydownHandler = function(e) {
-                if (!['ArrowUp', 'ArrowDown'].includes(e.key)) return;
+                // Only react on Alt+ArrowUp / Alt+ArrowDown
+                if (!e.altKey || !['ArrowUp', 'ArrowDown'].includes(e.key)) return;
+                
+                // Never interfere when focus is inside an input, textarea or contenteditable
+                const tag = document.activeElement.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement.isContentEditable) return;
                 
                 const focusedWidget = document.activeElement.closest('.info-center-widget');
                 if (!focusedWidget) return;
