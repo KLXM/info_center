@@ -5,6 +5,8 @@ use rex_api_function;
 use rex_backend_login;
 use rex_backend_password_policy;
 use rex_csrf_token;
+use rex_file;
+use rex_path;
 use rex_request;
 use rex_response;
 use rex_sql;
@@ -17,6 +19,10 @@ use rex_url;
  *   - #user login email [role]   → create user with forced password change
  *   - #clearcache                → clear REDAXO cache
  *   - #userdisable login         → disable (lock) a user account
+ *   - #userenable login          → enable (unlock) a user account
+ *   - #passwd login              → reset password for a user
+ *   - #mediasize                 → show media folder size statistics
+ *   - #logview [n]               → show last n lines of system log
  */
 class rex_api_info_center_admin_command extends rex_api_function
 {
@@ -59,6 +65,33 @@ class rex_api_info_center_admin_command extends rex_api_function
 
         if (str_starts_with($command, 'userdisable ')) {
             $this->disableUser(trim(substr($command, 12)));
+            return;
+        }
+
+        if (str_starts_with($command, 'userenable ')) {
+            $this->enableUser(trim(substr($command, 11)));
+            return;
+        }
+
+        if (str_starts_with($command, 'passwd ')) {
+            $this->resetPassword(trim(substr($command, 7)));
+            return;
+        }
+
+        if ($command === 'mediasize') {
+            $this->mediaSize();
+            return;
+        }
+
+        if ($command === 'logview' || str_starts_with($command, 'logview ')) {
+            $n = 20;
+            if (str_starts_with($command, 'logview ')) {
+                $parsed = (int) trim(substr($command, 8));
+                if ($parsed > 0 && $parsed <= 500) {
+                    $n = $parsed;
+                }
+            }
+            $this->logView($n);
             return;
         }
 
@@ -271,6 +304,173 @@ class rex_api_info_center_admin_command extends rex_api_function
 
     // -------------------------------------------------------------------------
     // Helpers
+    // -------------------------------------------------------------------------
+
+    private function enableUser(string $login): void
+    {
+        if ($login === '') {
+            rex_response::sendJson(['success' => false, 'message' => 'Kein Benutzername angegeben.']);
+            exit;
+        }
+
+        $check = rex_sql::factory();
+        $check->setQuery(
+            'SELECT id, status FROM ' . rex::getTable('user') . ' WHERE login = :login LIMIT 1',
+            ['login' => $login]
+        );
+
+        if ($check->getRows() === 0) {
+            rex_response::sendJson(['success' => false, 'message' => 'Benutzer "' . rex_escape($login) . '" nicht gefunden.']);
+            exit;
+        }
+
+        $userId        = (int) $check->getValue('id');
+        $currentStatus = (int) $check->getValue('status');
+
+        if ($currentStatus === 1) {
+            rex_response::sendJson(['success' => false, 'message' => 'Benutzer "' . rex_escape($login) . '" ist bereits aktiv.']);
+            exit;
+        }
+
+        $sql = rex_sql::factory();
+        $sql->setTable(rex::getTable('user'));
+        $sql->setWhere(['id' => $userId]);
+        $sql->setValue('status', 1);
+        $sql->addGlobalUpdateFields(rex::getUser()->getLogin());
+        $sql->update();
+
+        rex_response::sendJson([
+            'success' => true,
+            'message' => 'Benutzer "' . rex_escape($login) . '" wurde aktiviert.',
+            'data'    => ['login' => $login],
+        ]);
+        exit;
+    }
+
+    private function resetPassword(string $login): void
+    {
+        if ($login === '') {
+            rex_response::sendJson(['success' => false, 'message' => 'Kein Benutzername angegeben.']);
+            exit;
+        }
+
+        $check = rex_sql::factory();
+        $check->setQuery(
+            'SELECT id FROM ' . rex::getTable('user') . ' WHERE login = :login LIMIT 1',
+            ['login' => $login]
+        );
+
+        if ($check->getRows() === 0) {
+            rex_response::sendJson(['success' => false, 'message' => 'Benutzer "' . rex_escape($login) . '" nicht gefunden.']);
+            exit;
+        }
+
+        $userId         = (int) $check->getValue('id');
+        $password       = $this->generatePassword(14);
+        $passwordHash   = rex_backend_login::passwordHash($password);
+        $passwordPolicy = rex_backend_password_policy::factory();
+
+        $sql = rex_sql::factory();
+        $sql->setTable(rex::getTable('user'));
+        $sql->setWhere(['id' => $userId]);
+        $sql->setValue('password', $passwordHash);
+        $sql->setValue('password_change_required', 1);
+        $sql->setArrayValue('previous_passwords', $passwordPolicy->updatePreviousPasswords(null, $passwordHash));
+        $sql->setDateTimeValue('password_changed', time());
+        $sql->addGlobalUpdateFields(rex::getUser()->getLogin());
+        $sql->update();
+
+        rex_response::sendJson([
+            'success' => true,
+            'message' => 'Passwort für "' . rex_escape($login) . '" wurde zurückgesetzt.',
+            'data'    => [
+                'login'    => $login,
+                'password' => $password,
+            ],
+        ]);
+        exit;
+    }
+
+    private function mediaSize(): void
+    {
+        $mediaPath  = rex_path::media();
+        $totalSize  = 0;
+        $fileCount  = 0;
+        $files      = [];
+
+        if (is_dir($mediaPath)) {
+            $iterator = new \RecursiveIteratorIterator(
+                new \RecursiveDirectoryIterator($mediaPath, \FilesystemIterator::SKIP_DOTS)
+            );
+            foreach ($iterator as $file) {
+                if ($file->isFile()) {
+                    $size       = $file->getSize();
+                    $totalSize += $size;
+                    ++$fileCount;
+                    $files[] = ['name' => $file->getFilename(), 'size' => $size];
+                }
+            }
+        }
+
+        usort($files, static fn($a, $b) => $b['size'] - $a['size']);
+        $topFiles = array_map(
+            fn($f) => ['name' => $f['name'], 'size_human' => $this->formatBytes($f['size'])],
+            array_slice($files, 0, 10)
+        );
+
+        rex_response::sendJson([
+            'success' => true,
+            'data'    => [
+                'total_size_human' => $this->formatBytes($totalSize),
+                'file_count'       => $fileCount,
+                'top_files'        => $topFiles,
+            ],
+        ]);
+        exit;
+    }
+
+    private function logView(int $lines): void
+    {
+        $logFile = rex_path::log('system.log');
+
+        if (!is_file($logFile)) {
+            rex_response::sendJson(['success' => true, 'data' => ['entries' => [], 'total' => 0, 'shown' => 0]]);
+            exit;
+        }
+
+        $allLines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if ($allLines === false) {
+            $allLines = [];
+        }
+
+        $total   = count($allLines);
+        $entries = array_reverse(array_slice($allLines, max(0, $total - $lines), $lines));
+
+        rex_response::sendJson([
+            'success' => true,
+            'data'    => [
+                'entries' => $entries,
+                'total'   => $total,
+                'shown'   => count($entries),
+            ],
+        ]);
+        exit;
+    }
+
+    private function formatBytes(int $bytes): string
+    {
+        if ($bytes >= 1073741824) {
+            return round($bytes / 1073741824, 2) . ' GB';
+        }
+        if ($bytes >= 1048576) {
+            return round($bytes / 1048576, 2) . ' MB';
+        }
+        if ($bytes >= 1024) {
+            return round($bytes / 1024, 2) . ' KB';
+        }
+        return $bytes . ' B';
+    }
+
     // -------------------------------------------------------------------------
 
     /**

@@ -1549,6 +1549,70 @@
             });
         }
 
+        // #userenable login
+        if (isAdmin && /^#?userenable\s+\S+/i.test(trimmedQuery)) {
+            const login = trimmedQuery.replace(/^#?userenable\s+/i, '').trim();
+            actions.push({
+                type: 'url',
+                title: `Benutzer aktivieren: ${login}`,
+                subtitle: 'Account entsperren (status = 1)',
+                action: () => adminCommand('userenable ' + login, null, (result) => {
+                    showCommandFeedback(result.success, result.message);
+                })
+            });
+        }
+
+        // #passwd login
+        if (isAdmin && /^#?passwd\s+\S+/i.test(trimmedQuery)) {
+            const login = trimmedQuery.replace(/^#?passwd\s+/i, '').trim();
+            actions.push({
+                type: 'url',
+                title: `Passwort zurücksetzen: ${login}`,
+                subtitle: 'Neues Temp-Passwort generieren (password_change_required = 1)',
+                action: () => adminCommand('passwd ' + login, null, (result) => {
+                    if (result.success && result.data) {
+                        showPasswdModal(result.data);
+                    } else {
+                        showCommandFeedback(false, result.message);
+                    }
+                })
+            });
+        }
+
+        // #mediasize
+        if (isAdmin && /^#?mediasize$/i.test(trimmedQuery)) {
+            actions.push({
+                type: 'url',
+                title: 'Medienordner-Größe anzeigen',
+                subtitle: 'Speicherverbrauch und Top-10-Dateien',
+                action: () => adminCommand('mediasize', null, (result) => {
+                    if (result.success && result.data) {
+                        showMediaSizeModal(result.data);
+                    } else {
+                        showCommandFeedback(false, result.message);
+                    }
+                })
+            });
+        }
+
+        // #logview [n]
+        if (isAdmin && /^#?logview(\s+\d+)?$/i.test(trimmedQuery)) {
+            const nMatch = trimmedQuery.match(/\d+/);
+            const n = nMatch ? parseInt(nMatch[0], 10) : 20;
+            actions.push({
+                type: 'url',
+                title: `System-Log anzeigen (${n} Einträge)`,
+                subtitle: 'Letzte Einträge aus dem REDAXO-Systemlog',
+                action: () => adminCommand('logview ' + n, null, (result) => {
+                    if (result.success && result.data) {
+                        showLogViewModal(result.data);
+                    } else {
+                        showCommandFeedback(false, result.message);
+                    }
+                })
+            });
+        }
+
         return actions;
     }
     
@@ -1692,6 +1756,110 @@
                 .catch(() => prompt('Zugangsdaten (manuell kopieren):', credentials));
         });
 
+        modal.appendChild(box);
+        modal.onclick = e => { if (e.target === modal) modal.remove(); };
+        document.body.appendChild(modal);
+    }
+
+    function showPasswdModal(data) {
+        const isDark  = document.body.classList.contains('rex-theme-dark') ||
+                        window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const bg      = isDark ? '#1e1e1e' : '#fff';
+        const textCol = isDark ? '#e0e0e0' : '#333';
+        const codeBg  = isDark ? '#2d2d2d' : '#f4f4f4';
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:999999;';
+
+        const credentials = `Login: ${data.login}\nPasswort: ${data.password}`;
+        const box = document.createElement('div');
+        box.style.cssText = `background:${bg};padding:28px 32px;border-radius:8px;max-width:460px;width:90%;border-top:4px solid #4caf50;`;
+        box.innerHTML = `
+            <h3 style="margin:0 0 16px;color:${isDark ? '#4caf50' : '#2e7d32'};">🔑 Passwort zurückgesetzt</h3>
+            <p style="color:${textCol};margin:0 0 12px;">Neues temporäres Passwort für <strong>${escapeHtml(data.login)}</strong>.<br>Der User muss es beim nächsten Login ändern.</p>
+            <table style="width:100%;border-collapse:collapse;margin:12px 0;color:${textCol};">
+                <tr><td style="padding:4px 8px;font-weight:bold;">Login</td><td style="padding:4px 8px;font-family:monospace;">${escapeHtml(data.login)}</td></tr>
+                <tr><td style="padding:4px 8px;font-weight:bold;">Passwort</td><td style="padding:4px 8px;font-family:monospace;background:${codeBg};letter-spacing:.05em;">${escapeHtml(data.password)}</td></tr>
+            </table>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:20px;">
+                <button class="btn btn-default" id="ic-copy-passwd">Kopieren</button>
+                <button class="btn btn-primary" onclick="this.closest('[style*=fixed]').remove()">Schließen</button>
+            </div>
+        `;
+        box.querySelector('#ic-copy-passwd').addEventListener('click', () => {
+            navigator.clipboard.writeText(credentials)
+                .then(() => alert('Zugangsdaten kopiert!'))
+                .catch(() => prompt('Manuell kopieren:', credentials));
+        });
+        modal.appendChild(box);
+        modal.onclick = e => { if (e.target === modal) modal.remove(); };
+        document.body.appendChild(modal);
+    }
+
+    function showMediaSizeModal(data) {
+        const isDark  = document.body.classList.contains('rex-theme-dark') ||
+                        window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const bg      = isDark ? '#1e1e1e' : '#fff';
+        const textCol = isDark ? '#e0e0e0' : '#333';
+        const thBg    = isDark ? '#2d2d2d' : '#f4f4f4';
+        const border  = isDark ? '#3a3a3a' : '#e0e0e0';
+        const rowAlt  = isDark ? '#252525' : '#fafafa';
+
+        const rows = (data.top_files || []).map((f, i) => `
+            <tr style="background:${i % 2 === 0 ? 'transparent' : rowAlt};">
+                <td style="padding:5px 10px;border-bottom:1px solid ${border};font-family:monospace;font-size:.85em;">${escapeHtml(f.name)}</td>
+                <td style="padding:5px 10px;border-bottom:1px solid ${border};text-align:right;">${escapeHtml(f.size_human)}</td>
+            </tr>`).join('');
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:999999;padding:20px;';
+        const box = document.createElement('div');
+        box.style.cssText = `background:${bg};padding:24px;border-radius:8px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;`;
+        box.innerHTML = `
+            <h3 style="margin:0 0 4px;color:${isDark ? '#4a9eff' : '#1976d2'};">🗄️ Medienordner</h3>
+            <p style="margin:0 0 16px;color:${isDark ? '#aaa' : '#666'};font-size:.9em;">Gesamt: <strong style="color:${textCol};">${escapeHtml(data.total_size_human)}</strong> &nbsp;|&nbsp; Dateien: <strong style="color:${textCol};">${data.file_count.toLocaleString()}</strong></p>
+            ${rows ? `<h4 style="margin:0 0 8px;color:${textCol};">Top 10 größte Dateien</h4>
+            <table style="width:100%;border-collapse:collapse;color:${textCol};font-size:.9rem;">
+                <thead><tr style="background:${thBg};">
+                    <th style="padding:7px 10px;text-align:left;border-bottom:2px solid ${border};">Datei</th>
+                    <th style="padding:7px 10px;text-align:right;border-bottom:2px solid ${border};">Größe</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>` : '<p style="color:' + textCol + ';">Keine Dateien gefunden.</p>'}
+            <div style="text-align:center;margin-top:20px;">
+                <button class="btn btn-primary" onclick="this.closest('[style*=fixed]').remove()">Schließen</button>
+            </div>
+        `;
+        modal.appendChild(box);
+        modal.onclick = e => { if (e.target === modal) modal.remove(); };
+        document.body.appendChild(modal);
+    }
+
+    function showLogViewModal(data) {
+        const isDark  = document.body.classList.contains('rex-theme-dark') ||
+                        window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const bg      = isDark ? '#1e1e1e' : '#fff';
+        const textCol = isDark ? '#e0e0e0' : '#333';
+        const codeBg  = isDark ? '#111' : '#f8f8f8';
+        const codeFg  = isDark ? '#ced4da' : '#333';
+
+        const entries = data.entries || [];
+        const lines = entries.map(l => `<div style="padding:2px 0;border-bottom:1px solid ${isDark ? '#2a2a2a' : '#eee'};word-break:break-all;">${escapeHtml(l)}</div>`).join('');
+
+        const modal = document.createElement('div');
+        modal.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:999999;padding:20px;';
+        const box = document.createElement('div');
+        box.style.cssText = `background:${bg};padding:24px;border-radius:8px;max-width:900px;width:100%;max-height:85vh;overflow-y:auto;`;
+        box.innerHTML = `
+            <h3 style="margin:0 0 4px;color:${isDark ? '#4a9eff' : '#1976d2'};">📋 System-Log</h3>
+            <p style="margin:0 0 12px;color:${isDark ? '#aaa' : '#666'};font-size:.9em;">Letzte <strong>${data.shown}</strong> von <strong>${data.total}</strong> Einträgen (neueste zuerst)</p>
+            ${entries.length > 0
+                ? `<div style="background:${codeBg};color:${codeFg};font-family:monospace;font-size:.8em;padding:12px;border-radius:4px;max-height:60vh;overflow-y:auto;">${lines}</div>`
+                : `<p style="color:${textCol};">Keine Log-Einträge vorhanden.</p>`}
+            <div style="text-align:center;margin-top:20px;">
+                <button class="btn btn-primary" onclick="this.closest('[style*=fixed]').remove()">Schließen</button>
+            </div>
+        `;
         modal.appendChild(box);
         modal.onclick = e => { if (e.target === modal) modal.remove(); };
         document.body.appendChild(modal);
@@ -1975,9 +2143,19 @@
             <h3 style="color:${headingColor};margin-top:25px;">⚙️ Admin-Befehle</h3>
             <div style="background:${boxBg};padding:15px;border-radius:5px;margin-bottom:20px;">
                 <p style="margin:5px 0;color:${textColor};"><strong>👤 Benutzer anlegen:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#user login email [Rolle]</code></p>
-                <p style="margin:5px 0 10px 20px;color:${textColor};font-size:.9em;">Legt einen neuen User an. Beim ersten Login muss das Passwort geändert werden. Die Zugangsdaten werden angezeigt.</p>
+                <p style="margin:5px 0 10px 20px;color:${textColor};font-size:.9em;">Legt einen neuen User an. <code style="background:${codeBg};color:${codeColor};padding:1px 4px;border-radius:3px;">admin</code> als Rolle setzt admin = 1.</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>👥 Benutzerliste:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#showusers</code></p>
+                <p style="margin:5px 0 10px 20px;color:${textColor};font-size:.9em;">Alle REDAXO-Benutzer mit Status, Rolle und letztem Login.</p>
                 <p style="margin:5px 0;color:${textColor};"><strong>🔒 Benutzer sperren:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#userdisable login</code></p>
                 <p style="margin:5px 0 10px 20px;color:${textColor};font-size:.9em;">Deaktiviert den Account sofort (status = 0).</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>🔓 Benutzer aktivieren:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#userenable login</code></p>
+                <p style="margin:5px 0 10px 20px;color:${textColor};font-size:.9em;">Aktiviert einen gesperrten Account (status = 1).</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>🔑 Passwort zurücksetzen:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#passwd login</code></p>
+                <p style="margin:5px 0 10px 20px;color:${textColor};font-size:.9em;">Generiert ein neues Temp-Passwort. User muss es beim nächsten Login ändern.</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>🗄️ Medienspeicher:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#mediasize</code></p>
+                <p style="margin:5px 0 10px 20px;color:${textColor};font-size:.9em;">Zeigt Gesamtgröße, Dateianzahl und Top-10-Dateien des Medienordners.</p>
+                <p style="margin:5px 0;color:${textColor};"><strong>📋 System-Log:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#logview [n]</code></p>
+                <p style="margin:5px 0 10px 20px;color:${textColor};font-size:.9em;">Letzte n Einträge aus dem REDAXO-Systemlog (Standard: 20, max: 500).</p>
                 <p style="margin:5px 0;color:${textColor};"><strong>🗑️ Cache leeren:</strong> <code style="background:${codeBg};color:${codeColor};padding:2px 6px;border-radius:3px;">#clearcache</code></p>
                 <p style="margin:5px 0 0 20px;color:${textColor};font-size:.9em;">Löscht den kompletten REDAXO-Cache.</p>
             </div>` : ''}

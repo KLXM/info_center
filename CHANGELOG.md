@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.6.0] - 2026-04-21
+
+### Added
+- **Admin-Befehl `#mediasize`**: Zeigt Gesamtgröße, Dateianzahl und Top-10-Dateien des Medienordners in einem Modal.
+- **Admin-Befehl `#userenable login`**: Aktiviert einen gesperrten Benutzeraccount (status = 1). Gegenstück zu `#userdisable`.
+- **Admin-Befehl `#passwd login`**: Generiert ein neues kryptografisch sicheres Temporärpasswort für einen bestehenden Benutzer. `password_change_required = 1` erzwingt die Passwortänderung.
+- **Admin-Befehl `#logview [n]`**: Zeigt die letzten n Einträge aus dem REDAXO-Systemlog (Standard: 20, max: 500) in einem lesbaren Modal.
+- Hilfe-Modal listet alle 8 Admin-Befehle mit Kurzbeschreibung auf.
+
 ## [2.5.0] - 2026-04-21
 
 ### Added
