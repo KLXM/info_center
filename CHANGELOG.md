@@ -1,28 +1,24 @@
 # Changelog
 
-## [2.6.0] - 2026-04-21
-
-### Added
-- **Admin-Befehl `#mediasize`**: Zeigt Gesamtgröße, Dateianzahl und Top-10-Dateien des Medienordners in einem Modal.
-- **Admin-Befehl `#userenable login`**: Aktiviert einen gesperrten Benutzeraccount (status = 1). Gegenstück zu `#userdisable`.
-- **Admin-Befehl `#passwd login`**: Generiert ein neues kryptografisch sicheres Temporärpasswort für einen bestehenden Benutzer. `password_change_required = 1` erzwingt die Passwortänderung.
-- **Admin-Befehl `#logview [n]`**: Zeigt die letzten n Einträge aus dem REDAXO-Systemlog (Standard: 20, max: 500) in einem lesbaren Modal.
-- Hilfe-Modal listet alle 8 Admin-Befehle mit Kurzbeschreibung auf.
-
 ## [2.5.0] - 2026-04-21
 
 ### Added
-- **Admin-Befehl `#user login email [Rolle]`**: Legt einen neuen REDAXO-Benutzer direkt aus dem Suchfeld an. Ein kryptografisch sicheres temporäres Passwort wird generiert. `password_change_required = 1` erzwingt die Passwortänderung beim ersten Login. Zugangsdaten werden in einem Modal angezeigt und können per Klick kopiert werden.
+- **Admin-Befehl `#user login email [Rolle]`**: Legt einen neuen REDAXO-Benutzer direkt aus dem Suchfeld an. Ein kryptografisch sicheres temporäres Passwort wird generiert. `password_change_required = 1` erzwingt die Passwortänderung beim ersten Login. Zugangsdaten werden in einem Modal angezeigt und können per Klick kopiert werden. `admin` als Rolle setzt `admin = 1`.
 - **Admin-Befehl `#showusers`**: Listet alle REDAXO-Benutzer mit Status, Rolle und letztem Login in einem Modal auf.
 - **Admin-Befehl `#clearcache`**: Leert den kompletten REDAXO-Cache (`rex_delete_cache()`) und gibt direktes Feedback.
 - **Admin-Befehl `#userdisable login`**: Deaktiviert einen Benutzeraccount sofort (`status = 0`). Self-Lock ist verhindert – der ausführende Admin kann sich nicht selbst sperren.
+- **Admin-Befehl `#userenable login`**: Aktiviert einen gesperrten Benutzeraccount (status = 1). Gegenstück zu `#userdisable`.
+- **Admin-Befehl `#passwd login`**: Generiert ein neues kryptografisch sicheres Temporärpasswort für einen bestehenden Benutzer. `password_change_required = 1` erzwingt die Passwortänderung.
+- **Admin-Befehl `#mediasize`**: Zeigt Gesamtgröße, Dateianzahl und Top-10-Dateien des Medienordners in einem Modal.
+- **Admin-Befehl `#logview [n]`**: Zeigt die letzten n Einträge aus dem REDAXO-Systemlog (Standard: 20, max: 500) in einem lesbaren Modal.
 - Alle Admin-Befehle nutzen den neuen API-Endpunkt `rex_api_info_center_admin_command` mit CSRF-Token-Validierung.
-- Hilfe-Modal zeigt Admin-Befehle in eigenem Abschnitt (nur für Admins sichtbar).
+- Hilfe-Modal zeigt alle Admin-Befehle in eigenem Abschnitt (nur für Admins sichtbar).
 
 ### Fixed
 - Such-Widget: Quick Action px↔rem/em-Konvertierung war fehlerhaft. Eingaben wie `16px rem` oder `1.5rem px` wurden nicht erkannt. Ersetzt durch Regex-basierte Mustererkennung mit expliziter Richtungserkennung. Unterstützt jetzt: `16px`, `16px rem`, `16px to rem`, `1.5rem`, `1.5rem px`, `1.5rem to px`.
 - Such-Widget: Start-Artikel erschienen doppelt in den Suchergebnissen (einmal als Kategorie, einmal als Artikel). Start-Artikel werden jetzt aus der Artikel-Liste dedupliziert.
 - Suchfilter `created:today` / `modified:today` etc. funktionierten nicht, da das `#`-Präfix in der Regex zwingend war. Das Präfix ist jetzt optional.
+- Benutzer-Bearbeiten-Link in `#showusers` verwendete falsche Backend-URL (`users/user` → `users/users`) und HTML-escapte `&amp;` in JSON-Ausgabe.
 
 ## [2.3.5] - 2026-03-12
 
