@@ -2250,3 +2250,15 @@ body.rex-theme-dark .info-center-widget.drag-over {
 .info-center-widget-content * {
     margin-top: revert !important;
 }
+
+/* Ausnahmen von der revert-Regel oben: diese Selektoren setzen bewusst margin:0/margin-top
+   (ohne !important) auf Elementen (h3, h4, ul, pre), die per Browser-Default einen eingebauten
+   margin-top (~1em) mitbringen - revert würde genau darauf zurückfallen und den beabsichtigten
+   Reset wieder aufheben. Gleiche Spezifität wie die revert-Regel oben, gewinnt aber durch
+   spätere Position im Stylesheet. */
+.info-center-widget-title,
+.info-center-recent-articles h4,
+.info-center-tree-level,
+.info-center-code-preview-tooltip pre {
+    margin-top: 0 !important;
+}
