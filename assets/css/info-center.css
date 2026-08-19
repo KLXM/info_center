@@ -2239,3 +2239,14 @@ body.rex-theme-dark .info-center-widget.drag-over {
     font-size: var(--font-size-base) !important;
     color: var(--text-color) !important;
 }
+
+/* Fortsetzung des obigen Schutzes: uikit_theme_builders Live-Theme-Editor (und potenziell
+   jedes andere Frontend-Theme) kann margin-top auf generischen Block-Elementen setzen
+   (z.B. "* + p { margin-top: ... !important }"). revert !important mit mindestens
+   klassenbasierter Spezifität gewinnt gegen solche typ-/universalselektor-basierten Regeln
+   zuverlässig (mit Playwright verifiziert) und fällt korrekt auf den Browser-Default zurück,
+   statt eine Fremdvorgabe zu übernehmen. */
+.info-center-container *,
+.info-center-widget-content * {
+    margin-top: revert !important;
+}
