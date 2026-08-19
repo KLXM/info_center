@@ -11,6 +11,7 @@ use rex_addon;
 use rex_i18n;
 use rex_backend_login;
 use rex_be_controller;
+use rex_path;
 use rex_perm;
 
 
@@ -160,17 +161,28 @@ if (rex::isFrontend() && ($user = rex_backend_login::createUser()) && ($user->is
     rex_extension::register('OUTPUT_FILTER', function(rex_extension_point $ep) use ($infoCenter, $addon) {
         $content = $ep->getSubject();
         $infoCenterOutput = $infoCenter->get();
-        
+
+        // rex_view::addCssFile()/addJsFile() (Backend-Pfad oben) hängen einen
+        // ?buster=<filemtime> automatisch an - diese Tags hier gehen direkt raus, daher
+        // manuell nachbilden. Ohne das kann der Browser nach einem CSS/JS-Update (z.B. den
+        // !important-Schutzregeln gegen fremdes Frontend-Theme-CSS) eine alte gecachte
+        // Version weiterverwenden.
+        $withBuster = function (string $relativePath) use ($addon): string {
+            $url = $addon->getAssetsUrl($relativePath);
+            $mtime = @filemtime(rex_path::addonAssets('info_center', $relativePath));
+            return $mtime ? $url . '?buster=' . $mtime : $url;
+        };
+
         if ($infoCenterOutput) {
             // Assets und Info Center vor den schließenden Tags einfügen
             $content = str_ireplace(
                 ['</head>', '</body>'],
                 [
-                    '<link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/info-center.css') . '" />
-                    <link rel="stylesheet" type="text/css" href="' . $addon->getAssetsUrl('css/timetracker.css') . '" /></head>',
+                    '<link rel="stylesheet" type="text/css" href="' . $withBuster('css/info-center.css') . '" />
+                    <link rel="stylesheet" type="text/css" href="' . $withBuster('css/timetracker.css') . '" /></head>',
                     $infoCenterOutput . '
-                    <script src="' . $addon->getAssetsUrl('js/info-center.js') . '"></script>
-                    <script src="' . $addon->getAssetsUrl('js/timetracker.js') . '"></script>
+                    <script src="' . $withBuster('js/info-center.js') . '"></script>
+                    <script src="' . $withBuster('js/timetracker.js') . '"></script>
                     </body>'
                 ],
                 $content
