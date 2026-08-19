@@ -121,17 +121,6 @@ if ($isWidgetEnabled('system') && rex::getUser() && rex::getUser()->isAdmin()) {
     $infoCenter->registerWidget($widget);
 }
 
-// Live Theme Editor Widget (prio: 3). Muss - wie ArticleWidget/StatsWidget etc. - auf
-// JEDEM Request registriert werden (auch im Backend), sonst taucht es in der
-// Widget-Auswahl auf pages/config.php nicht auf (die baut ihre Liste aus den gerade
-// registrierten Widgets). Die Frontend-Beschränkung sitzt in
-// LiveThemeEditorWidget::render() selbst (gibt im Backend '' zurück).
-if ($isWidgetEnabled('livethemeeditor') && rex_addon::get('uikit_theme_builder')->isAvailable()) {
-    $widget = new \UikitThemeBuilder\Widgets\LiveThemeEditorWidget();
-    $widget->setPriority(3);
-    $infoCenter->registerWidget($widget);
-}
-
 // Registriere Custom Widgets (prio: 20+)
 $infoCenter->registerCustomWidgets();
 

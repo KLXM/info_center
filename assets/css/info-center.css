@@ -2216,3 +2216,26 @@ body.rex-theme-light .info-center-search-badge.offline {
 body.rex-theme-dark .info-center-widget.drag-over {
     border-top-color: #4a9eff;
 }
+
+/* Info Center vor dem aktiven Frontend-/Theme-CSS schützen. Auf Frontend-Seiten läuft
+   irgendein Theme (kompiliert oder - z.B. beim uikit_theme_builder Live-Theme-Editor -
+   live per CSS-Variablen verändert), das html/body sowie h1-h6 mit !important überschreibt.
+   Ohne diesen Block würden solche Regeln (falls sie später im Dokument stehen, was bei
+   nachträglich per OUTPUT_FILTER eingefügtem Fremd-CSS der Fall sein kann) sogar unsere
+   eigene Font-Size-Einstellung (S/M/L/XL) und Widget-Titel-Größe überstimmen - font-size,
+   font-family und color hier deshalb selbst mit !important erzwingen, unabhängig davon,
+   was irgendein Theme im Frontend sonst tut. */
+.info-center-container,
+.info-center-container * {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+}
+
+.info-center-widget-title {
+    font-size: var(--font-size-title) !important;
+    color: var(--text-color) !important;
+}
+
+.info-center-widget-content {
+    font-size: var(--font-size-base) !important;
+    color: var(--text-color) !important;
+}
