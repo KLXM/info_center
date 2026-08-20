@@ -1,7 +1,11 @@
 // REDAXO Info Center JavaScript - Frontend und Backend kompatibel
 (function() {
     'use strict';
-    
+
+    // Siehe handleOutsideClick(): Fallback für Popups (z.B. Pickit Color), die sich schon
+    // während desselben Klicks selbst aus dem DOM entfernen können, bevor 'click' dort ankommt.
+    let infoCenterColorPickerMouseDownInside = false;
+
     // Initialize InfoCenter namespace early
     window.InfoCenter = window.InfoCenter || {};
     
@@ -135,6 +139,15 @@
         
         // Close on outside click (nur einmal registrieren)
         if (!document.infoCenterClickRegistered) {
+            // Capture-Phase, VOR dem eigentlichen 'click': Pickit Color entfernt sein Popup bei
+            // der Farbauswahl teils schon synchron während desselben Klicks (eigener 'mousedown'-
+            // Handler, siehe colorpicker.min.js), bevor das 'click'-Event unten bei handleOutsideClick
+            // ankommt - dann findet e.target.closest('.colorpicker-container') dort nichts mehr,
+            // weil der Knoten bereits aus dem DOM entfernt wurde. 'mousedown' in der Capture-Phase
+            // läuft garantiert VOR jeder Entfernung, das Ergebnis wird für den folgenden Klick gemerkt.
+            document.addEventListener('mousedown', function (e) {
+                infoCenterColorPickerMouseDownInside = !!e.target.closest('.colorpicker-container');
+            }, true);
             document.addEventListener('click', handleOutsideClick);
             document.infoCenterClickRegistered = true;
         }
@@ -207,8 +220,17 @@
         const sidebar = document.querySelector('.info-center-sidebar');
         const toggleBtn = e.target.closest('.info-center-toggle');
         const closeBtn = e.target.closest('.info-center-close-btn');
-        
-        if (sidebar && !sidebar.contains(e.target) && !toggleBtn && !closeBtn) {
+        // Pickit Color (uikit_theme_builder) hängt sein Popup absichtlich an document.body statt
+        // in den Sidebar-DOM-Baum, um Clipping/Z-Index-Probleme innerhalb der Sidebar zu
+        // vermeiden (siehe uikit_theme_builder). Dadurch liegt ein Klick ins Popup (Farbe wählen,
+        // Hex tippen, Preset klicken) außerhalb von sidebar.contains() - ohne diese Ausnahme
+        // schließt sich die Sidebar bei jeder Farbauswahl. Zusätzlich der mousedown-Flag als
+        // Fallback, falls Pickit das Popup schon vor dem 'click' selbst aus dem DOM entfernt hat
+        // (closest() findet dann nichts mehr, obwohl der Klick eindeutig im Popup begann).
+        const colorPickerPopup = e.target.closest('.colorpicker-container') || infoCenterColorPickerMouseDownInside;
+        infoCenterColorPickerMouseDownInside = false;
+
+        if (sidebar && !sidebar.contains(e.target) && !toggleBtn && !closeBtn && !colorPickerPopup) {
             sidebar.classList.remove('active');
             const btn = document.querySelector('.info-center-toggle');
             if (btn) btn.classList.remove('active');
