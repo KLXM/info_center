@@ -2240,25 +2240,11 @@ body.rex-theme-dark .info-center-widget.drag-over {
     color: var(--text-color) !important;
 }
 
-/* Fortsetzung des obigen Schutzes: uikit_theme_builders Live-Theme-Editor (und potenziell
-   jedes andere Frontend-Theme) kann margin-top auf generischen Block-Elementen setzen
-   (z.B. "* + p { margin-top: ... !important }"). revert !important mit mindestens
-   klassenbasierter Spezifität gewinnt gegen solche typ-/universalselektor-basierten Regeln
-   zuverlässig (mit Playwright verifiziert) und fällt korrekt auf den Browser-Default zurück,
-   statt eine Fremdvorgabe zu übernehmen. */
-.info-center-container *,
-.info-center-widget-content * {
-    margin-top: revert !important;
-}
-
-/* Ausnahmen von der revert-Regel oben: diese Selektoren setzen bewusst margin:0/margin-top
-   (ohne !important) auf Elementen (h3, h4, ul, pre), die per Browser-Default einen eingebauten
-   margin-top (~1em) mitbringen - revert würde genau darauf zurückfallen und den beabsichtigten
-   Reset wieder aufheben. Gleiche Spezifität wie die revert-Regel oben, gewinnt aber durch
-   spätere Position im Stylesheet. */
-.info-center-widget-title,
-.info-center-recent-articles h4,
-.info-center-tree-level,
-.info-center-code-preview-tooltip pre {
-    margin-top: 0 !important;
-}
+/* Frühere Gegenmaßnahme gegen uikit_theme_builders Live-Theme-Editor-Bridge-CSS (universal-
+   selektor-basierte "* + p { margin-top: ... !important }"-Regeln) war hier "margin-top:
+   revert !important" - das hat das Problem nur verlagert, statt es zu lösen: revert fällt auf
+   den Browser-Default zurück und überschreibt damit kategorisch (per !important, unabhängig
+   von Spezifität) auch info_centers EIGENE, beabsichtigte margin-top-Werte weiter oben in
+   dieser Datei - sichtbar als "ineinandergeschobene" Abstände im Info Center. Die eigentliche
+   Ursache wird jetzt stattdessen an der Quelle behoben: live-theme-editor-bridge.css schließt
+   .info-center-container per :not() explizit von seinen margin-top-Regeln aus. */
