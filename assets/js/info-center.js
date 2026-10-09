@@ -337,6 +337,14 @@
     }
 
     // Structure Tree
+    // API-URL auf Basis der aktuellen Seite. Ohne Query-String (z. B. nach einem POST auf
+    // index.php) ergäbe ein angehängtes "&rex-api-call=…" einen ungültigen Pfad.
+    function structureApiUrl(url) {
+        const apiUrl = new URL(url.href);
+        apiUrl.searchParams.set('rex-api-call', 'info_center_structure');
+        return apiUrl.pathname + apiUrl.search;
+    }
+
     function loadStructure() {
         const container = document.getElementById('info-center-structure-container');
         if (!container) return;
@@ -354,7 +362,7 @@
         }
         
         // Fetch structure via API
-        fetch(currentUrl.pathname + currentUrl.search + '&rex-api-call=info_center_structure')
+        fetch(structureApiUrl(currentUrl))
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
@@ -402,7 +410,7 @@
                     container.dataset.loaded = 'false';
                     container.innerHTML = '<div class="info-center-loading">Lade Struktur...</div>';
                     
-                    fetch(currentUrl.pathname + currentUrl.search + '&rex-api-call=info_center_structure')
+                    fetch(structureApiUrl(currentUrl))
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
@@ -432,7 +440,7 @@
                         container.dataset.loaded = 'false';
                         container.innerHTML = '<div class="info-center-loading">Lade Struktur...</div>';
                         
-                        fetch(currentUrl.pathname + currentUrl.search + '&rex-api-call=info_center_structure')
+                        fetch(structureApiUrl(currentUrl))
                             .then(response => response.json())
                             .then(data => {
                                 if (data.success) {

@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.5.1] - 2026-10-09
+
+### Fixed
+- Struktur-Widget: „Error loading structure“ nach dem Absenden eines Backend-Formulars (z. B. YForm). Die Seite lag dann unter `index.php` ohne Query-String, an den die API-URL nur `&rex-api-call=…` anhängte – das ergab einen ungültigen Pfad (404). Gleiches beim Zurücksetzen der Domain-Auswahl. Die URL wird jetzt über `URLSearchParams` gebaut.
+- Fataler Fehler mit uikit_theme_builder: Die veraltete Registrierung des Live-Theme-Editor-Widgets ist entfernt, das Widget registriert sich in uikit_theme_builder selbst.
+- Abstände im Info Center: Fremde Theme-CSS (u. a. der Live-Theme-Editor) setzte `margin-top` auf Elemente im Info Center; die Ursache ist an der Quelle behoben, die zwischenzeitliche `revert`-Gegenregel wieder entfernt.
+- Farbwähler (Pickit Color) im Info Center: Eine Farbauswahl schloss das Info Center nicht mehr versehentlich, wenn der Farbwähler sein Popup schon während des Klicks entfernt.
+- Frontend: CSS/JS des Info Centers mit Versionsparameter eingebunden, damit Browser nach Updates keine veralteten Dateien verwenden.
+
 ## [2.5.0] - 2026-04-21
 
 ### Added
