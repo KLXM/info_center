@@ -24,14 +24,14 @@
     font-size: 24px;
     font-weight: bold;
     font-family: 'Courier New', monospace;
-    color: #2c3e50;
+    color: var(--text-color, #2c3e50);
     margin-bottom: 4px;
     text-shadow: 0 1px 2px rgba(50, 64, 80, 0.1);
 }
 
 .session-info {
     font-size: 11px;
-    color: #7f8c8d;
+    color: var(--text-color-muted, #4b5563); /* vorher #7f8c8d (2,9:1) */
     font-weight: 500;
 }
 
@@ -63,37 +63,37 @@
 }
 
 .time-btn-start {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    background: linear-gradient(135deg, #15803d, #16a34a);
     color: white;
     box-shadow: 0 2px 4px rgba(46, 204, 113, 0.3);
 }
 
 .time-btn-start:hover:not(:disabled) {
-    background: linear-gradient(135deg, #229954, #27ae60);
+    background: linear-gradient(135deg, #166534, #15803d);
     transform: translateY(-1px);
     box-shadow: 0 3px 6px rgba(46, 204, 113, 0.4);
 }
 
 .time-btn-pause {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
+    background: linear-gradient(135deg, #b45309, #c2410c);
     color: white;
     box-shadow: 0 2px 4px rgba(243, 156, 18, 0.3);
 }
 
 .time-btn-pause:hover:not(:disabled) {
-    background: linear-gradient(135deg, #e67e22, #d35400);
+    background: linear-gradient(135deg, #92400e, #b45309);
     transform: translateY(-1px);
     box-shadow: 0 3px 6px rgba(243, 156, 18, 0.4);
 }
 
 .time-btn-stop {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
     color: white;
     box-shadow: 0 2px 4px rgba(231, 76, 60, 0.3);
 }
 
 .time-btn-stop:hover:not(:disabled) {
-    background: linear-gradient(135deg, #c0392b, #a93226);
+    background: linear-gradient(135deg, #991b1b, #b91c1c);
     transform: translateY(-1px);
     box-shadow: 0 3px 6px rgba(231, 76, 60, 0.4);
 }
@@ -122,12 +122,12 @@
 }
 
 .stat-label {
-    color: #7f8c8d;
+    color: var(--text-color-muted, #4b5563); /* vorher #7f8c8d (2,9:1) */
     font-weight: 500;
 }
 
 .stat-value {
-    color: #2c3e50;
+    color: var(--text-color, #2c3e50);
     font-weight: bold;
     font-family: 'Courier New', monospace;
 }
@@ -260,17 +260,17 @@
 }
 
 .time-tracker-mini .mini-btn-start {
-    background: linear-gradient(135deg, #27ae60, #2ecc71);
+    background: linear-gradient(135deg, #15803d, #16a34a);
     color: white;
 }
 
 .time-tracker-mini .mini-btn-pause {
-    background: linear-gradient(135deg, #f39c12, #e67e22);
+    background: linear-gradient(135deg, #b45309, #c2410c);
     color: white;
 }
 
 .time-tracker-mini .mini-btn-stop {
-    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    background: linear-gradient(135deg, #b91c1c, #dc2626);
     color: white;
 }
 
