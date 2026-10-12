@@ -5,7 +5,7 @@
     --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.6);
     --border-color: rgba(255, 255, 255, 0.08);
     --text-color: #e2e8f0;
-    --text-color-muted: #94a3b8;
+    --text-color-muted: #aab6c6; /* ≥ 4,5:1 auf Widgets (vorher #94a3b8) */
     --header-bg: rgba(50, 64, 80, 0.95);
     --widget-bg: rgba(50, 64, 80, 0.4);
     --widget-border: rgba(255, 255, 255, 0.1);
@@ -30,7 +30,7 @@
         --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.25);
         --border-color: rgba(50, 64, 80, 0.2);
         --text-color: #1f2937;
-        --text-color-muted: #6b7280;
+        --text-color-muted: #4b5563; /* ≥ 4,5:1 (vorher #6b7280) */
         --header-bg: rgba(50, 64, 80, 0.08);
         --widget-bg: rgba(255, 255, 255, 0.6);
         --widget-border: rgba(50, 64, 80, 0.12);
@@ -46,7 +46,7 @@ body.rex-theme-light .info-center-container {
     --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.25) !important;
     --border-color: rgba(50, 64, 80, 0.2) !important;
     --text-color: #1f2937 !important;
-    --text-color-muted: #6b7280 !important;
+    --text-color-muted: #4b5563 !important; /* ≥ 4,5:1 (vorher #6b7280) */
     --header-bg: rgba(50, 64, 80, 0.08) !important;
     --widget-bg: rgba(255, 255, 255, 0.6) !important;
     --widget-border: rgba(50, 64, 80, 0.12) !important;
@@ -61,7 +61,7 @@ body.rex-theme-dark .info-center-container {
     --panel-shadow: 0 0 40px rgba(50, 64, 80, 0.6) !important;
     --border-color: rgba(255, 255, 255, 0.08) !important;
     --text-color: #e2e8f0 !important;
-    --text-color-muted: #94a3b8 !important;
+    --text-color-muted: #aab6c6 !important; /* ≥ 4,5:1 (vorher #94a3b8) */
     --header-bg: rgba(50, 64, 80, 0.95) !important;
     --widget-bg: rgba(50, 64, 80, 0.4) !important;
     --widget-border: rgba(255, 255, 255, 0.1) !important;
@@ -956,7 +956,7 @@ body.rex-theme-dark .info-center-widget:hover {
 .info-center-width-btn {
     background: transparent;
     border: 1px solid var(--button-border);
-    color: var(--text-color-muted);
+    color: var(--text-color); /* vorher gedämpft – zu blass auf dem halbtransparenten Panel */
     padding: 6px;
     border-radius: 4px;
     cursor: pointer;
@@ -1681,7 +1681,9 @@ body.rex-theme-dark .info-center-widget:hover {
 }
 
 .info-center-search-input {
+    box-sizing: border-box; /* sonst 100 % + Innenabstand → ragt über den Widget-Rand */
     width: 100%;
+    text-overflow: ellipsis;
     padding: 10px 70px 10px 40px;
     background: var(--widget-bg);
     border: 1px solid var(--widget-border);
@@ -1694,8 +1696,8 @@ body.rex-theme-dark .info-center-widget:hover {
 
 .info-center-search-input:focus {
     outline: none;
-    border-color: rgba(59, 130, 246, 0.5);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.35); /* deutlich sichtbarer Fokus */
 }
 
 .info-center-search-input::placeholder {
@@ -2248,3 +2250,11 @@ body.rex-theme-dark .info-center-widget.drag-over {
    dieser Datei - sichtbar als "ineinandergeschobene" Abstände im Info Center. Die eigentliche
    Ursache wird jetzt stattdessen an der Quelle behoben: live-theme-editor-bridge.css schließt
    .info-center-container per :not() explizit von seinen margin-top-Regeln aus. */
+
+/* Barrierefreiheit: sichtbarer Tastatur-Fokus für alle Bedienelemente im Info Center */
+.info-center-container a:focus-visible,
+.info-center-container button:focus-visible,
+.info-center-container [tabindex]:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}

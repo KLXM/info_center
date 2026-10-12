@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.5.2] - 2026-10-13
+
+### Fixed
+- **Kontrast (Barrierefreiheit):** gedämpfte Schrift jetzt ≥ 4,5:1 – hell `#4b5563` statt `#6b7280`, dunkel `#aab6c6` statt `#94a3b8`. Betrifft u. a. inaktive Reiter („Struktur“), Beschriftungen und Hinweise in Widgets. axe meldet in hellem und dunklem Theme keine Kontrastfehler mehr (vorher 5 bzw. 1).
+- **Breiten-Knöpfe S/M/L/XL:** volle Textfarbe statt gedämpft (lagen auf dem halbtransparenten Panel bei 2,9:1).
+- **TimeTracker:** Statustext und „Heute“ über die Theme-Farben (vorher fest `#7f8c8d`, 2,9:1); Zeit und Werte folgen der Textfarbe des Themes. Start/Pause/Stopp mit dunkleren Flächen, damit die weiße Schrift lesbar ist.
+- **Suchfeld:** ragte über den Widget-Rand (100 % Breite plus Innenabstand ohne `box-sizing`); langer Platzhalter wird mit „…“ gekürzt.
+- **Tastatur-Fokus:** deutlich sichtbarer Fokusrahmen für Links, Knöpfe und Suchfeld im Info Center.
+
 ## [2.5.1] - 2026-10-09
 
 ### Fixed
