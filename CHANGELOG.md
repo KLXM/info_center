@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.3] - 2026-10-19
+
+### Fixed
+- **Kein Session-Cookie mehr für Besucher:** Im Frontend startete das AddOn bei jedem Aufruf eine Backend-Session, damit
+  bekam jeder Besucher ein `PHPSESSID`-Cookie (Datenschutz-Hinweis nötig, Seiten schlechter cachebar). Jetzt wird die
+  Session nur aufgenommen, wenn das Login-Cookie schon da ist (`rex_backend_login::hasSession()`); für angemeldete
+  Redakteure funktioniert das Info Center im Frontend wie bisher. Auf der Konsole (CLI) wird nichts gestartet.
+
 ## [2.5.2] - 2026-10-13
 
 ### Fixed
