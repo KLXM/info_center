@@ -15,9 +15,9 @@ use rex_path;
 use rex_perm;
 
 
-// Frontend-Session starten, damit rex::getUser() funktioniert
-if (rex::isFrontend()) {
-    rex_backend_login::startSession();
+// Frontend: Session nur für eingeloggte Redakteure (Login-Cookie vorhanden) – sonst bekäme jeder Besucher ein Session-Cookie
+if (rex::isFrontend() && 'cli' !== PHP_SAPI) {
+    rex_backend_login::hasSession();
 }
 
 // Get addon instance
