@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.6.0] - unveröffentlicht
+## [2.6.0] - 2026-10-22
 
 ### Added
 - **Issue Tracker Widget:** „Problem mit dieser Seite melden“ direkt aus dem Info Center – im Frontend und im
