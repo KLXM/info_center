@@ -261,3 +261,27 @@ info_center_help_search_templates = Templates (Name, Code)
 info_center_help_search_media = Media (Filename, Title)
 info_center_articles_show_more = Show {0} more
 info_center_articles_show_less = Show less
+
+# Issue Tracker Widget
+info_center_it_title = Issue Tracker
+info_center_it_page = Affected page
+info_center_it_subject = Subject
+info_center_it_required = required
+info_center_it_description = Description
+info_center_it_priority = Priority
+info_center_it_assignee = Assign to
+info_center_it_assignee_all = Everyone (shared responsibility)
+info_center_it_submit = Report a problem with this page
+info_center_it_sending = Sending …
+info_center_it_success = Topic #{0} has been created.
+info_center_it_open_issue = Open topic #{0}
+info_center_it_open_tracker = Open in Issue Tracker
+info_center_it_mine = Assigned to me, open
+info_center_it_mine_empty = No open topics.
+info_center_it_error = The topic could not be created. Please try again.
+info_center_it_no_permission = No permission for the Issue Tracker.
+info_center_it_csrf = Your session has expired. Please reload the page.
+info_center_it_title_required = Please enter a subject.
+info_center_it_too_long = Subject or description is too long.
+info_center_it_assignee_invalid = The selected person cannot take on topics.
+info_center_it_page_invalid = This page cannot be attached.

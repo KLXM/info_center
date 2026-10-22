@@ -2258,3 +2258,286 @@ body.rex-theme-dark .info-center-widget.drag-over {
     outline: 2px solid #3b82f6;
     outline-offset: 2px;
 }
+
+/* ==========================================================================
+   Issue Tracker Widget (2.6.0)
+   Alle Regeln unter .info-center-container .ic-it – nichts davon wirkt außerhalb des Info Centers.
+   Eigene Werte für Formularelemente, damit Frontend-Themes (input, select, button …) nicht durchschlagen.
+   ========================================================================== */
+.info-center-container .ic-it {
+    --ic-it-accent: #1d4ed8;        /* Knopf, weiße Schrift 6,7:1 */
+    --ic-it-accent-hover: #1e40af;
+    --ic-it-ok: #86efac;            /* dunkles Theme */
+    --ic-it-err: #fca5a5;
+    --ic-it-field-bg: rgba(15, 23, 42, 0.55);
+    --ic-it-field-border: rgba(255, 255, 255, 0.28);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: var(--text-color);
+}
+
+@media (prefers-color-scheme: light) {
+    body:not(.rex-theme-dark) .info-center-container .ic-it {
+        --ic-it-ok: #166534;
+        --ic-it-err: #b91c1c;
+        --ic-it-field-bg: rgba(255, 255, 255, 0.9);
+        --ic-it-field-border: rgba(31, 41, 55, 0.45);
+    }
+}
+
+body.rex-theme-light .info-center-container .ic-it {
+    --ic-it-ok: #166534;
+    --ic-it-err: #b91c1c;
+    --ic-it-field-bg: rgba(255, 255, 255, 0.9);
+    --ic-it-field-border: rgba(31, 41, 55, 0.45);
+}
+
+body.rex-theme-dark .info-center-container .ic-it {
+    --ic-it-ok: #86efac;
+    --ic-it-err: #fca5a5;
+    --ic-it-field-bg: rgba(15, 23, 42, 0.55);
+    --ic-it-field-border: rgba(255, 255, 255, 0.28);
+}
+
+.info-center-container .ic-it-page {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 10px;
+    border: 1px solid var(--widget-border);
+    border-radius: 8px;
+    min-width: 0;
+}
+
+.info-center-container .ic-it-label,
+.info-center-container .ic-it label {
+    display: block;
+    margin: 0 0 4px;
+    padding: 0;
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--text-color-muted);
+    text-transform: none;
+    letter-spacing: normal;
+}
+
+.info-center-container .ic-it-page .ic-it-label {
+    margin: 0;
+}
+
+.info-center-container .ic-it-page-title {
+    font-weight: 600;
+    color: var(--text-color);
+    overflow-wrap: anywhere;
+}
+
+.info-center-container .ic-it-page-url {
+    font-size: var(--font-size-small);
+    color: var(--text-color-muted);
+    overflow-wrap: anywhere;
+    word-break: break-all;
+}
+
+.info-center-container .ic-it-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+}
+
+.info-center-container .ic-it-field {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1 1 0;
+}
+
+.info-center-container .ic-it-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.info-center-container .ic-it-row .ic-it-field {
+    flex: 1 1 160px; /* in schmalen Panels untereinander, damit „Alle (gemeinsame Zuständigkeit)“ lesbar bleibt */
+}
+
+.info-center-container .ic-it-req {
+    font-weight: 400;
+}
+
+.info-center-container .ic-it input[type="text"],
+.info-center-container .ic-it textarea,
+.info-center-container .ic-it select {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    min-height: 34px;
+    margin: 0;
+    padding: 6px 8px;
+    font-size: var(--font-size-base);
+    line-height: 1.4;
+    color: var(--text-color);
+    background: var(--ic-it-field-bg);
+    border: 1px solid var(--ic-it-field-border);
+    border-radius: 6px;
+    box-shadow: none;
+    appearance: auto;
+}
+
+.info-center-container .ic-it textarea {
+    resize: vertical;
+    min-height: 64px;
+}
+
+.info-center-container .ic-it select option {
+    color: #1f2937;
+    background: #fff;
+}
+
+.info-center-container .ic-it input[type="text"]:focus-visible,
+.info-center-container .ic-it textarea:focus-visible,
+.info-center-container .ic-it select:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 1px;
+}
+
+.info-center-container .ic-it [aria-invalid="true"] {
+    border-color: var(--ic-it-err);
+}
+
+.info-center-container .ic-it-actions {
+    display: flex;
+}
+
+.info-center-container .ic-it .ic-it-submit {
+    display: inline-block;
+    width: 100%;
+    margin: 0;
+    padding: 8px 12px;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    line-height: 1.3;
+    color: #fff;
+    background: var(--ic-it-accent);
+    border: 1px solid var(--ic-it-accent);
+    border-radius: 6px;
+    box-shadow: none;
+    text-transform: none;
+    cursor: pointer;
+}
+
+.info-center-container .ic-it .ic-it-submit:hover {
+    background: var(--ic-it-accent-hover);
+}
+
+.info-center-container .ic-it .ic-it-submit:disabled {
+    opacity: 0.7;
+    cursor: progress;
+}
+
+.info-center-container .ic-it-msg {
+    font-size: var(--font-size-small);
+    color: var(--text-color);
+}
+
+.info-center-container .ic-it-msg:empty {
+    display: none;
+}
+
+.info-center-container .ic-it-msg--success {
+    color: var(--ic-it-ok);
+    font-weight: 600;
+}
+
+.info-center-container .ic-it-msg--error {
+    color: var(--ic-it-err);
+    font-weight: 600;
+}
+
+.info-center-container .ic-it a {
+    color: var(--text-color);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.info-center-container .ic-it .ic-it-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 6px;
+    padding: 0;
+    font-size: var(--font-size-small);
+    font-weight: 600;
+    color: var(--text-color-muted);
+}
+
+.info-center-container .ic-it-count {
+    display: inline-block;
+    min-width: 20px;
+    padding: 0 6px;
+    border-radius: 10px;
+    background: var(--hover-bg);
+    border: 1px solid var(--widget-border);
+    color: var(--text-color);
+    text-align: center;
+}
+
+.info-center-container .ic-it .ic-it-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.info-center-container .ic-it .ic-it-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin: 0;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--widget-border);
+}
+
+.info-center-container .ic-it .ic-it-list li::before {
+    content: none;
+}
+
+.info-center-container .ic-it .ic-it-list li:last-child {
+    border-bottom: 0;
+}
+
+.info-center-container .ic-it .ic-it-list a {
+    min-width: 0;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.info-center-container .ic-it .ic-it-list a:hover .ic-it-issue-title {
+    text-decoration: underline;
+}
+
+.info-center-container .ic-it-id,
+.info-center-container .ic-it-status,
+.info-center-container .ic-it-empty {
+    font-size: var(--font-size-small);
+    color: var(--text-color-muted);
+}
+
+.info-center-container .ic-it-status {
+    flex-shrink: 0;
+}
+
+.info-center-container .ic-it .ic-it-empty {
+    margin: 0;
+}
+
+.info-center-container .ic-it-footer {
+    font-size: var(--font-size-small);
+}

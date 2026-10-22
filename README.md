@@ -18,6 +18,7 @@ Das **Info Center** ist ein intelligentes Dashboard-System für REDAXO CMS, das 
 - **📝 Artikel Widget** - Zuletzt bearbeitete Inhalte mit direkten Links
 - **🔗 URL Widget** - URL2/YRewrite Datensätze verwalten
 - **🛠️ Upkeep Integration** - Wartungs-Status auf einen Blick
+- **Issue Tracker** - Aktuelle Seite (Frontend oder Backend) als Thema im Issue Tracker melden
 - **⚙️ System-Informationen** - Server-Status und PHP-Infos
 
 ### 🎨 **Widget Builder**
@@ -323,6 +324,28 @@ permissions:
   info_center[config]: "Info Center konfigurieren"  
   info_center[admin]: "Widget Builder verwenden"
 ```
+
+---
+
+## Issue Tracker Widget
+
+Erscheint, wenn das AddOn [Issue Tracker](https://github.com/FriendsOfREDAXO/issue_tracker) (ab 2.0) installiert ist
+und der Benutzer das Recht `issue_tracker[]` hat (Admins immer). Wie alle Widgets lässt es sich unter
+**Info Center → Einstellungen** je Benutzer aus- und einblenden und per Drag & Drop sortieren.
+
+- **Problem mit dieser Seite melden:** Betreff (Pflicht), Beschreibung, Priorität (Standard „Normal“) und
+  Zuständigkeit (Standard „Alle (gemeinsame Zuständigkeit)“ wie im Issue Tracker).
+- **Seite wird automatisch angehängt** und im Widget angezeigt:
+  - im Frontend der aktuelle Artikel samt Sprache als „Betroffene Seite“ und die vollständige Adresse
+    (nur Adressen dieser Website),
+  - im Backend die aktuelle Backend-Seite als Herkunft (wie der Knopf „Neues Thema“ des Issue Trackers);
+    beim Bearbeiten eines Artikels zusätzlich dieser Artikel als betroffene Seite.
+- Das Thema entsteht wie im Issue Tracker selbst: Verlaufseintrag und die üblichen Benachrichtigungen.
+- Danach ein Link „Thema #… öffnen“; im Backend öffnet er die Ebene des Issue Trackers.
+- Darunter die Anzahl der mir zugewiesenen offenen Themen und die drei zuletzt geänderten.
+
+Gespeichert wird über `rex_api_info_center_issue_report` (nur POST, Backend-Session, Recht und CSRF-Token werden
+serverseitig geprüft). Besucher ohne Backend-Login bekommen weiterhin weder Info Center noch Session-Cookie.
 
 ---
 

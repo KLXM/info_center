@@ -253,3 +253,27 @@ info_center_help_search_templates = Templates (Name, Code)
 info_center_help_search_media = Medien (Dateiname, Titel)
 info_center_articles_show_more = {0} weitere anzeigen
 info_center_articles_show_less = Weniger anzeigen
+
+# Issue Tracker Widget
+info_center_it_title = Issue Tracker
+info_center_it_page = Betroffene Seite
+info_center_it_subject = Betreff
+info_center_it_required = Pflichtfeld
+info_center_it_description = Beschreibung
+info_center_it_priority = Priorität
+info_center_it_assignee = Zuweisen an
+info_center_it_assignee_all = Alle (gemeinsame Zuständigkeit)
+info_center_it_submit = Problem mit dieser Seite melden
+info_center_it_sending = Wird gesendet …
+info_center_it_success = Thema #{0} wurde angelegt.
+info_center_it_open_issue = Thema #{0} öffnen
+info_center_it_open_tracker = Im Issue Tracker öffnen
+info_center_it_mine = Mir zugewiesen, offen
+info_center_it_mine_empty = Keine offenen Themen.
+info_center_it_error = Das Thema konnte nicht angelegt werden. Bitte versuchen Sie es erneut.
+info_center_it_no_permission = Keine Berechtigung für den Issue Tracker.
+info_center_it_csrf = Die Sitzung ist abgelaufen. Bitte laden Sie die Seite neu.
+info_center_it_title_required = Bitte geben Sie einen Betreff ein.
+info_center_it_too_long = Betreff oder Beschreibung ist zu lang.
+info_center_it_assignee_invalid = Die gewählte Person kann keine Themen übernehmen.
+info_center_it_page_invalid = Die Seite kann nicht angehängt werden.

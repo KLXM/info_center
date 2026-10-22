@@ -107,6 +107,14 @@ if ($isWidgetEnabled('upkeep') && rex::getUser() && rex::getUser()->isAdmin()) {
     $infoCenter->registerWidget($widget);
 }
 
+// Issue Tracker Widget (prio: 3) - Backend und Frontend, nur mit AddOn issue_tracker und Recht issue_tracker[]
+// createUser() nimmt im Frontend nur eine vorhandene Session auf (Login-Cookie), legt für Besucher keine an
+if ($isWidgetEnabled('issuetracker') && Widgets\IssueTrackerWidget::isAvailableForUser(rex_backend_login::createUser())) {
+    $widget = new Widgets\IssueTrackerWidget();
+    $widget->setPriority(3);
+    $infoCenter->registerWidget($widget);
+}
+
 // Stats Widget (prio: 5) - Nur für Admins (Backend und Frontend)
 $user = rex_backend_login::createUser();
 if ($isWidgetEnabled('stats') && $user && $user->isAdmin()) {

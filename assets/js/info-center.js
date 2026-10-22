@@ -2450,7 +2450,7 @@
                 
                 // Never interfere when focus is inside an input, textarea or contenteditable
                 const tag = document.activeElement.tagName;
-                if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement.isContentEditable) return;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || document.activeElement.isContentEditable) return;
                 
                 const focusedWidget = document.activeElement.closest('.info-center-widget');
                 if (!focusedWidget) return;
@@ -2598,3 +2598,120 @@
     });
 
 })(); // Self-executing anonymous function without jQuery dependency
+
+
+// Issue Tracker Widget (2.6.0): aktuelle Seite als Thema im AddOn issue_tracker melden
+(function () {
+    'use strict';
+
+    // Adresse beim Laden: Titel und Adresse hat der Server schon geprüft eingetragen
+    var initialHref = window.location.href.split('#')[0];
+
+    // Backend: Seite für die Meldung = aktuelle Adresse (nach PJAX-Wechseln samt Seitentitel); geprüft wird serverseitig
+    function syncBackendPage(root) {
+        if (root.dataset.icItContext !== 'backend') { return; }
+        var url = window.location.href.split('#')[0];
+        if (url === initialHref) { return; }
+        var title = (document.title || '').split(' · ')[0].trim();
+        var rel = url.indexOf('index.php') !== -1 ? url.substring(url.indexOf('index.php')) : url;
+        var t = root.querySelector('[data-ic-it-page-title]');
+        var u = root.querySelector('[data-ic-it-page-url]');
+        if (t) { t.textContent = title; }
+        if (u) { u.textContent = rel; }
+        var ft = root.querySelector('[data-ic-it-field-title]');
+        var fu = root.querySelector('[data-ic-it-field-url]');
+        if (ft) { ft.value = title; }
+        if (fu) { fu.value = url; }
+    }
+
+    function syncAll() {
+        document.querySelectorAll('[data-ic-it]').forEach(syncBackendPage);
+    }
+
+    function setMessage(root, type, text, link) {
+        var box = root.querySelector('[data-ic-it-msg]');
+        if (!box) { return; }
+        box.className = 'ic-it-msg' + (type ? ' ic-it-msg--' + type : '');
+        box.textContent = '';
+        if (!text) { return; }
+        var p = document.createElement('span');
+        p.textContent = text;
+        box.appendChild(p);
+        if (link) {
+            box.appendChild(document.createTextNode(' '));
+            var a = document.createElement('a');
+            a.href = link.url;
+            a.textContent = link.label;
+            if (root.dataset.icItContext === 'backend') {
+                // Ebene des Issue Trackers (it-launcher.js) übernimmt den Klick, ohne Skript normaler Link
+                a.setAttribute('data-it-app-open', '');
+                a.setAttribute('data-pjax', 'false');
+            }
+            box.appendChild(a);
+        }
+    }
+
+    document.addEventListener('submit', function (e) {
+        var form = e.target;
+        if (!form.matches || !form.matches('[data-ic-it-form]')) { return; }
+        e.preventDefault();
+        var root = form.closest('[data-ic-it]');
+        if (!root || form.dataset.busy === '1') { return; }
+
+        syncBackendPage(root);
+        var titleInput = form.elements.title;
+        titleInput.removeAttribute('aria-invalid');
+        if (!titleInput.value.trim()) {
+            titleInput.setAttribute('aria-invalid', 'true');
+            setMessage(root, 'error', root.dataset.icItMsgTitleRequired);
+            titleInput.focus();
+            return;
+        }
+
+        var button = form.querySelector('.ic-it-submit');
+        form.dataset.busy = '1';
+        if (button) { button.disabled = true; }
+        setMessage(root, '', root.dataset.icItMsgSending);
+
+        fetch(root.dataset.icItApi, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Accept': 'application/json' },
+            body: new URLSearchParams(new FormData(form))
+        })
+            .then(function (r) {
+                return r.json().catch(function () { return { success: false }; });
+            })
+            .then(function (data) {
+                if (data && data.success) {
+                    form.elements.title.value = '';
+                    form.elements.description.value = '';
+                    setMessage(root, 'success', data.message, { url: data.url, label: data.link_label });
+                    var link = root.querySelector('[data-ic-it-msg] a');
+                    if (link) { link.focus(); }
+                } else {
+                    if (data && data.field === 'title') {
+                        titleInput.setAttribute('aria-invalid', 'true');
+                        titleInput.focus();
+                    }
+                    setMessage(root, 'error', (data && data.message) || root.dataset.icItMsgError);
+                }
+            })
+            .catch(function () {
+                setMessage(root, 'error', root.dataset.icItMsgError);
+            })
+            .then(function () {
+                form.dataset.busy = '';
+                if (button) { button.disabled = false; }
+            });
+    });
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', syncAll);
+    } else {
+        syncAll();
+    }
+    if (typeof jQuery !== 'undefined') {
+        jQuery(document).on('rex:ready', syncAll);
+    }
+})();

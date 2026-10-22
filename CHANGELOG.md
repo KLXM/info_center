@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.6.0] - unveröffentlicht
+
+### Added
+- **Issue Tracker Widget:** „Problem mit dieser Seite melden“ direkt aus dem Info Center – im Frontend und im
+  Backend. Voraussetzung: AddOn issue_tracker (FriendsOfREDAXO) und Recht `issue_tracker[]`; sonst wird das
+  Widget nicht registriert. Betreff, Beschreibung, Priorität und Zuständigkeit („Alle (gemeinsame Zuständigkeit)“
+  als Standard). Die aktuelle Seite wird automatisch angehängt und angezeigt: im Frontend Artikel + Sprache als
+  betroffene Seite und die volle Adresse (nur eigene Website), im Backend die Backend-Seite als Herkunft nach den
+  Regeln des Issue Trackers, beim Bearbeiten eines Artikels zusätzlich dieser. Anlegen wie im Tracker selbst
+  (Verlauf, Benachrichtigungen). Danach Link „Thema #… öffnen“ (im Backend in der Ebene des Trackers), dazu die
+  Zahl der mir zugewiesenen offenen Themen und die letzten drei.
+- Neuer API-Endpunkt `rex_api_info_center_issue_report`: nur POST, CSRF-Token im Body, Backend-Session und Recht
+  werden geprüft, Eingaben serverseitig validiert (Längen, Priorität, Zuständige, Artikel, Adresse).
+
+### Changed
+- Widget-Sortierung per Alt+Pfeil reagiert auch nicht mehr, solange eine Auswahlliste den Fokus hat.
+
 ## [2.5.3] - 2026-10-19
 
 ### Fixed
