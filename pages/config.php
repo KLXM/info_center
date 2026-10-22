@@ -25,6 +25,9 @@ if (rex_post('formsubmit', 'string') == '1') {
     // Widget-Einstellungen pro User speichern
     $widgetConfig = [];
     $widgets = ['search', 'url', 'timetracker', 'article', 'upkeep', 'stats', 'system'];
+    if (Widgets\IssueTrackerWidget::isAvailableForUser(rex::getUser())) {
+        $widgets[] = 'issuetracker';
+    }
     
     // Füge registrierte externe Widgets hinzu
     if (class_exists(\KLXM\InfoCenter\InfoCenter::class)) {
@@ -102,6 +105,11 @@ $adminWidgets = [
 // Füge Admin-Widgets hinzu wenn User Admin ist
 if (rex::getUser()->isAdmin()) {
     $widgets = array_merge($widgets, $adminWidgets);
+}
+
+// Issue Tracker Widget: auch auflisten, wenn der Benutzer es ausgeblendet hat (dann ist es nicht registriert)
+if (Widgets\IssueTrackerWidget::isAvailableForUser(rex::getUser())) {
+    $widgets['issuetracker'] = \rex_i18n::msg('info_center_it_title');
 }
 
 // Füge alle anderen registrierten Widgets hinzu
